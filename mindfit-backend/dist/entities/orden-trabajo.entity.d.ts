@@ -1,0 +1,32 @@
+import { EstadoOrdenTrabajo, PrioridadOrden, TipoMantenimiento } from '../common/enums';
+import { Activo } from './activo.entity';
+import { Sucursal } from './sucursal.entity';
+import { Usuario } from './usuario.entity';
+import { EvidenciaOt } from './evidencia-ot.entity';
+import { ComentarioOt } from './comentario-ot.entity';
+export declare class OrdenTrabajo {
+    id: number;
+    codigoOt: string;
+    activoId: number | null;
+    activo: Activo | null;
+    sucursalId: number;
+    sucursal: Sucursal;
+    creadoPorId: number;
+    creadoPor: Usuario;
+    asignadoAId: number | null;
+    asignadoA: Usuario | null;
+    titulo: string;
+    descripcion: string | null;
+    prioridad: PrioridadOrden;
+    tipoMantenimiento: TipoMantenimiento;
+    estado: EstadoOrdenTrabajo;
+    tiempoEstimadoMinutos: number | null;
+    fechaProgramacion: Date | null;
+    fechaInicioReal: Date | null;
+    fechaFinReal: Date | null;
+    motivoRechazo: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    evidencias: EvidenciaOt[];
+    comentarios: ComentarioOt[];
+}

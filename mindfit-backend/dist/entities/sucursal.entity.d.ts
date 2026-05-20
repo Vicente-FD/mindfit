@@ -1,0 +1,16 @@
+import { Usuario } from './usuario.entity';
+import { Activo } from './activo.entity';
+import { OrdenTrabajo } from './orden-trabajo.entity';
+export declare class Sucursal {
+    id: number;
+    nombre: string;
+    direccion: string | null;
+    comuna: string | null;
+    ciudad: string | null;
+    estaActiva: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    usuarios: Usuario[];
+    activos: Activo[];
+    ordenesTrabajo: OrdenTrabajo[];
+}

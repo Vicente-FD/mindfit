@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-deep-black: #000000;
+  --color-obsidian-grey: #1a1a1c;
+  --color-orange-energy: #ff6600;
+  --color-pure-white: #ffffff;
+  --color-slate-grey: #94a3b8;
+  --color-status-green: #22c55e;
+}
+
+@layer base {
+  html,
+  body {
+    @apply min-h-screen bg-deep-black text-pure-white antialiased;
+  }
+}

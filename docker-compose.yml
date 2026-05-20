@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: mindfit-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: mindfit_ops
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mindfitpass123
+    volumes:
+      - mindfit_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d mindfit_ops']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mindfit_postgres_data:
