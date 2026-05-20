@@ -18,6 +18,9 @@ export class Sucursal {
   @Column({ type: 'varchar', length: 150, unique: true })
   nombre: string;
 
+  @Column({ type: 'varchar', length: 5, nullable: true })
+  sigla: string | null;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   direccion: string | null;
 

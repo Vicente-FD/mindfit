@@ -1,7 +1,10 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Patch, Post } from '@nestjs/common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { UpdateSesionDto } from './dto/update-sesion.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -11,5 +14,18 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('logout')
+  logout(@CurrentUser() user: JwtPayload) {
+    return this.authService.logout(user.sub);
+  }
+
+  @Patch('sesion')
+  updateSesion(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateSesionDto,
+  ) {
+    return this.authService.updateSesion(user.sub, dto.estado);
   }
 }

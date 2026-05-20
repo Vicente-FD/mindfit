@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -9,8 +9,8 @@ import { UsuariosService } from '../../../core/services/usuarios.service';
 import { SucursalesService } from '../../../core/services/sucursales.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Usuario, PermisosUi } from '../../../core/models/usuario.model';
-import { UserRole } from '../../../core/models/user.model';
-import { Sucursal } from '../../../core/models/sucursal.model';
+import { UserRole, EstadoSesion } from '../../../core/models/user.model';
+import { Sucursal, CASA_CENTRAL_VALUE } from '../../../core/models/sucursal.model';
 
 const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Super Admin' },
@@ -18,6 +18,15 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: 'tecnico', label: 'Técnico' },
   { value: 'jefe_sucursal', label: 'Jefe Sucursal' },
   { value: 'gerente_bi', label: 'Gerente / BI' },
+];
+
+const ROLE_TABS: { value: UserRole | 'todos'; label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'jefe_operaciones', label: 'Operaciones' },
+  { value: 'tecnico', label: 'Técnicos' },
+  { value: 'jefe_sucursal', label: 'Jefes Sucursal' },
+  { value: 'gerente_bi', label: 'Ejecutivos' },
 ];
 
 const PERMISO_LABELS: { key: keyof PermisosUi; label: string }[] = [
@@ -35,27 +44,30 @@ const PERMISO_LABELS: { key: keyof PermisosUi; label: string }[] = [
   templateUrl: './usuarios-admin.component.html',
   styleUrl: './usuarios-admin.component.css',
 })
-export class UsuariosAdminComponent implements OnInit {
+export class UsuariosAdminComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly usuariosService = inject(UsuariosService);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly toast = inject(ToastService);
 
+  readonly casaCentral = CASA_CENTRAL_VALUE;
   readonly roles = ROLES;
+  readonly roleTabs = ROLE_TABS;
   readonly permisoLabels = PERMISO_LABELS;
   readonly usuarios = signal<Usuario[]>([]);
   readonly sucursales = signal<Sucursal[]>([]);
   readonly selected = signal<Usuario | null>(null);
   readonly loading = signal(false);
   readonly saving = signal(false);
-  readonly showCreate = signal(false);
+  readonly showForm = signal(false);
+  readonly activeRoleTab = signal<UserRole | 'todos'>('todos');
 
   readonly createForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
     nombre: ['', Validators.required],
     rol: ['tecnico' as UserRole, Validators.required],
-    sucursalId: ['' as number | ''],
+    sucursalId: [CASA_CENTRAL_VALUE as string | number],
     telefono: [''],
   });
 
@@ -63,7 +75,7 @@ export class UsuariosAdminComponent implements OnInit {
     nombre: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     rol: ['tecnico' as UserRole, Validators.required],
-    sucursalId: ['' as number | ''],
+    sucursalId: [CASA_CENTRAL_VALUE as string | number],
     telefono: [''],
     estaActivo: [true],
     nuevaPassword: [''],
@@ -86,42 +98,71 @@ export class UsuariosAdminComponent implements OnInit {
     () => this.editForm.controls.rol.value === 'jefe_sucursal',
   );
 
+  private refreshIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  readonly filteredUsuarios = computed(() => {
+    const tab = this.activeRoleTab();
+    const list = this.usuarios();
+    if (tab === 'todos') return list;
+    return list.filter((u) => u.rol === tab);
+  });
+
   ngOnInit(): void {
     this.load();
     this.sucursalesService.list().subscribe({
       next: (s) => this.sucursales.set(s),
     });
+    this.refreshIntervalId = setInterval(() => this.load(true), 30_000);
   }
 
-  load(): void {
-    this.loading.set(true);
+  ngOnDestroy(): void {
+    if (this.refreshIntervalId != null) {
+      clearInterval(this.refreshIntervalId);
+    }
+  }
+
+  load(silent = false): void {
+    if (!silent) this.loading.set(true);
     this.usuariosService.list().subscribe({
       next: (data) => {
         this.usuarios.set(data);
-        this.loading.set(false);
+        const sel = this.selected();
+        if (sel) {
+          const updated = data.find((u) => u.id === sel.id);
+          if (updated) this.selected.set(updated);
+        }
+        if (!silent) this.loading.set(false);
       },
       error: () => {
-        this.loading.set(false);
-        this.toast.error('Error al cargar usuarios');
+        if (!silent) {
+          this.loading.set(false);
+          this.toast.error('Error al cargar usuarios');
+        }
       },
     });
   }
 
-  toggleCreate(): void {
-    this.showCreate.update((v) => !v);
+  toggleForm(): void {
+    this.showForm.update((v) => !v);
   }
 
-  private resolveSucursalId(
+  setRoleTab(tab: UserRole | 'todos'): void {
+    this.activeRoleTab.set(tab);
+  }
+
+  private parseSucursalId(
     rol: UserRole,
-    sucursalId: number | '',
+    raw: string | number,
   ): number | null | undefined {
     if (rol !== 'jefe_sucursal') {
-      return null;
+      return raw === CASA_CENTRAL_VALUE || raw === '' || raw == null
+        ? null
+        : Number(raw);
     }
-    if (sucursalId === '' || sucursalId == null) {
+    if (raw === CASA_CENTRAL_VALUE || raw === '' || raw == null) {
       return undefined;
     }
-    return Number(sucursalId);
+    return Number(raw);
   }
 
   submitCreate(): void {
@@ -130,7 +171,7 @@ export class UsuariosAdminComponent implements OnInit {
       return;
     }
     const v = this.createForm.getRawValue();
-    const sucursalId = this.resolveSucursalId(v.rol, v.sucursalId);
+    const sucursalId = this.parseSucursalId(v.rol, v.sucursalId);
     if (v.rol === 'jefe_sucursal' && sucursalId === undefined) {
       this.toast.error('Jefe de sucursal requiere una sede asignada');
       return;
@@ -142,7 +183,7 @@ export class UsuariosAdminComponent implements OnInit {
         password: v.password,
         nombre: v.nombre,
         rol: v.rol,
-        sucursalId: sucursalId ?? undefined,
+        sucursalId: sucursalId ?? null,
         telefono: v.telefono || undefined,
       })
       .subscribe({
@@ -153,10 +194,10 @@ export class UsuariosAdminComponent implements OnInit {
             password: '',
             nombre: '',
             rol: 'tecnico',
-            sucursalId: '',
+            sucursalId: CASA_CENTRAL_VALUE,
             telefono: '',
           });
-          this.showCreate.set(false);
+          this.showForm.set(false);
           this.load();
         },
         error: (err) => {
@@ -167,13 +208,13 @@ export class UsuariosAdminComponent implements OnInit {
   }
 
   selectUsuario(u: Usuario): void {
-    this.showCreate.set(false);
+    this.showForm.set(false);
     this.selected.set(u);
     this.editForm.patchValue({
       nombre: u.nombre,
       email: u.email,
       rol: u.rol,
-      sucursalId: u.sucursalId ?? '',
+      sucursalId: (u.sucursalId ?? CASA_CENTRAL_VALUE) as string | number,
       telefono: u.telefono ?? '',
       estaActivo: u.estaActivo,
       nuevaPassword: '',
@@ -202,7 +243,7 @@ export class UsuariosAdminComponent implements OnInit {
       return;
     }
 
-    const sucursalId = this.resolveSucursalId(v.rol, v.sucursalId);
+    const sucursalId = this.parseSucursalId(v.rol, v.sucursalId);
     if (v.rol === 'jefe_sucursal' && sucursalId === undefined) {
       this.toast.error('Jefe de sucursal requiere una sede asignada');
       return;
@@ -224,9 +265,7 @@ export class UsuariosAdminComponent implements OnInit {
       .pipe(
         switchMap((updated) => {
           const pwd = v.nuevaPassword?.trim();
-          if (!pwd) {
-            return of(updated);
-          }
+          if (!pwd) return of(updated);
           return this.usuariosService
             .updatePassword(u.id, pwd)
             .pipe(switchMap(() => of(updated)));
@@ -248,14 +287,11 @@ export class UsuariosAdminComponent implements OnInit {
       });
   }
 
-  savePermisos(): void {
-    this.submitEdit();
-  }
-
-  toggleActivo(u: Usuario): void {
-    this.usuariosService.update(u.id, { estaActivo: !u.estaActivo }).subscribe({
+  onToggleActivo(u: Usuario, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.usuariosService.update(u.id, { estaActivo: checked }).subscribe({
       next: (updated) => {
-        this.toast.success(u.estaActivo ? 'Usuario desactivado' : 'Usuario activado');
+        this.toast.success(checked ? 'Usuario activado' : 'Usuario desactivado');
         if (this.selected()?.id === u.id) {
           this.selected.set(updated);
           this.editForm.patchValue({ estaActivo: updated.estaActivo });
@@ -280,5 +316,21 @@ export class UsuariosAdminComponent implements OnInit {
 
   rolLabel(rol: UserRole): string {
     return ROLES.find((r) => r.value === rol)?.label ?? rol;
+  }
+
+  sedeLabel(u: Usuario): string {
+    if (!u.sucursalId) return 'Casa Central';
+    return u.sucursal?.nombre ?? `Sede #${u.sucursalId}`;
+  }
+
+  sessionClass(estado?: EstadoSesion): string {
+    if (estado === 'conectado') return 'session-online';
+    if (estado === 'reposo') return 'session-reposo';
+    return 'session-offline';
+  }
+
+  sessionIcon(estado?: EstadoSesion): string {
+    if (estado === 'reposo') return '🌙';
+    return '';
   }
 }

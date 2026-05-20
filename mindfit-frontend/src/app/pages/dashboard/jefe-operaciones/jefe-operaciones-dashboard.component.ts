@@ -5,8 +5,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { WorkOrdersService } from '../../../core/services/work-orders.service';
-import { ActivosRegistroComponent } from '../admin/activos-registro.component';
-import { UsuariosAdminComponent } from '../admin/usuarios-admin.component';
 import { SucursalesService } from '../../../core/services/sucursales.service';
 import { ActivosService } from '../../../core/services/activos.service';
 import { UsuariosService } from '../../../core/services/usuarios.service';
@@ -18,15 +16,9 @@ import { Sucursal } from '../../../core/models/sucursal.model';
 import { Activo } from '../../../core/services/activos.service';
 import { PRIORIDADES_OT } from '../../../core/models/analytics.model';
 
-type OpsTab = 'ots' | 'activos' | 'usuarios' | 'metricas';
-
 @Component({
   selector: 'app-jefe-operaciones-dashboard',
-  imports: [
-    ReactiveFormsModule,
-    ActivosRegistroComponent,
-    UsuariosAdminComponent,
-  ],
+  imports: [ReactiveFormsModule],
   templateUrl: './jefe-operaciones-dashboard.component.html',
   styleUrl: './jefe-operaciones-dashboard.component.css',
 })
@@ -39,7 +31,6 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   private readonly analytics = inject(AnalyticsService);
   private readonly toast = inject(ToastService);
 
-  readonly tab = signal<OpsTab>('ots');
   readonly prioridades = PRIORIDADES_OT;
   readonly ordenes = signal<WorkOrder[]>([]);
   readonly sucursales = signal<Sucursal[]>([]);
@@ -71,10 +62,6 @@ export class JefeOperacionesDashboardComponent implements OnInit {
           otsReportadas: k.otsReportadas,
         }),
     });
-  }
-
-  setTab(t: OpsTab): void {
-    this.tab.set(t);
   }
 
   reload(): void {

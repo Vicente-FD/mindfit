@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OperacionAuditoria = exports.TipoEvidencia = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.RolUsuario = void 0;
+exports.OperacionAuditoria = exports.TipoEvidencia = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.RolUsuario = void 0;
 var RolUsuario;
 (function (RolUsuario) {
     RolUsuario["ADMIN"] = "admin";
@@ -9,6 +9,12 @@ var RolUsuario;
     RolUsuario["JEFE_SUCURSAL"] = "jefe_sucursal";
     RolUsuario["GERENTE_BI"] = "gerente_bi";
 })(RolUsuario || (exports.RolUsuario = RolUsuario = {}));
+var EstadoSesionUsuario;
+(function (EstadoSesionUsuario) {
+    EstadoSesionUsuario["CONECTADO"] = "conectado";
+    EstadoSesionUsuario["DESCONECTADO"] = "desconectado";
+    EstadoSesionUsuario["REPOSO"] = "reposo";
+})(EstadoSesionUsuario || (exports.EstadoSesionUsuario = EstadoSesionUsuario = {}));
 var CategoriaActivo;
 (function (CategoriaActivo) {
     CategoriaActivo["CARDIO"] = "cardio";

@@ -185,7 +185,8 @@ export class TecnicoDashboardComponent implements OnInit {
         const orden = this.orders().find(
           (o) =>
             o.activoId === activo.id ||
-            o.activo?.codigoQrToken === activo.codigoQrToken,
+            o.activo?.codigoQrToken === activo.codigoQrToken ||
+            o.activo?.codigoQrToken === activo.codigoInventario,
         );
         if (orden) {
           this.tecnicoUi.showQrAlert({ activoNombre: activo.nombre, orden });

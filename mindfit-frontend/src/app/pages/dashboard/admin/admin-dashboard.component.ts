@@ -1,19 +1,19 @@
-import { Component, signal } from '@angular/core';
-import { UsuariosAdminComponent } from './usuarios-admin.component';
-import { ActivosRegistroComponent } from './activos-registro.component';
-
-type AdminTab = 'usuarios' | 'activos' | 'resumen';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [UsuariosAdminComponent, ActivosRegistroComponent],
-  templateUrl: './admin-dashboard.component.html',
-  styleUrl: './admin-dashboard.component.css',
+  template: `
+    <div class="page-card">
+      <h1 class="text-xl font-semibold text-pure-white">Panel Super Admin</h1>
+      <p class="mt-2 text-sm text-slate-grey">
+        Use el menú lateral para gestionar personal, activos con códigos QR y permisos del sistema.
+      </p>
+      <ul class="mt-4 space-y-2 text-sm text-pure-white">
+        <li>· Personal y permisos</li>
+        <li>· Activos con códigos LF-MX-25-01-01</li>
+        <li>· Etiquetas QR imprimibles</li>
+      </ul>
+    </div>
+  `,
 })
-export class AdminDashboardComponent {
-  readonly tab = signal<AdminTab>('usuarios');
-
-  setTab(t: AdminTab): void {
-    this.tab.set(t);
-  }
-}
+export class AdminDashboardComponent {}

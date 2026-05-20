@@ -1,4 +1,4 @@
-import { RolUsuario } from '../common/enums';
+import { RolUsuario, EstadoSesionUsuario } from '../common/enums';
 import type { PermisosUi } from '../common/interfaces/permisos-ui.interface';
 import { Sucursal } from './sucursal.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
@@ -15,6 +15,7 @@ export declare class Usuario {
     sucursal: Sucursal | null;
     telefono: string | null;
     estaActivo: boolean;
+    estadoSesion: EstadoSesionUsuario;
     permisosUi: PermisosUi;
     createdAt: Date;
     updatedAt: Date;

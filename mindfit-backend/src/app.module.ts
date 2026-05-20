@@ -10,15 +10,18 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
 import { SeedService } from './database/seed.service';
+import { SchemaFixService } from './database/schema-fix.service';
 import {
   Activo,
   AuditTrail,
   ComentarioOt,
   EvidenciaOt,
+  Marca,
   OrdenTrabajo,
   Sucursal,
   Usuario,
 } from './entities';
+import { MarcasModule } from './marcas/marcas.module';
 import { SucursalesModule } from './sucursales/sucursales.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { ActivosModule } from './activos/activos.module';
@@ -48,6 +51,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
         entities: [
           Sucursal,
           Usuario,
+          Marca,
           Activo,
           OrdenTrabajo,
           EvidenciaOt,
@@ -60,19 +64,27 @@ import { AnalyticsModule } from './analytics/analytics.module';
         keepConnectionAlive: true,
       }),
     }),
-    TypeOrmModule.forFeature([Sucursal, Usuario, Activo, OrdenTrabajo]),
+    TypeOrmModule.forFeature([
+      Sucursal,
+      Usuario,
+      Marca,
+      Activo,
+      OrdenTrabajo,
+    ]),
     CommonModule,
     DatabaseModule,
     AuthModule,
     SucursalesModule,
     UsuariosModule,
     ActivosModule,
+    MarcasModule,
     OrdenesTrabajoModule,
     AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    SchemaFixService,
     SeedService,
     {
       provide: APP_GUARD,

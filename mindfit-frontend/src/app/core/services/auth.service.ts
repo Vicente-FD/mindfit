@@ -1,10 +1,11 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs';
+import { tap, finalize } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AuthUser,
+  EstadoSesion,
   LoginResponse,
   ROLE_DASHBOARD_ROUTES,
   UserRole,
@@ -45,6 +46,28 @@ export class AuthService {
   }
 
   logout(): void {
+    const token = this.getToken();
+    if (token) {
+      this.http
+        .post(`${environment.apiUrl}/auth/logout`, {})
+        .pipe(
+          finalize(() => this.clearSessionAndRedirect()),
+        )
+        .subscribe({ error: () => this.clearSessionAndRedirect() });
+    } else {
+      this.clearSessionAndRedirect();
+    }
+  }
+
+  patchUser(partial: Partial<AuthUser>): void {
+    const current = this.userSignal();
+    if (!current) return;
+    const updated = { ...current, ...partial };
+    this.userSignal.set(updated);
+    localStorage.setItem(USER_KEY, JSON.stringify(updated));
+  }
+
+  private clearSessionAndRedirect(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this.tokenSignal.set(null);

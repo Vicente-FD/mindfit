@@ -1,6 +1,8 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../core/services/auth.service';
+import { SessionHeartbeatService } from '../../core/services/session-heartbeat.service';
 import { UserRole } from '../../core/models/user.model';
 import { QrScannerModalComponent } from '../qr-scanner-modal/qr-scanner-modal.component';
 
@@ -13,12 +15,19 @@ interface NavItem {
 
 @Component({
   selector: 'app-dashboard-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, QrScannerModalComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    QrScannerModalComponent,
+    LucideAngularModule,
+  ],
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.css',
 })
-export class DashboardLayoutComponent {
+export class DashboardLayoutComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
+  private readonly sessionHeartbeat = inject(SessionHeartbeatService);
 
   readonly user = this.auth.user;
   readonly showScanner = signal(false);
@@ -30,38 +39,48 @@ export class DashboardLayoutComponent {
 
   readonly showQrFab = computed(() => this.user()?.rol === 'tecnico');
 
-  readonly hideLayoutHeader = computed(() => this.user()?.rol === 'tecnico');
-
   readonly navItems: NavItem[] = [
     {
-      label: 'Admin',
+      label: 'Dashboard',
       route: '/dashboard/admin',
-      icon: 'grid',
+      icon: 'layout-dashboard',
       roles: ['admin'],
     },
     {
-      label: 'OTs',
+      label: 'Órdenes de trabajo',
       route: '/dashboard/jefe-operaciones',
-      icon: 'clipboard',
+      icon: 'clipboard-list',
       roles: ['jefe_operaciones'],
     },
     {
-      label: 'Tareas',
+      label: 'Gestión de Activos',
+      route: '/dashboard/activos',
+      icon: 'package',
+      roles: ['admin', 'jefe_operaciones'],
+    },
+    {
+      label: 'Personal y Permisos',
+      route: '/dashboard/usuarios',
+      icon: 'users',
+      roles: ['admin', 'jefe_operaciones'],
+    },
+    {
+      label: 'Reportar Falla',
+      route: '/dashboard/sucursal',
+      icon: 'alert-triangle',
+      roles: ['jefe_sucursal'],
+    },
+    {
+      label: 'Mis Tareas',
       route: '/dashboard/tecnico',
-      icon: 'home',
+      icon: 'wrench',
       roles: ['tecnico'],
     },
     {
-      label: 'BI',
+      label: 'Dashboard Ejecutivo',
       route: '/dashboard/gerente',
-      icon: 'chart',
-      roles: ['gerente_bi'],
-    },
-    {
-      label: 'Sucursal',
-      route: '/dashboard/sucursal',
-      icon: 'alert',
-      roles: ['jefe_sucursal'],
+      icon: 'bar-chart-3',
+      roles: ['gerente_bi', 'jefe_operaciones'],
     },
   ];
 
@@ -71,17 +90,20 @@ export class DashboardLayoutComponent {
     return this.navItems.filter((item) => item.roles.includes(rol));
   });
 
-  readonly statusLabel = computed(() => {
-    const rol = this.user()?.rol;
-    const map: Record<UserRole, string> = {
-      admin: 'Sistema global',
-      jefe_operaciones: 'Centro de operaciones',
-      tecnico: 'En terreno',
-      jefe_sucursal: 'Vista sucursal',
-      gerente_bi: 'Analítica ejecutiva',
-    };
-    return rol ? map[rol] : 'Mindfit Ops';
+  readonly ubicacionLabel = computed(() => {
+    const u = this.user();
+    if (!u) return 'Mindfit Ops';
+    if (!u.sucursalId) return 'Casa Central';
+    return u.sucursalNombre ?? `Sede #${u.sucursalId}`;
   });
+
+  ngOnInit(): void {
+    this.sessionHeartbeat.start();
+  }
+
+  ngOnDestroy(): void {
+    this.sessionHeartbeat.stop();
+  }
 
   openScanner(): void {
     this.showScanner.set(true);
@@ -92,6 +114,7 @@ export class DashboardLayoutComponent {
   }
 
   logout(): void {
+    this.sessionHeartbeat.stop();
     this.auth.logout();
   }
 }

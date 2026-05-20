@@ -19,6 +19,7 @@ const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const enums_1 = require("../common/enums");
 const activos_service_1 = require("./activos.service");
 const create_activo_dto_1 = require("./dto/create-activo.dto");
+const filter_activos_dto_1 = require("./dto/filter-activos.dto");
 const update_activo_dto_1 = require("./dto/update-activo.dto");
 let ActivosController = class ActivosController {
     activosService;
@@ -28,11 +29,8 @@ let ActivosController = class ActivosController {
     findByUuid(uuidActivo) {
         return this.activosService.findByUuid(uuidActivo);
     }
-    findAll(sucursalId) {
-        const parsed = sucursalId != null && sucursalId !== ''
-            ? parseInt(sucursalId, 10)
-            : undefined;
-        return this.activosService.findAll(parsed);
+    findAll(filters) {
+        return this.activosService.findAll(filters);
     }
     findOne(id) {
         return this.activosService.findOne(id);
@@ -56,9 +54,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.TECNICO, enums_1.RolUsuario.JEFE_SUCURSAL, enums_1.RolUsuario.GERENTE_BI),
-    __param(0, (0, common_1.Query)('sucursalId')),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [filter_activos_dto_1.FilterActivosDto]),
     __metadata("design:returntype", void 0)
 ], ActivosController.prototype, "findAll", null);
 __decorate([

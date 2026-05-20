@@ -51,6 +51,7 @@ const jwt_1 = require("@nestjs/jwt");
 const typeorm_1 = require("@nestjs/typeorm");
 const bcrypt = __importStar(require("bcrypt"));
 const typeorm_2 = require("typeorm");
+const enums_1 = require("../common/enums");
 const usuario_entity_1 = require("../entities/usuario.entity");
 let AuthService = class AuthService {
     usuarioRepository;
@@ -62,6 +63,7 @@ let AuthService = class AuthService {
     async login(dto) {
         const usuario = await this.usuarioRepository.findOne({
             where: { email: dto.email.toLowerCase() },
+            relations: { sucursal: true },
         });
         if (!usuario || !usuario.estaActivo) {
             throw new common_1.UnauthorizedException('Credenciales inválidas');
@@ -75,15 +77,41 @@ let AuthService = class AuthService {
             email: usuario.email,
             rol: usuario.rol,
         };
+        usuario.estadoSesion = enums_1.EstadoSesionUsuario.CONECTADO;
+        await this.usuarioRepository.save(usuario);
         return {
             accessToken: await this.jwtService.signAsync(payload),
-            user: {
-                id: usuario.id,
-                email: usuario.email,
-                nombre: usuario.nombre,
-                rol: usuario.rol,
-                sucursalId: usuario.sucursalId,
-            },
+            user: this.toAuthUser(usuario),
+        };
+    }
+    async logout(userId) {
+        await this.setEstadoSesion(userId, enums_1.EstadoSesionUsuario.DESCONECTADO);
+        return { ok: true };
+    }
+    async updateSesion(userId, estado) {
+        const usuario = await this.setEstadoSesion(userId, estado);
+        return { estadoSesion: usuario.estadoSesion };
+    }
+    async setEstadoSesion(userId, estado) {
+        const usuario = await this.usuarioRepository.findOne({
+            where: { id: userId },
+            relations: { sucursal: true },
+        });
+        if (!usuario) {
+            throw new common_1.UnauthorizedException('Usuario no encontrado');
+        }
+        usuario.estadoSesion = estado;
+        return this.usuarioRepository.save(usuario);
+    }
+    toAuthUser(usuario) {
+        return {
+            id: usuario.id,
+            email: usuario.email,
+            nombre: usuario.nombre,
+            rol: usuario.rol,
+            sucursalId: usuario.sucursalId,
+            sucursalNombre: usuario.sucursal?.nombre ?? null,
+            estadoSesion: usuario.estadoSesion,
         };
     }
 };

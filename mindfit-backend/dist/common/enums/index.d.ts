@@ -5,6 +5,11 @@ export declare enum RolUsuario {
     JEFE_SUCURSAL = "jefe_sucursal",
     GERENTE_BI = "gerente_bi"
 }
+export declare enum EstadoSesionUsuario {
+    CONECTADO = "conectado",
+    DESCONECTADO = "desconectado",
+    REPOSO = "reposo"
+}
 export declare enum CategoriaActivo {
     CARDIO = "cardio",
     FUERZA = "fuerza",

@@ -57,48 +57,51 @@ const sucursal_entity_1 = require("../entities/sucursal.entity");
 const usuario_entity_1 = require("../entities/usuario.entity");
 const activo_entity_1 = require("../entities/activo.entity");
 const orden_trabajo_entity_1 = require("../entities/orden-trabajo.entity");
+const marca_entity_1 = require("../entities/marca.entity");
 const DEMO_PASSWORD = 'Admin123!';
 let SeedService = SeedService_1 = class SeedService {
     sucursalRepo;
     usuarioRepo;
     activoRepo;
     ordenRepo;
+    marcaRepo;
     logger = new common_1.Logger(SeedService_1.name);
-    constructor(sucursalRepo, usuarioRepo, activoRepo, ordenRepo) {
+    constructor(sucursalRepo, usuarioRepo, activoRepo, ordenRepo, marcaRepo) {
         this.sucursalRepo = sucursalRepo;
         this.usuarioRepo = usuarioRepo;
         this.activoRepo = activoRepo;
         this.ordenRepo = ordenRepo;
+        this.marcaRepo = marcaRepo;
     }
     async onModuleInit() {
         const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
         const ordenCount = await this.ordenRepo.count();
-        const florida = await this.upsertSucursal('Sede La Florida', 'Av. Vicuña Mackenna 6100', 'La Florida', 'Santiago');
-        const condes = await this.upsertSucursal('Sede Las Condes', 'Av. Apoquindo 4500', 'Las Condes', 'Santiago');
-        const central = await this.upsertSucursal('Sucursal Central', 'Av. Principal 100', 'Santiago', 'Santiago');
+        await this.seedMarcas();
+        const florida = await this.upsertSucursal('Sede La Florida', 'LF', 'Av. Vicuña Mackenna 6100', 'La Florida', 'Santiago');
+        const condes = await this.upsertSucursal('Sede Las Condes', 'LC', 'Av. Apoquindo 4500', 'Las Condes', 'Santiago');
+        await this.upsertSucursal('Sede Viña del Mar', 'VM', 'Av. Libertad 1340', 'Viña del Mar', 'Valparaíso');
         const sucursalMap = {
             florida: florida.id,
             condes: condes.id,
-            central: central.id,
         };
         const users = [
             {
                 email: 'admin@mindfit.cl',
                 nombre: 'Super Admin Mindfit',
                 rol: enums_1.RolUsuario.ADMIN,
-                sucursalKey: 'central',
+                sucursalKey: null,
             },
             {
                 email: 'jefe.ops@mindfit.cl',
                 nombre: 'Jefe de Operaciones',
                 rol: enums_1.RolUsuario.JEFE_OPERACIONES,
-                sucursalKey: 'central',
+                sucursalKey: null,
             },
             {
                 email: 'tecnico@mindfit.cl',
                 nombre: 'Técnico de Campo',
                 rol: enums_1.RolUsuario.TECNICO,
-                sucursalKey: 'florida',
+                sucursalKey: null,
             },
             {
                 email: 'jefe.florida@mindfit.cl',
@@ -116,7 +119,7 @@ let SeedService = SeedService_1 = class SeedService {
                 email: 'gerente@mindfit.cl',
                 nombre: 'Ejecutivo Gerencia BI',
                 rol: enums_1.RolUsuario.GERENTE_BI,
-                sucursalKey: 'central',
+                sucursalKey: null,
             },
         ];
         const savedUsers = {};
@@ -124,72 +127,93 @@ let SeedService = SeedService_1 = class SeedService {
             let usuario = await this.usuarioRepo.findOne({
                 where: { email: u.email },
             });
+            const sucursalId = u.sucursalKey != null ? sucursalMap[u.sucursalKey] : null;
             if (!usuario) {
                 usuario = await this.usuarioRepo.save(this.usuarioRepo.create({
                     email: u.email,
                     passwordHash,
                     nombre: u.nombre,
                     rol: u.rol,
-                    sucursalId: u.sucursalKey
-                        ? sucursalMap[u.sucursalKey]
-                        : null,
+                    sucursalId,
                     estaActivo: true,
+                    estadoSesion: enums_1.EstadoSesionUsuario.DESCONECTADO,
                     permisosUi: permisos_ui_interface_1.PERMISOS_BY_ROL[u.rol] ?? {},
                 }));
             }
+            else {
+                if (u.sucursalKey === null && u.rol !== enums_1.RolUsuario.JEFE_SUCURSAL) {
+                    usuario.sucursalId = null;
+                }
+                await this.usuarioRepo.save(usuario);
+            }
             savedUsers[u.email] = usuario;
         }
+        const matrix = await this.marcaRepo.findOne({ where: { sigla: 'MX' } });
+        const life = await this.marcaRepo.findOne({ where: { sigla: 'LF' } });
+        const carrier = await this.marcaRepo.findOne({ where: { sigla: 'CR' } });
+        const pedrollo = await this.marcaRepo.findOne({ where: { sigla: 'PD' } });
         const activosData = [
             {
                 nombre: 'Cinta Correr Pro X500',
-                marca: 'Technogym',
+                marcaId: matrix?.id,
+                marca: 'Matrix',
                 modelo: 'X500',
-                numeroSerie: 'TG-X500-001',
+                codigo: 'LF-MX-25-01-01',
                 categoria: enums_1.CategoriaActivo.CARDIO,
                 sucursalId: florida.id,
                 costo: '4500000',
+                fechaCompra: '2025-01-15',
             },
             {
                 nombre: 'Press de Pierna',
+                marcaId: life?.id,
                 marca: 'Life Fitness',
                 modelo: 'Axiom',
-                numeroSerie: 'LF-PP-042',
+                codigo: 'LF-LF-25-02-01',
                 categoria: enums_1.CategoriaActivo.FUERZA,
                 sucursalId: florida.id,
                 costo: '3200000',
+                fechaCompra: '2025-03-10',
             },
             {
                 nombre: 'Aire Acondicionado Central',
+                marcaId: carrier?.id,
                 marca: 'Carrier',
                 modelo: '42QHC018',
-                numeroSerie: 'CR-AC-018',
+                codigo: 'LC-CR-24-03-01',
                 categoria: enums_1.CategoriaActivo.CLIMATIZACION,
                 sucursalId: condes.id,
                 costo: '2800000',
+                fechaCompra: '2024-06-01',
             },
             {
                 nombre: 'Bomba de Agua Piscina',
+                marcaId: pedrollo?.id,
                 marca: 'Pedrollo',
                 modelo: 'PKm 60',
-                numeroSerie: 'PD-BA-060',
+                codigo: 'LC-PD-24-05-01',
                 categoria: enums_1.CategoriaActivo.BOMBA_AGUA,
                 sucursalId: condes.id,
                 costo: '890000',
+                fechaCompra: '2024-08-20',
             },
         ];
         const activos = [];
         for (const a of activosData) {
             let activo = await this.activoRepo.findOne({
-                where: { numeroSerie: a.numeroSerie },
+                where: { codigoInventario: a.codigo },
             });
             if (!activo) {
                 activo = this.activoRepo.create({
                     nombre: a.nombre,
+                    marcaId: a.marcaId ?? null,
                     marca: a.marca,
                     modelo: a.modelo,
-                    numeroSerie: a.numeroSerie,
+                    codigoInventario: a.codigo,
+                    codigoQrToken: a.codigo,
                     categoria: a.categoria,
                     sucursalId: a.sucursalId,
+                    fechaCompra: a.fechaCompra,
                     costoAdquisicion: a.costo,
                     documentacionUrls: [],
                     estadoOperacional: enums_1.EstadoOperacionalActivo.OPERATIVO,
@@ -247,24 +271,42 @@ let SeedService = SeedService_1 = class SeedService {
                 }));
             }
         }
-        this.logger.log('Seed / usuarios demo Mindfit Ops:');
-        this.logger.log('  admin@mindfit.cl (Super Admin)');
-        this.logger.log('  jefe.ops@mindfit.cl (Jefe Operaciones)');
-        this.logger.log('  tecnico@mindfit.cl (Técnico)');
-        this.logger.log('  jefe.florida@mindfit.cl / jefe.condes@mindfit.cl');
-        this.logger.log('  gerente@mindfit.cl (Ejecutivo BI)');
+        this.logger.log('Seed Mindfit Ops listo (marcas, siglas, usuarios demo)');
         this.logger.log(`  Contraseña demo: ${DEMO_PASSWORD}`);
     }
-    async upsertSucursal(nombre, direccion, comuna, ciudad) {
+    async seedMarcas() {
+        const marcas = [
+            { nombre: 'Matrix', sigla: 'MX' },
+            { nombre: 'Life Fitness', sigla: 'LF' },
+            { nombre: 'Precor', sigla: 'PR' },
+            { nombre: 'Technogym', sigla: 'TG' },
+            { nombre: 'Carrier', sigla: 'CR' },
+            { nombre: 'Pedrollo', sigla: 'PD' },
+        ];
+        for (const m of marcas) {
+            const exists = await this.marcaRepo.findOne({
+                where: [{ nombre: m.nombre }, { sigla: m.sigla }],
+            });
+            if (!exists) {
+                await this.marcaRepo.save(this.marcaRepo.create(m));
+            }
+        }
+    }
+    async upsertSucursal(nombre, sigla, direccion, comuna, ciudad) {
         let sucursal = await this.sucursalRepo.findOne({ where: { nombre } });
         if (!sucursal) {
             sucursal = await this.sucursalRepo.save(this.sucursalRepo.create({
                 nombre,
+                sigla,
                 direccion,
                 comuna,
                 ciudad,
                 estaActiva: true,
             }));
+        }
+        else if (!sucursal.sigla) {
+            sucursal.sigla = sigla;
+            sucursal = await this.sucursalRepo.save(sucursal);
         }
         return sucursal;
     }
@@ -276,7 +318,9 @@ exports.SeedService = SeedService = SeedService_1 = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(usuario_entity_1.Usuario)),
     __param(2, (0, typeorm_1.InjectRepository)(activo_entity_1.Activo)),
     __param(3, (0, typeorm_1.InjectRepository)(orden_trabajo_entity_1.OrdenTrabajo)),
+    __param(4, (0, typeorm_1.InjectRepository)(marca_entity_1.Marca)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])

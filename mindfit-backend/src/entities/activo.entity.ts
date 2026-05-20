@@ -15,6 +15,7 @@ import {
   EstadoOperacionalActivo,
 } from '../common/enums';
 import { Sucursal } from './sucursal.entity';
+import { Marca } from './marca.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
 
 @Entity('activos')
@@ -29,12 +30,38 @@ export class Activo {
   })
   uuidActivo: string;
 
-  @Column({ name: 'codigo_qr_token', type: 'varchar', length: 64, unique: true })
-  codigoQrToken: string;
+  @Column({
+    name: 'codigo_qr_token',
+    type: 'varchar',
+    length: 32,
+    unique: true,
+    nullable: true,
+  })
+  codigoQrToken: string | null;
+
+  @Column({
+    name: 'codigo_inventario',
+    type: 'varchar',
+    length: 32,
+    unique: true,
+    nullable: true,
+  })
+  codigoInventario: string | null;
 
   @Column({ type: 'varchar', length: 200 })
   nombre: string;
 
+  @Column({ name: 'marca_id', type: 'int', nullable: true })
+  marcaId: number | null;
+
+  @ManyToOne(() => Marca, (marca) => marca.activos, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'marca_id' })
+  marcaRelacion: Marca | null;
+
+  /** Denormalizado para consultas rápidas y compatibilidad */
   @Column({ type: 'varchar', length: 100, nullable: true })
   marca: string | null;
 
@@ -98,12 +125,9 @@ export class Activo {
   ordenesTrabajo: OrdenTrabajo[];
 
   @BeforeInsert()
-  generarIdentificadores(): void {
+  generarUuid(): void {
     if (!this.uuidActivo) {
       this.uuidActivo = uuidv4();
-    }
-    if (!this.codigoQrToken) {
-      this.codigoQrToken = uuidv4().replace(/-/g, '');
     }
   }
 }

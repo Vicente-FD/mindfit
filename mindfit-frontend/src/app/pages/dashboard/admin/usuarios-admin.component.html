@@ -1,49 +1,51 @@
 <div class="space-y-4">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
-      <h2 class="text-lg font-semibold text-pure-white">Usuarios y permisos</h2>
-      <p class="text-xs text-slate-grey">Super Admin / Jefe de Operaciones</p>
+      <h2 class="text-lg font-semibold text-pure-white">Personal y permisos</h2>
+      <p class="text-xs text-slate-grey">Casa Central = acceso multisitio (sucursal nula)</p>
     </div>
-    <button type="button" class="btn-primary text-sm" (click)="toggleCreate()">
-      {{ showCreate() ? 'Cancelar' : '+ Nuevo usuario' }}
+    <button type="button" class="btn-primary text-sm" (click)="toggleForm()">
+      {{ showForm() ? 'Cancelar' : '+ Crear nuevo usuario' }}
     </button>
   </div>
 
-  @if (showCreate()) {
+  @if (showForm()) {
     <form class="page-card space-y-3" [formGroup]="createForm" (ngSubmit)="submitCreate()">
-      <h3 class="text-sm font-semibold text-pure-white">Crear usuario</h3>
+      <h3 class="text-sm font-semibold text-pure-white">Nuevo usuario</h3>
       <div class="grid gap-3 sm:grid-cols-2">
         <div>
-          <label class="field-label">Nombre</label>
+          <label class="field-label">Nombre *</label>
           <input class="field-input" formControlName="nombre" />
         </div>
         <div>
-          <label class="field-label">Email</label>
+          <label class="field-label">Email *</label>
           <input class="field-input" type="email" formControlName="email" />
         </div>
         <div>
-          <label class="field-label">Contraseña</label>
+          <label class="field-label">Contraseña *</label>
           <input class="field-input" type="password" formControlName="password" />
         </div>
         <div>
-          <label class="field-label">Rol</label>
+          <label class="field-label">Rol *</label>
           <select class="field-input" formControlName="rol">
             @for (r of roles; track r.value) {
               <option [value]="r.value">{{ r.label }}</option>
             }
           </select>
         </div>
-        @if (needsSucursal()) {
-          <div class="sm:col-span-2">
-            <label class="field-label">Sucursal *</label>
-            <select class="field-input" formControlName="sucursalId">
-              <option value="">Seleccione sede</option>
-              @for (s of sucursales(); track s.id) {
-                <option [value]="s.id">{{ s.nombre }}</option>
-              }
-            </select>
-          </div>
-        }
+        <div class="sm:col-span-2">
+          <label class="field-label">
+            @if (needsSucursal()) { Sucursal * } @else { Sede / Casa Central }
+          </label>
+          <select class="field-input" formControlName="sucursalId">
+            @if (!needsSucursal()) {
+              <option [value]="casaCentral">Casa Central (multisitio)</option>
+            }
+            @for (s of sucursales(); track s.id) {
+              <option [value]="s.id">{{ s.nombre }}</option>
+            }
+          </select>
+        </div>
         <div class="sm:col-span-2">
           <label class="field-label">Teléfono</label>
           <input class="field-input" formControlName="telefono" />
@@ -53,14 +55,27 @@
     </form>
   }
 
+  <nav class="role-tabs flex flex-wrap gap-2">
+    @for (t of roleTabs; track t.value) {
+      <button
+        type="button"
+        class="role-tab"
+        [class.role-tab-active]="activeRoleTab() === t.value"
+        (click)="setRoleTab(t.value)"
+      >
+        {{ t.label }}
+      </button>
+    }
+  </nav>
+
   <div class="grid gap-4 lg:grid-cols-2">
     <section class="page-card">
-      <h3 class="mb-3 text-sm font-semibold text-pure-white">Personal registrado</h3>
+      <h3 class="mb-3 text-sm font-semibold text-pure-white">Personal</h3>
       @if (loading()) {
         <p class="text-sm text-slate-grey">Cargando...</p>
       } @else {
-        <ul class="max-h-96 space-y-2 overflow-y-auto">
-          @for (u of usuarios(); track u.id) {
+        <ul class="max-h-[28rem] space-y-2 overflow-y-auto">
+          @for (u of filteredUsuarios(); track u.id) {
             <li>
               <button
                 type="button"
@@ -68,14 +83,26 @@
                 [class.user-row-active]="selected()?.id === u.id"
                 (click)="selectUsuario(u)"
               >
-                <span class="font-medium text-pure-white">{{ u.nombre }}</span>
-                <span class="block text-xs text-slate-grey">{{ u.email }} · {{ rolLabel(u.rol) }}</span>
-                @if (u.sucursal; as suc) {
-                  <span class="block text-xs text-slate-grey/80">{{ suc.nombre }}</span>
-                }
-                @if (!u.estaActivo) {
-                  <span class="mt-1 inline-block text-xs text-orange-energy">Inactivo</span>
-                }
+                <div class="flex items-start gap-2">
+                  <span class="session-dot" [class]="sessionClass(u.estadoSesion)">
+                    @if (sessionIcon(u.estadoSesion)) {
+                      <span class="session-moon">{{ sessionIcon(u.estadoSesion) }}</span>
+                    }
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <span class="font-medium text-pure-white">{{ u.nombre }}</span>
+                    <span class="block text-xs text-slate-grey">{{ u.email }} · {{ rolLabel(u.rol) }}</span>
+                    <span class="block text-xs text-slate-grey/80">{{ sedeLabel(u) }}</span>
+                  </div>
+                  <label class="toggle-switch" (click)="$event.stopPropagation()">
+                    <input
+                      type="checkbox"
+                      [checked]="u.estaActivo"
+                      (change)="onToggleActivo(u, $event)"
+                    />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
               </button>
             </li>
           }
@@ -112,17 +139,19 @@
               <label class="field-label">Teléfono</label>
               <input class="field-input" formControlName="telefono" />
             </div>
-            @if (needsSucursalEdit()) {
-              <div class="sm:col-span-2">
-                <label class="field-label">Sucursal *</label>
-                <select class="field-input" formControlName="sucursalId">
-                  <option value="">Seleccione sede</option>
-                  @for (s of sucursales(); track s.id) {
-                    <option [value]="s.id">{{ s.nombre }}</option>
-                  }
-                </select>
-              </div>
-            }
+            <div class="sm:col-span-2">
+              <label class="field-label">
+                @if (needsSucursalEdit()) { Sucursal * } @else { Sede / Casa Central }
+              </label>
+              <select class="field-input" formControlName="sucursalId">
+                @if (!needsSucursalEdit()) {
+                  <option [value]="casaCentral">Casa Central (multisitio)</option>
+                }
+                @for (s of sucursales(); track s.id) {
+                  <option [value]="s.id">{{ s.nombre }}</option>
+                }
+              </select>
+            </div>
             <div class="sm:col-span-2">
               <label class="field-label">Nueva contraseña (opcional)</label>
               <input
@@ -130,37 +159,30 @@
                 type="password"
                 formControlName="nuevaPassword"
                 placeholder="Dejar vacío para no cambiar"
-                autocomplete="new-password"
               />
-            </div>
-            <div class="sm:col-span-2">
-              <label class="perm-check">
-                <input type="checkbox" formControlName="estaActivo" />
-                <span>Usuario activo en el sistema</span>
-              </label>
             </div>
           </div>
 
-          <div class="border-t border-white/5 pt-3">
+          <div class="border-t border-white/5 pt-3" [formGroup]="permisosForm">
             <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-grey">
               Permisos de interfaz
             </h4>
-            <div class="space-y-2" [formGroup]="permisosForm">
-              @for (p of permisoLabels; track p.key) {
-                <label class="perm-check">
-                  <input type="checkbox" [formControlName]="p.key" />
-                  <span>{{ p.label }}</span>
-                </label>
-              }
-            </div>
+            @for (p of permisoLabels; track p.key) {
+              <label class="perm-check">
+                <input type="checkbox" [formControlName]="p.key" />
+                <span>{{ p.label }}</span>
+              </label>
+            }
           </div>
 
-          <div class="flex flex-wrap gap-2 pt-2">
-            <button type="button" class="btn-primary text-sm" [disabled]="saving() || editForm.invalid" (click)="submitEdit()">
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="btn-primary text-sm"
+              [disabled]="saving() || editForm.invalid"
+              (click)="submitEdit()"
+            >
               @if (saving()) { Guardando... } @else { Guardar cambios }
-            </button>
-            <button type="button" class="btn-ghost text-sm" (click)="toggleActivo(u)">
-              {{ u.estaActivo ? 'Desactivar' : 'Activar' }}
             </button>
             <button type="button" class="btn-ghost text-sm text-orange-energy" (click)="deactivate(u)">
               Dar de baja
@@ -169,7 +191,7 @@
         </div>
       } @else {
         <p class="text-sm text-slate-grey">
-          Selecciona un usuario de la lista para modificar sus datos, rol, sede y permisos.
+          Selecciona un usuario para modificar datos, rol, sede y permisos.
         </p>
       }
     </section>

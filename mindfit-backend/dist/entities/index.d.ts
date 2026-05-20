@@ -1,3 +1,4 @@
+export { Marca } from './marca.entity';
 export { Sucursal } from './sucursal.entity';
 export { Usuario } from './usuario.entity';
 export { Activo } from './activo.entity';

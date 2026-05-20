@@ -5,6 +5,10 @@ export class CreateSucursalDto {
   @MaxLength(150)
   nombre: string;
 
+  @IsString()
+  @MaxLength(5)
+  sigla: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(255)

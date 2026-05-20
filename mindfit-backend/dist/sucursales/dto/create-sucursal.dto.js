@@ -13,6 +13,7 @@ exports.CreateSucursalDto = void 0;
 const class_validator_1 = require("class-validator");
 class CreateSucursalDto {
     nombre;
+    sigla;
     direccion;
     comuna;
     ciudad;
@@ -24,6 +25,11 @@ __decorate([
     (0, class_validator_1.MaxLength)(150),
     __metadata("design:type", String)
 ], CreateSucursalDto.prototype, "nombre", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(5),
+    __metadata("design:type", String)
+], CreateSucursalDto.prototype, "sigla", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

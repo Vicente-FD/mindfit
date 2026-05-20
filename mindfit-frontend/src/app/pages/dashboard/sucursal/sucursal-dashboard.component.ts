@@ -41,7 +41,7 @@ export class SucursalDashboardComponent implements OnInit {
       this.toast.error('Su usuario no tiene sucursal asignada');
       return;
     }
-    this.activosService.list(sucursalId).subscribe({
+    this.activosService.list({ sucursalId }).subscribe({
       next: (a) => this.activos.set(a),
     });
     this.loadOrdenes();

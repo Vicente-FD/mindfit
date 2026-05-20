@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -12,9 +12,17 @@ export interface Activo extends PublicAsset {
   documentacionUrls: string[];
 }
 
+export interface ActivosFilter {
+  sucursalId?: number;
+  marcaId?: number;
+  categoria?: AssetCategory;
+  anioCompra?: number;
+  busqueda?: string;
+}
+
 export interface CreateActivoPayload {
   nombre: string;
-  marca?: string;
+  marcaId: number;
   modelo?: string;
   numeroSerie?: string;
   categoria: AssetCategory;
@@ -30,9 +38,24 @@ export class ActivosService {
 
   constructor(private readonly http: HttpClient) {}
 
-  list(sucursalId?: number): Observable<Activo[]> {
-    const params = sucursalId != null ? `?sucursalId=${sucursalId}` : '';
-    return this.http.get<Activo[]>(`${this.baseUrl}${params}`);
+  list(filters: ActivosFilter = {}): Observable<Activo[]> {
+    let params = new HttpParams();
+    if (filters.sucursalId != null) {
+      params = params.set('sucursalId', String(filters.sucursalId));
+    }
+    if (filters.marcaId != null) {
+      params = params.set('marcaId', String(filters.marcaId));
+    }
+    if (filters.categoria) {
+      params = params.set('categoria', filters.categoria);
+    }
+    if (filters.anioCompra != null) {
+      params = params.set('anioCompra', String(filters.anioCompra));
+    }
+    if (filters.busqueda?.trim()) {
+      params = params.set('busqueda', filters.busqueda.trim());
+    }
+    return this.http.get<Activo[]>(this.baseUrl, { params });
   }
 
   getPublic(identifier: string): Observable<Activo> {

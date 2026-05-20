@@ -41,6 +41,7 @@ export class UsuariosService {
         telefono: true,
         estaActivo: true,
         permisosUi: true,
+        estadoSesion: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -60,6 +61,7 @@ export class UsuariosService {
         telefono: true,
         estaActivo: true,
         permisosUi: true,
+        estadoSesion: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -76,6 +78,12 @@ export class UsuariosService {
     });
     if (exists) {
       throw new ConflictException('El email ya está registrado');
+    }
+
+    if (dto.rol === RolUsuario.JEFE_SUCURSAL && !dto.sucursalId) {
+      throw new BadRequestException(
+        'Jefe de sucursal requiere una sede asignada',
+      );
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
@@ -115,18 +123,17 @@ export class UsuariosService {
     }
 
     const rol = dto.rol ?? usuario.rol;
+    const sucursalId =
+      dto.sucursalId !== undefined ? dto.sucursalId : usuario.sucursalId;
+
+    if (rol === RolUsuario.JEFE_SUCURSAL && !sucursalId) {
+      throw new BadRequestException(
+        'Jefe de sucursal requiere una sede asignada',
+      );
+    }
+
     if (dto.rol !== undefined || dto.sucursalId !== undefined) {
-      const sucursalId =
-        dto.sucursalId !== undefined ? dto.sucursalId : usuario.sucursalId;
-
-      if (rol === RolUsuario.JEFE_SUCURSAL && !sucursalId) {
-        throw new BadRequestException(
-          'Jefe de sucursal requiere una sede asignada',
-        );
-      }
-
-      usuario.sucursalId =
-        rol === RolUsuario.JEFE_SUCURSAL ? (sucursalId ?? null) : null;
+      usuario.sucursalId = sucursalId ?? null;
     }
 
     const { sucursalId: _omit, ...rest } = dto;

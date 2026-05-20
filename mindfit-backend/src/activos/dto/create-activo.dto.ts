@@ -19,10 +19,8 @@ export class CreateActivoDto {
   @MaxLength(200)
   nombre: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  marca?: string;
+  @IsInt()
+  marcaId: number;
 
   @IsOptional()
   @IsString()

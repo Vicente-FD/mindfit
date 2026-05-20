@@ -1,4 +1,4 @@
-import { UserRole } from './user.model';
+import { UserRole, EstadoSesion } from './user.model';
 
 export interface PermisosUi {
   verDashboardEjecutivo?: boolean;
@@ -17,8 +17,9 @@ export interface Usuario {
   sucursalId: number | null;
   telefono: string | null;
   estaActivo: boolean;
+  estadoSesion?: EstadoSesion;
   permisosUi?: PermisosUi;
-  sucursal?: { id: number; nombre: string } | null;
+  sucursal?: { id: number; nombre: string; sigla?: string } | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -28,7 +29,7 @@ export interface CreateUsuarioPayload {
   password: string;
   nombre: string;
   rol: UserRole;
-  sucursalId?: number;
+  sucursalId?: number | null;
   telefono?: string;
   estaActivo?: boolean;
   permisosUi?: PermisosUi;

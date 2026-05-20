@@ -14,7 +14,7 @@ const class_validator_1 = require("class-validator");
 const enums_1 = require("../../common/enums");
 class CreateActivoDto {
     nombre;
-    marca;
+    marcaId;
     modelo;
     numeroSerie;
     categoria;
@@ -32,11 +32,9 @@ __decorate([
     __metadata("design:type", String)
 ], CreateActivoDto.prototype, "nombre", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(100),
-    __metadata("design:type", String)
-], CreateActivoDto.prototype, "marca", void 0);
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], CreateActivoDto.prototype, "marcaId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

@@ -14,12 +14,16 @@ const typeorm_1 = require("typeorm");
 const uuid_1 = require("uuid");
 const enums_1 = require("../common/enums");
 const sucursal_entity_1 = require("./sucursal.entity");
+const marca_entity_1 = require("./marca.entity");
 const orden_trabajo_entity_1 = require("./orden-trabajo.entity");
 let Activo = class Activo {
     id;
     uuidActivo;
     codigoQrToken;
+    codigoInventario;
     nombre;
+    marcaId;
+    marcaRelacion;
     marca;
     modelo;
     numeroSerie;
@@ -34,12 +38,9 @@ let Activo = class Activo {
     createdAt;
     updatedAt;
     ordenesTrabajo;
-    generarIdentificadores() {
+    generarUuid() {
         if (!this.uuidActivo) {
             this.uuidActivo = (0, uuid_1.v4)();
-        }
-        if (!this.codigoQrToken) {
-            this.codigoQrToken = (0, uuid_1.v4)().replace(/-/g, '');
         }
     }
 };
@@ -57,13 +58,41 @@ __decorate([
     __metadata("design:type", String)
 ], Activo.prototype, "uuidActivo", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'codigo_qr_token', type: 'varchar', length: 64, unique: true }),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)({
+        name: 'codigo_qr_token',
+        type: 'varchar',
+        length: 32,
+        unique: true,
+        nullable: true,
+    }),
+    __metadata("design:type", Object)
 ], Activo.prototype, "codigoQrToken", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        name: 'codigo_inventario',
+        type: 'varchar',
+        length: 32,
+        unique: true,
+        nullable: true,
+    }),
+    __metadata("design:type", Object)
+], Activo.prototype, "codigoInventario", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 200 }),
     __metadata("design:type", String)
 ], Activo.prototype, "nombre", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'marca_id', type: 'int', nullable: true }),
+    __metadata("design:type", Object)
+], Activo.prototype, "marcaId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => marca_entity_1.Marca, (marca) => marca.activos, {
+        nullable: true,
+        onDelete: 'SET NULL',
+    }),
+    (0, typeorm_1.JoinColumn)({ name: 'marca_id' }),
+    __metadata("design:type", Object)
+], Activo.prototype, "marcaRelacion", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 100, nullable: true }),
     __metadata("design:type", Object)
@@ -145,7 +174,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], Activo.prototype, "generarIdentificadores", null);
+], Activo.prototype, "generarUuid", null);
 exports.Activo = Activo = __decorate([
     (0, typeorm_1.Entity)('activos')
 ], Activo);

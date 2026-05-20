@@ -27,6 +27,7 @@ let Usuario = class Usuario {
     sucursal;
     telefono;
     estaActivo;
+    estadoSesion;
     permisosUi;
     createdAt;
     updatedAt;
@@ -77,6 +78,15 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'esta_activo', type: 'boolean', default: true }),
     __metadata("design:type", Boolean)
 ], Usuario.prototype, "estaActivo", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        name: 'estado_sesion',
+        type: 'varchar',
+        length: 20,
+        default: enums_1.EstadoSesionUsuario.DESCONECTADO,
+    }),
+    __metadata("design:type", String)
+], Usuario.prototype, "estadoSesion", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'permisos_ui', type: 'jsonb', default: () => "'{}'" }),
     __metadata("design:type", Object)

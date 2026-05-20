@@ -13,6 +13,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { RolUsuario } from '../common/enums';
 import { ActivosService } from './activos.service';
 import { CreateActivoDto } from './dto/create-activo.dto';
+import { FilterActivosDto } from './dto/filter-activos.dto';
 import { UpdateActivoDto } from './dto/update-activo.dto';
 
 @Controller('activos')
@@ -33,12 +34,8 @@ export class ActivosController {
     RolUsuario.JEFE_SUCURSAL,
     RolUsuario.GERENTE_BI,
   )
-  findAll(@Query('sucursalId') sucursalId?: string) {
-    const parsed =
-      sucursalId != null && sucursalId !== ''
-        ? parseInt(sucursalId, 10)
-        : undefined;
-    return this.activosService.findAll(parsed);
+  findAll(@Query() filters: FilterActivosDto) {
+    return this.activosService.findAll(filters);
   }
 
   @Get(':id')

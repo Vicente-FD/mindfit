@@ -5,12 +5,16 @@ export type UserRole =
   | 'jefe_sucursal'
   | 'gerente_bi';
 
+export type EstadoSesion = 'conectado' | 'desconectado' | 'reposo';
+
 export interface AuthUser {
   id: number;
   email: string;
   nombre: string;
   rol: UserRole;
   sucursalId: number | null;
+  sucursalNombre?: string | null;
+  estadoSesion?: EstadoSesion;
 }
 
 export interface LoginResponse {

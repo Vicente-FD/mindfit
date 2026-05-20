@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { RolUsuario } from '../common/enums';
+import { RolUsuario, EstadoSesionUsuario } from '../common/enums';
 import type { PermisosUi } from '../common/interfaces/permisos-ui.interface';
 import { Sucursal } from './sucursal.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
@@ -48,6 +48,14 @@ export class Usuario {
 
   @Column({ name: 'esta_activo', type: 'boolean', default: true })
   estaActivo: boolean;
+
+  @Column({
+    name: 'estado_sesion',
+    type: 'varchar',
+    length: 20,
+    default: EstadoSesionUsuario.DESCONECTADO,
+  })
+  estadoSesion: EstadoSesionUsuario;
 
   @Column({ name: 'permisos_ui', type: 'jsonb', default: () => "'{}'" })
   permisosUi: PermisosUi;

@@ -1,4 +1,4 @@
-import { RolUsuario } from '../../common/enums';
+import { EstadoSesionUsuario, RolUsuario } from '../../common/enums';
 
 export class AuthResponseDto {
   accessToken: string;
@@ -8,5 +8,7 @@ export class AuthResponseDto {
     nombre: string;
     rol: RolUsuario;
     sucursalId: number | null;
+    sucursalNombre: string | null;
+    estadoSesion: EstadoSesionUsuario;
   };
 }

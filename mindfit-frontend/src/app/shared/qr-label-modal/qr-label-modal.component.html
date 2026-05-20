@@ -1,0 +1,18 @@
+<div class="modal-backdrop no-print" (click)="close()">
+  <div id="qr-print-sheet" class="qr-modal" (click)="$event.stopPropagation()">
+    <button type="button" class="modal-close no-print" (click)="close()" aria-label="Cerrar">×</button>
+    @if (activo(); as a) {
+      <img src="assets/mindfit-logo.png" alt="Mindfit" class="qr-logo" />
+      <p class="qr-brand">Mindfit Ops</p>
+      <p class="qr-nombre">{{ a.nombre }}</p>
+      <div class="qr-wrap">
+        <qrcode [qrdata]="scanUrl(a)" [width]="200" errorCorrectionLevel="M" />
+      </div>
+      <p class="qr-codigo">{{ a.codigoInventario || a.codigoQrToken }}</p>
+      <p class="qr-hint">Escanea para abrir ficha en terreno</p>
+      <button type="button" class="btn-primary no-print mt-4 w-full" (click)="print()">
+        Imprimir etiqueta
+      </button>
+    }
+  </div>
+</div>

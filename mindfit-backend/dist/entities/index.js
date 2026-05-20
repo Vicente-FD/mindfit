@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = void 0;
+exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = void 0;
+var marca_entity_1 = require("./marca.entity");
+Object.defineProperty(exports, "Marca", { enumerable: true, get: function () { return marca_entity_1.Marca; } });
 var sucursal_entity_1 = require("./sucursal.entity");
 Object.defineProperty(exports, "Sucursal", { enumerable: true, get: function () { return sucursal_entity_1.Sucursal; } });
 var usuario_entity_1 = require("./usuario.entity");

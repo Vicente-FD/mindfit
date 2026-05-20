@@ -73,6 +73,7 @@ let UsuariosService = class UsuariosService {
                 telefono: true,
                 estaActivo: true,
                 permisosUi: true,
+                estadoSesion: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -91,6 +92,7 @@ let UsuariosService = class UsuariosService {
                 telefono: true,
                 estaActivo: true,
                 permisosUi: true,
+                estadoSesion: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -106,6 +108,9 @@ let UsuariosService = class UsuariosService {
         });
         if (exists) {
             throw new common_1.ConflictException('El email ya está registrado');
+        }
+        if (dto.rol === enums_1.RolUsuario.JEFE_SUCURSAL && !dto.sucursalId) {
+            throw new common_1.BadRequestException('Jefe de sucursal requiere una sede asignada');
         }
         const passwordHash = await bcrypt.hash(dto.password, 12);
         const usuario = this.repo().create({
@@ -140,13 +145,12 @@ let UsuariosService = class UsuariosService {
             }
         }
         const rol = dto.rol ?? usuario.rol;
+        const sucursalId = dto.sucursalId !== undefined ? dto.sucursalId : usuario.sucursalId;
+        if (rol === enums_1.RolUsuario.JEFE_SUCURSAL && !sucursalId) {
+            throw new common_1.BadRequestException('Jefe de sucursal requiere una sede asignada');
+        }
         if (dto.rol !== undefined || dto.sucursalId !== undefined) {
-            const sucursalId = dto.sucursalId !== undefined ? dto.sucursalId : usuario.sucursalId;
-            if (rol === enums_1.RolUsuario.JEFE_SUCURSAL && !sucursalId) {
-                throw new common_1.BadRequestException('Jefe de sucursal requiere una sede asignada');
-            }
-            usuario.sucursalId =
-                rol === enums_1.RolUsuario.JEFE_SUCURSAL ? (sucursalId ?? null) : null;
+            usuario.sucursalId = sucursalId ?? null;
         }
         const { sucursalId: _omit, ...rest } = dto;
         Object.assign(usuario, rest);

@@ -6,6 +6,12 @@ export enum RolUsuario {
   GERENTE_BI = 'gerente_bi',
 }
 
+export enum EstadoSesionUsuario {
+  CONECTADO = 'conectado',
+  DESCONECTADO = 'desconectado',
+  REPOSO = 'reposo',
+}
+
 export enum CategoriaActivo {
   CARDIO = 'cardio',
   FUERZA = 'fuerza',

@@ -1,11 +1,15 @@
 import { CategoriaActivo, EstadoOperacionalActivo } from '../common/enums';
 import { Sucursal } from './sucursal.entity';
+import { Marca } from './marca.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
 export declare class Activo {
     id: number;
     uuidActivo: string;
-    codigoQrToken: string;
+    codigoQrToken: string | null;
+    codigoInventario: string | null;
     nombre: string;
+    marcaId: number | null;
+    marcaRelacion: Marca | null;
     marca: string | null;
     modelo: string | null;
     numeroSerie: string | null;
@@ -20,5 +24,5 @@ export declare class Activo {
     createdAt: Date;
     updatedAt: Date;
     ordenesTrabajo: OrdenTrabajo[];
-    generarIdentificadores(): void;
+    generarUuid(): void;
 }

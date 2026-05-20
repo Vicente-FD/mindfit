@@ -6,6 +6,7 @@ import {
   CategoriaActivo,
   EstadoOperacionalActivo,
   EstadoOrdenTrabajo,
+  EstadoSesionUsuario,
   PrioridadOrden,
   RolUsuario,
   TipoMantenimiento,
@@ -15,6 +16,7 @@ import { Sucursal } from '../entities/sucursal.entity';
 import { Usuario } from '../entities/usuario.entity';
 import { Activo } from '../entities/activo.entity';
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
+import { Marca } from '../entities/marca.entity';
 
 const DEMO_PASSWORD = 'Admin123!';
 
@@ -22,7 +24,7 @@ interface SeedUser {
   email: string;
   nombre: string;
   rol: RolUsuario;
-  sucursalKey?: 'florida' | 'condes' | 'central';
+  sucursalKey?: 'florida' | 'condes' | 'vina' | null;
 }
 
 @Injectable()
@@ -38,35 +40,41 @@ export class SeedService implements OnModuleInit {
     private readonly activoRepo: Repository<Activo>,
     @InjectRepository(OrdenTrabajo)
     private readonly ordenRepo: Repository<OrdenTrabajo>,
+    @InjectRepository(Marca)
+    private readonly marcaRepo: Repository<Marca>,
   ) {}
 
   async onModuleInit(): Promise<void> {
     const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
     const ordenCount = await this.ordenRepo.count();
 
+    await this.seedMarcas();
+
     const florida = await this.upsertSucursal(
       'Sede La Florida',
+      'LF',
       'Av. Vicuña Mackenna 6100',
       'La Florida',
       'Santiago',
     );
     const condes = await this.upsertSucursal(
       'Sede Las Condes',
+      'LC',
       'Av. Apoquindo 4500',
       'Las Condes',
       'Santiago',
     );
-    const central = await this.upsertSucursal(
-      'Sucursal Central',
-      'Av. Principal 100',
-      'Santiago',
-      'Santiago',
+    await this.upsertSucursal(
+      'Sede Viña del Mar',
+      'VM',
+      'Av. Libertad 1340',
+      'Viña del Mar',
+      'Valparaíso',
     );
 
-    const sucursalMap = {
+    const sucursalMap: Record<string, number> = {
       florida: florida.id,
       condes: condes.id,
-      central: central.id,
     };
 
     const users: SeedUser[] = [
@@ -74,19 +82,19 @@ export class SeedService implements OnModuleInit {
         email: 'admin@mindfit.cl',
         nombre: 'Super Admin Mindfit',
         rol: RolUsuario.ADMIN,
-        sucursalKey: 'central',
+        sucursalKey: null,
       },
       {
         email: 'jefe.ops@mindfit.cl',
         nombre: 'Jefe de Operaciones',
         rol: RolUsuario.JEFE_OPERACIONES,
-        sucursalKey: 'central',
+        sucursalKey: null,
       },
       {
         email: 'tecnico@mindfit.cl',
         nombre: 'Técnico de Campo',
         rol: RolUsuario.TECNICO,
-        sucursalKey: 'florida',
+        sucursalKey: null,
       },
       {
         email: 'jefe.florida@mindfit.cl',
@@ -104,7 +112,7 @@ export class SeedService implements OnModuleInit {
         email: 'gerente@mindfit.cl',
         nombre: 'Ejecutivo Gerencia BI',
         rol: RolUsuario.GERENTE_BI,
-        sucursalKey: 'central',
+        sucursalKey: null,
       },
     ];
 
@@ -114,6 +122,9 @@ export class SeedService implements OnModuleInit {
       let usuario = await this.usuarioRepo.findOne({
         where: { email: u.email },
       });
+      const sucursalId =
+        u.sucursalKey != null ? sucursalMap[u.sucursalKey] : null;
+
       if (!usuario) {
         usuario = await this.usuarioRepo.save(
           this.usuarioRepo.create({
@@ -121,69 +132,89 @@ export class SeedService implements OnModuleInit {
             passwordHash,
             nombre: u.nombre,
             rol: u.rol,
-            sucursalId: u.sucursalKey
-              ? sucursalMap[u.sucursalKey]
-              : null,
+            sucursalId,
             estaActivo: true,
+            estadoSesion: EstadoSesionUsuario.DESCONECTADO,
             permisosUi: PERMISOS_BY_ROL[u.rol] ?? {},
           }),
         );
+      } else {
+        if (u.sucursalKey === null && u.rol !== RolUsuario.JEFE_SUCURSAL) {
+          usuario.sucursalId = null;
+        }
+        await this.usuarioRepo.save(usuario);
       }
       savedUsers[u.email] = usuario;
     }
 
+    const matrix = await this.marcaRepo.findOne({ where: { sigla: 'MX' } });
+    const life = await this.marcaRepo.findOne({ where: { sigla: 'LF' } });
+    const carrier = await this.marcaRepo.findOne({ where: { sigla: 'CR' } });
+    const pedrollo = await this.marcaRepo.findOne({ where: { sigla: 'PD' } });
+
     const activosData = [
       {
         nombre: 'Cinta Correr Pro X500',
-        marca: 'Technogym',
+        marcaId: matrix?.id,
+        marca: 'Matrix',
         modelo: 'X500',
-        numeroSerie: 'TG-X500-001',
+        codigo: 'LF-MX-25-01-01',
         categoria: CategoriaActivo.CARDIO,
         sucursalId: florida.id,
         costo: '4500000',
+        fechaCompra: '2025-01-15',
       },
       {
         nombre: 'Press de Pierna',
+        marcaId: life?.id,
         marca: 'Life Fitness',
         modelo: 'Axiom',
-        numeroSerie: 'LF-PP-042',
+        codigo: 'LF-LF-25-02-01',
         categoria: CategoriaActivo.FUERZA,
         sucursalId: florida.id,
         costo: '3200000',
+        fechaCompra: '2025-03-10',
       },
       {
         nombre: 'Aire Acondicionado Central',
+        marcaId: carrier?.id,
         marca: 'Carrier',
         modelo: '42QHC018',
-        numeroSerie: 'CR-AC-018',
+        codigo: 'LC-CR-24-03-01',
         categoria: CategoriaActivo.CLIMATIZACION,
         sucursalId: condes.id,
         costo: '2800000',
+        fechaCompra: '2024-06-01',
       },
       {
         nombre: 'Bomba de Agua Piscina',
+        marcaId: pedrollo?.id,
         marca: 'Pedrollo',
         modelo: 'PKm 60',
-        numeroSerie: 'PD-BA-060',
+        codigo: 'LC-PD-24-05-01',
         categoria: CategoriaActivo.BOMBA_AGUA,
         sucursalId: condes.id,
         costo: '890000',
+        fechaCompra: '2024-08-20',
       },
     ];
 
     const activos: Activo[] = [];
     for (const a of activosData) {
       let activo = await this.activoRepo.findOne({
-        where: { numeroSerie: a.numeroSerie },
+        where: { codigoInventario: a.codigo },
       });
       if (!activo) {
         activo = this.activoRepo.create({
           nombre: a.nombre,
+          marcaId: a.marcaId ?? null,
           marca: a.marca,
           modelo: a.modelo,
-          numeroSerie: a.numeroSerie,
+          codigoInventario: a.codigo,
+          codigoQrToken: a.codigo,
           categoria: a.categoria,
           sucursalId: a.sucursalId,
+          fechaCompra: a.fechaCompra,
           costoAdquisicion: a.costo,
           documentacionUrls: [],
           estadoOperacional: EstadoOperacionalActivo.OPERATIVO,
@@ -247,17 +278,32 @@ export class SeedService implements OnModuleInit {
       }
     }
 
-    this.logger.log('Seed / usuarios demo Mindfit Ops:');
-    this.logger.log('  admin@mindfit.cl (Super Admin)');
-    this.logger.log('  jefe.ops@mindfit.cl (Jefe Operaciones)');
-    this.logger.log('  tecnico@mindfit.cl (Técnico)');
-    this.logger.log('  jefe.florida@mindfit.cl / jefe.condes@mindfit.cl');
-    this.logger.log('  gerente@mindfit.cl (Ejecutivo BI)');
+    this.logger.log('Seed Mindfit Ops listo (marcas, siglas, usuarios demo)');
     this.logger.log(`  Contraseña demo: ${DEMO_PASSWORD}`);
+  }
+
+  private async seedMarcas(): Promise<void> {
+    const marcas = [
+      { nombre: 'Matrix', sigla: 'MX' },
+      { nombre: 'Life Fitness', sigla: 'LF' },
+      { nombre: 'Precor', sigla: 'PR' },
+      { nombre: 'Technogym', sigla: 'TG' },
+      { nombre: 'Carrier', sigla: 'CR' },
+      { nombre: 'Pedrollo', sigla: 'PD' },
+    ];
+    for (const m of marcas) {
+      const exists = await this.marcaRepo.findOne({
+        where: [{ nombre: m.nombre }, { sigla: m.sigla }],
+      });
+      if (!exists) {
+        await this.marcaRepo.save(this.marcaRepo.create(m));
+      }
+    }
   }
 
   private async upsertSucursal(
     nombre: string,
+    sigla: string,
     direccion: string,
     comuna: string,
     ciudad: string,
@@ -267,12 +313,16 @@ export class SeedService implements OnModuleInit {
       sucursal = await this.sucursalRepo.save(
         this.sucursalRepo.create({
           nombre,
+          sigla,
           direccion,
           comuna,
           ciudad,
           estaActiva: true,
         }),
       );
+    } else if (!sucursal.sigla) {
+      sucursal.sigla = sigla;
+      sucursal = await this.sucursalRepo.save(sucursal);
     }
     return sucursal;
   }

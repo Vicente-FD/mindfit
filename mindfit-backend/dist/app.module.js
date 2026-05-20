@@ -19,7 +19,9 @@ const roles_guard_1 = require("./common/guards/roles.guard");
 const common_module_1 = require("./common/common.module");
 const database_module_1 = require("./database/database.module");
 const seed_service_1 = require("./database/seed.service");
+const schema_fix_service_1 = require("./database/schema-fix.service");
 const entities_1 = require("./entities");
+const marcas_module_1 = require("./marcas/marcas.module");
 const sucursales_module_1 = require("./sucursales/sucursales.module");
 const usuarios_module_1 = require("./usuarios/usuarios.module");
 const activos_module_1 = require("./activos/activos.module");
@@ -50,6 +52,7 @@ exports.AppModule = AppModule = __decorate([
                     entities: [
                         entities_1.Sucursal,
                         entities_1.Usuario,
+                        entities_1.Marca,
                         entities_1.Activo,
                         entities_1.OrdenTrabajo,
                         entities_1.EvidenciaOt,
@@ -62,19 +65,27 @@ exports.AppModule = AppModule = __decorate([
                     keepConnectionAlive: true,
                 }),
             }),
-            typeorm_1.TypeOrmModule.forFeature([entities_1.Sucursal, entities_1.Usuario, entities_1.Activo, entities_1.OrdenTrabajo]),
+            typeorm_1.TypeOrmModule.forFeature([
+                entities_1.Sucursal,
+                entities_1.Usuario,
+                entities_1.Marca,
+                entities_1.Activo,
+                entities_1.OrdenTrabajo,
+            ]),
             common_module_1.CommonModule,
             database_module_1.DatabaseModule,
             auth_module_1.AuthModule,
             sucursales_module_1.SucursalesModule,
             usuarios_module_1.UsuariosModule,
             activos_module_1.ActivosModule,
+            marcas_module_1.MarcasModule,
             ordenes_trabajo_module_1.OrdenesTrabajoModule,
             analytics_module_1.AnalyticsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [
             app_service_1.AppService,
+            schema_fix_service_1.SchemaFixService,
             seed_service_1.SeedService,
             {
                 provide: core_1.APP_GUARD,

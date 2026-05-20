@@ -20,13 +20,34 @@ export const routes: Routes = [
         (m) => m.DashboardLayoutComponent,
       ),
     children: [
-      { path: '', pathMatch: 'full', canActivate: [dashboardRedirectGuard], children: [] },
+      {
+        path: '',
+        pathMatch: 'full',
+        canActivate: [dashboardRedirectGuard],
+        children: [],
+      },
       {
         path: 'admin',
         canActivate: [rolesGuard(['admin'])],
         loadComponent: () =>
           import('./pages/dashboard/admin/admin-dashboard.component').then(
             (m) => m.AdminDashboardComponent,
+          ),
+      },
+      {
+        path: 'usuarios',
+        canActivate: [rolesGuard(['admin', 'jefe_operaciones'])],
+        loadComponent: () =>
+          import('./pages/dashboard/admin/usuarios-admin.component').then(
+            (m) => m.UsuariosAdminComponent,
+          ),
+      },
+      {
+        path: 'activos',
+        canActivate: [rolesGuard(['admin', 'jefe_operaciones'])],
+        loadComponent: () =>
+          import('./pages/dashboard/activos/activos-gestion.component').then(
+            (m) => m.ActivosGestionComponent,
           ),
       },
       {
@@ -47,7 +68,7 @@ export const routes: Routes = [
       },
       {
         path: 'gerente',
-        canActivate: [rolesGuard(['gerente_bi'])],
+        canActivate: [rolesGuard(['gerente_bi', 'jefe_operaciones'])],
         loadComponent: () =>
           import('./pages/dashboard/gerente/gerente-dashboard.component').then(
             (m) => m.GerenteDashboardComponent,
