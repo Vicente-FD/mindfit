@@ -11,6 +11,7 @@ export declare class ActivosService {
     findAll(sucursalId?: number): Promise<Activo[]>;
     findOne(id: number): Promise<Activo>;
     findByUuid(uuidActivo: string): Promise<Activo>;
+    findByPublicIdentifier(identifier: string): Promise<Activo>;
     create(dto: CreateActivoDto): Promise<Activo>;
     update(id: number, dto: UpdateActivoDto): Promise<Activo>;
 }

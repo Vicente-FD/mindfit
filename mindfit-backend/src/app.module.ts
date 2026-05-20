@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -7,7 +7,6 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
-import { AuditContextInterceptor } from './common/interceptors/audit-context.interceptor';
 import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
 import { SeedService } from './database/seed.service';
@@ -24,6 +23,7 @@ import { SucursalesModule } from './sucursales/sucursales.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { ActivosModule } from './activos/activos.module';
 import { OrdenesTrabajoModule } from './ordenes-trabajo/ordenes-trabajo.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -60,7 +60,7 @@ import { OrdenesTrabajoModule } from './ordenes-trabajo/ordenes-trabajo.module';
         keepConnectionAlive: true,
       }),
     }),
-    TypeOrmModule.forFeature([Sucursal, Usuario]),
+    TypeOrmModule.forFeature([Sucursal, Usuario, Activo, OrdenTrabajo]),
     CommonModule,
     DatabaseModule,
     AuthModule,
@@ -68,6 +68,7 @@ import { OrdenesTrabajoModule } from './ordenes-trabajo/ordenes-trabajo.module';
     UsuariosModule,
     ActivosModule,
     OrdenesTrabajoModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -80,10 +81,6 @@ import { OrdenesTrabajoModule } from './ordenes-trabajo/ordenes-trabajo.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: AuditContextInterceptor,
     },
   ],
 })

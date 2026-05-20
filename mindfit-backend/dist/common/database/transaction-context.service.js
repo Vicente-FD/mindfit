@@ -13,6 +13,9 @@ let TransactionContextService = class TransactionContextService {
     setManager(manager) {
         this.manager = manager;
     }
+    clearManager() {
+        this.manager = undefined;
+    }
     getManager(dataSource) {
         return this.manager ?? dataSource.manager;
     }

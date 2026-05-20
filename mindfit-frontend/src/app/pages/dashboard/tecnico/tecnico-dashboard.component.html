@@ -1,0 +1,75 @@
+<div class="tecnico-page mx-auto max-w-lg space-y-4 pb-4">
+  <header class="flex items-center justify-between gap-3 rounded-2xl border border-white/5 bg-obsidian-grey px-4 py-3">
+    <div>
+      <p class="text-xs text-slate-grey">Técnico de campo</p>
+      <h1 class="text-base font-semibold text-pure-white">{{ user()?.nombre }}</h1>
+      <div class="mt-1 flex items-center gap-1.5">
+        <span class="status-dot"></span>
+        <span class="text-xs text-status-green">Conectado</span>
+      </div>
+    </div>
+    <button type="button" class="btn-ghost text-xs" (click)="logout()">Salir</button>
+  </header>
+
+  @if (qrAlert(); as alert) {
+    <div class="qr-alert rounded-xl border border-orange-energy/40 bg-orange-energy/10 p-4">
+      <p class="text-sm font-semibold text-orange-energy">OT detectada por QR</p>
+      <p class="mt-1 text-xs text-pure-white">{{ alert.activoNombre }} — {{ alert.orden.codigoOt }}</p>
+      <div class="mt-3 flex gap-2">
+        <button type="button" class="btn-primary flex-1 py-2 text-xs" (click)="tecnicoUi.focusOrder(alert.orden.id); dismissQrAlert()">Ver tarea</button>
+        <button type="button" class="btn-ghost text-xs" (click)="dismissQrAlert()">Cerrar</button>
+      </div>
+    </div>
+  }
+
+  <div class="grid grid-cols-2 gap-3">
+    <div class="metric-card">
+      <p class="metric-label">Tareas Pendientes</p>
+      <p class="metric-value">{{ pendingCount() }}</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-label">En Proceso</p>
+      <p class="metric-value text-status-green">{{ inProgressCount() }}</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <p class="py-8 text-center text-sm text-slate-grey">Cargando órdenes...</p>
+  } @else if (visibleOrders().length === 0) {
+    <div class="page-card text-center">
+      <p class="text-sm text-slate-grey">No tienes tareas activas asignadas.</p>
+    </div>
+  } @else {
+    @for (orden of visibleOrders(); track orden.id) {
+      <article [id]="'ot-card-' + orden.id" class="ot-card" [class.ot-card-highlight]="isHighlighted(orden.id)">
+        <div class="flex items-start justify-between gap-2">
+          <span class="priority-badge" [class]="priorityClass(orden.prioridad)">{{ priorityLabel(orden.prioridad) }}</span>
+          <span class="text-xs text-slate-grey">{{ orden.codigoOt }}</span>
+        </div>
+        <h3 class="mt-2 text-base font-semibold text-pure-white">{{ activoLabel(orden) }}</h3>
+        <p class="mt-1 text-xs text-slate-grey">{{ activoDetalle(orden) }}</p>
+        @if (elapsedLabel(orden); as elapsed) {
+          <div class="timer-chip mt-3">
+            <span class="timer-dot"></span>
+            <span class="font-mono text-sm text-orange-energy">{{ elapsed }}</span>
+            <span class="text-xs text-slate-grey">en curso</span>
+          </div>
+        }
+        <div class="mt-4">
+          @if (orden.estado === 'asignada' || orden.estado === 'pendiente') {
+            <button type="button" class="btn-primary w-full" [disabled]="actionLoadingId() === orden.id" (click)="iniciarTrabajo(orden)">
+              @if (actionLoadingId() === orden.id) { Iniciando... } @else { Iniciar Trabajo }
+            </button>
+          }
+          @if (orden.estado === 'en_proceso') {
+            <button type="button" class="btn-close w-full" (click)="openCloseModal(orden)">Solicitar Cierre</button>
+          }
+        </div>
+      </article>
+    }
+  }
+</div>
+
+@if (closeTarget(); as orden) {
+  <app-close-ot-modal [orden]="orden" (closed)="closeTarget.set(null)" (submitted)="onCloseSubmitted()" />
+}

@@ -1,12 +1,18 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
+import { RolUsuario } from '../common/enums';
 import { Usuario } from '../entities/usuario.entity';
 import { TransactionContextService } from '../common/database/transaction-context.service';
+import {
+  PERMISOS_BY_ROL,
+  PERMISOS_UI_DEFAULT,
+} from '../common/interfaces/permisos-ui.interface';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
@@ -34,6 +40,7 @@ export class UsuariosService {
         sucursalId: true,
         telefono: true,
         estaActivo: true,
+        permisosUi: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -52,6 +59,7 @@ export class UsuariosService {
         sucursalId: true,
         telefono: true,
         estaActivo: true,
+        permisosUi: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -79,6 +87,10 @@ export class UsuariosService {
       sucursalId: dto.sucursalId ?? null,
       telefono: dto.telefono ?? null,
       estaActivo: dto.estaActivo ?? true,
+      permisosUi:
+        dto.permisosUi ??
+        PERMISOS_BY_ROL[dto.rol] ??
+        PERMISOS_UI_DEFAULT,
     });
     const saved = await this.repo().save(usuario);
     return this.findOne(saved.id);
@@ -89,10 +101,36 @@ export class UsuariosService {
     if (!usuario) {
       throw new NotFoundException(`Usuario ${id} no encontrado`);
     }
+
     if (dto.email) {
       dto.email = dto.email.toLowerCase();
+      if (dto.email !== usuario.email) {
+        const exists = await this.repo().findOne({
+          where: { email: dto.email },
+        });
+        if (exists) {
+          throw new ConflictException('El email ya está registrado');
+        }
+      }
     }
-    Object.assign(usuario, dto);
+
+    const rol = dto.rol ?? usuario.rol;
+    if (dto.rol !== undefined || dto.sucursalId !== undefined) {
+      const sucursalId =
+        dto.sucursalId !== undefined ? dto.sucursalId : usuario.sucursalId;
+
+      if (rol === RolUsuario.JEFE_SUCURSAL && !sucursalId) {
+        throw new BadRequestException(
+          'Jefe de sucursal requiere una sede asignada',
+        );
+      }
+
+      usuario.sucursalId =
+        rol === RolUsuario.JEFE_SUCURSAL ? (sucursalId ?? null) : null;
+    }
+
+    const { sucursalId: _omit, ...rest } = dto;
+    Object.assign(usuario, rest);
     await this.repo().save(usuario);
     return this.findOne(id);
   }

@@ -27,6 +27,7 @@ let Usuario = class Usuario {
     sucursal;
     telefono;
     estaActivo;
+    permisosUi;
     createdAt;
     updatedAt;
     ordenesCreadas;
@@ -76,6 +77,10 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'esta_activo', type: 'boolean', default: true }),
     __metadata("design:type", Boolean)
 ], Usuario.prototype, "estaActivo", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'permisos_ui', type: 'jsonb', default: () => "'{}'" }),
+    __metadata("design:type", Object)
+], Usuario.prototype, "permisosUi", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)

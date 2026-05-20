@@ -8,6 +8,7 @@ import {
   EstadoOrdenTrabajo,
   PrioridadOrden,
   TipoEvidencia,
+  TipoMantenimiento,
 } from '../common/enums';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
@@ -86,6 +87,43 @@ export class OrdenesTrabajoService {
     return orden;
   }
 
+  async findBySucursal(sucursalId: number) {
+    return this.findAll({ sucursalId });
+  }
+
+  async reportarFalla(
+    dto: {
+      activoId: number;
+      descripcion: string;
+      prioridad: PrioridadOrden;
+      titulo?: string;
+    },
+    creadoPorId: number,
+    sucursalId: number,
+    fotoUrl?: string,
+  ) {
+    const orden = await this.create(
+      {
+        activoId: dto.activoId,
+        sucursalId,
+        titulo: dto.titulo ?? `Reporte de falla - Activo #${dto.activoId}`,
+        descripcion: dto.descripcion,
+        prioridad: dto.prioridad,
+        tipoMantenimiento: TipoMantenimiento.CORRECTIVO,
+      },
+      creadoPorId,
+    );
+
+    if (fotoUrl) {
+      await this.agregarEvidencia(orden.id, creadoPorId, {
+        tipoEvidencia: TipoEvidencia.ANTES,
+        urlImagen: fotoUrl,
+      });
+    }
+
+    return this.findOne(orden.id);
+  }
+
   async create(dto: CreateOrdenTrabajoDto, creadoPorId: number) {
     const orden = this.ordenRepo().create({
       codigoOt: await this.generarCodigoOt(),
@@ -120,6 +158,55 @@ export class OrdenesTrabajoService {
     const orden = await this.findOne(id);
     orden.asignadoAId = dto.asignadoAId;
     orden.estado = EstadoOrdenTrabajo.ASIGNADA;
+    return this.ordenRepo().save(orden);
+  }
+
+  async updateEstado(
+    id: number,
+    estado: EstadoOrdenTrabajo,
+    tecnicoId: number,
+  ) {
+    if (estado === EstadoOrdenTrabajo.EN_PROCESO) {
+      return this.iniciar(id, tecnicoId);
+    }
+    throw new BadRequestException(
+      `Transición de estado no permitida para el técnico: ${estado}`,
+    );
+  }
+
+  async cerrarConArchivos(
+    id: number,
+    tecnicoId: number,
+    comentario: string,
+    urlAntes: string,
+    urlDespues: string,
+  ) {
+    const orden = await this.findOne(id);
+
+    if (orden.asignadoAId !== tecnicoId) {
+      throw new BadRequestException(
+        'Solo el técnico asignado puede cerrar esta orden',
+      );
+    }
+
+    if (orden.estado !== EstadoOrdenTrabajo.EN_PROCESO) {
+      throw new BadRequestException(
+        'Solo se pueden cerrar órdenes en estado en_proceso',
+      );
+    }
+
+    await this.agregarComentario(id, tecnicoId, { comentario });
+    await this.agregarEvidencia(id, tecnicoId, {
+      tipoEvidencia: TipoEvidencia.ANTES,
+      urlImagen: urlAntes,
+    });
+    await this.agregarEvidencia(id, tecnicoId, {
+      tipoEvidencia: TipoEvidencia.DESPUES,
+      urlImagen: urlDespues,
+    });
+
+    orden.estado = EstadoOrdenTrabajo.FINALIZADA;
+    orden.fechaFinReal = new Date();
     return this.ordenRepo().save(orden);
   }
 

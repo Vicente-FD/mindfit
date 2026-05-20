@@ -1,0 +1,34 @@
+.qr-ficha {
+  border: 2px solid rgb(255 255 255 / 0.08);
+}
+
+.qr-logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #qr-print-sheet,
+  #qr-print-sheet * {
+    visibility: visible;
+  }
+
+  #qr-print-sheet {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white !important;
+    color: black !important;
+    padding: 24px;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

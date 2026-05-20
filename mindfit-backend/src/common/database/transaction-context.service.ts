@@ -9,6 +9,10 @@ export class TransactionContextService {
     this.manager = manager;
   }
 
+  clearManager(): void {
+    this.manager = undefined;
+  }
+
   getManager(dataSource: DataSource): EntityManager {
     return this.manager ?? dataSource.manager;
   }

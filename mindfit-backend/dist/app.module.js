@@ -16,7 +16,6 @@ const app_service_1 = require("./app.service");
 const auth_module_1 = require("./auth/auth.module");
 const jwt_auth_guard_1 = require("./common/guards/jwt-auth.guard");
 const roles_guard_1 = require("./common/guards/roles.guard");
-const audit_context_interceptor_1 = require("./common/interceptors/audit-context.interceptor");
 const common_module_1 = require("./common/common.module");
 const database_module_1 = require("./database/database.module");
 const seed_service_1 = require("./database/seed.service");
@@ -25,6 +24,7 @@ const sucursales_module_1 = require("./sucursales/sucursales.module");
 const usuarios_module_1 = require("./usuarios/usuarios.module");
 const activos_module_1 = require("./activos/activos.module");
 const ordenes_trabajo_module_1 = require("./ordenes-trabajo/ordenes-trabajo.module");
+const analytics_module_1 = require("./analytics/analytics.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -62,7 +62,7 @@ exports.AppModule = AppModule = __decorate([
                     keepConnectionAlive: true,
                 }),
             }),
-            typeorm_1.TypeOrmModule.forFeature([entities_1.Sucursal, entities_1.Usuario]),
+            typeorm_1.TypeOrmModule.forFeature([entities_1.Sucursal, entities_1.Usuario, entities_1.Activo, entities_1.OrdenTrabajo]),
             common_module_1.CommonModule,
             database_module_1.DatabaseModule,
             auth_module_1.AuthModule,
@@ -70,6 +70,7 @@ exports.AppModule = AppModule = __decorate([
             usuarios_module_1.UsuariosModule,
             activos_module_1.ActivosModule,
             ordenes_trabajo_module_1.OrdenesTrabajoModule,
+            analytics_module_1.AnalyticsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [
@@ -82,10 +83,6 @@ exports.AppModule = AppModule = __decorate([
             {
                 provide: core_1.APP_GUARD,
                 useClass: roles_guard_1.RolesGuard,
-            },
-            {
-                provide: core_1.APP_INTERCEPTOR,
-                useClass: audit_context_interceptor_1.AuditContextInterceptor,
             },
         ],
     })

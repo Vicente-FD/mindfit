@@ -75,6 +75,26 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         }
         return orden;
     }
+    async findBySucursal(sucursalId) {
+        return this.findAll({ sucursalId });
+    }
+    async reportarFalla(dto, creadoPorId, sucursalId, fotoUrl) {
+        const orden = await this.create({
+            activoId: dto.activoId,
+            sucursalId,
+            titulo: dto.titulo ?? `Reporte de falla - Activo #${dto.activoId}`,
+            descripcion: dto.descripcion,
+            prioridad: dto.prioridad,
+            tipoMantenimiento: enums_1.TipoMantenimiento.CORRECTIVO,
+        }, creadoPorId);
+        if (fotoUrl) {
+            await this.agregarEvidencia(orden.id, creadoPorId, {
+                tipoEvidencia: enums_1.TipoEvidencia.ANTES,
+                urlImagen: fotoUrl,
+            });
+        }
+        return this.findOne(orden.id);
+    }
     async create(dto, creadoPorId) {
         const orden = this.ordenRepo().create({
             codigoOt: await this.generarCodigoOt(),
@@ -107,6 +127,33 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         const orden = await this.findOne(id);
         orden.asignadoAId = dto.asignadoAId;
         orden.estado = enums_1.EstadoOrdenTrabajo.ASIGNADA;
+        return this.ordenRepo().save(orden);
+    }
+    async updateEstado(id, estado, tecnicoId) {
+        if (estado === enums_1.EstadoOrdenTrabajo.EN_PROCESO) {
+            return this.iniciar(id, tecnicoId);
+        }
+        throw new common_1.BadRequestException(`Transición de estado no permitida para el técnico: ${estado}`);
+    }
+    async cerrarConArchivos(id, tecnicoId, comentario, urlAntes, urlDespues) {
+        const orden = await this.findOne(id);
+        if (orden.asignadoAId !== tecnicoId) {
+            throw new common_1.BadRequestException('Solo el técnico asignado puede cerrar esta orden');
+        }
+        if (orden.estado !== enums_1.EstadoOrdenTrabajo.EN_PROCESO) {
+            throw new common_1.BadRequestException('Solo se pueden cerrar órdenes en estado en_proceso');
+        }
+        await this.agregarComentario(id, tecnicoId, { comentario });
+        await this.agregarEvidencia(id, tecnicoId, {
+            tipoEvidencia: enums_1.TipoEvidencia.ANTES,
+            urlImagen: urlAntes,
+        });
+        await this.agregarEvidencia(id, tecnicoId, {
+            tipoEvidencia: enums_1.TipoEvidencia.DESPUES,
+            urlImagen: urlDespues,
+        });
+        orden.estado = enums_1.EstadoOrdenTrabajo.FINALIZADA;
+        orden.fechaFinReal = new Date();
         return this.ordenRepo().save(orden);
     }
     async iniciar(id, tecnicoId) {

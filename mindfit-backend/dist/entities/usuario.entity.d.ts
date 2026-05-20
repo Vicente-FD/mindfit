@@ -1,4 +1,5 @@
 import { RolUsuario } from '../common/enums';
+import type { PermisosUi } from '../common/interfaces/permisos-ui.interface';
 import { Sucursal } from './sucursal.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
 import { EvidenciaOt } from './evidencia-ot.entity';
@@ -14,6 +15,7 @@ export declare class Usuario {
     sucursal: Sucursal | null;
     telefono: string | null;
     estaActivo: boolean;
+    permisosUi: PermisosUi;
     createdAt: Date;
     updatedAt: Date;
     ordenesCreadas: OrdenTrabajo[];

@@ -1,0 +1,24 @@
+<div class="mx-auto max-w-6xl space-y-4">
+  <header class="page-card">
+    <h1 class="text-xl font-semibold text-pure-white">Super Admin — Mindfit Ops</h1>
+    <p class="mt-1 text-sm text-slate-grey">Administración del sistema, usuarios, permisos y activos</p>
+    <nav class="tab-nav mt-4 flex flex-wrap gap-2">
+      <button type="button" class="tab-btn" [class.tab-active]="tab() === 'usuarios'" (click)="setTab('usuarios')">Usuarios</button>
+      <button type="button" class="tab-btn" [class.tab-active]="tab() === 'activos'" (click)="setTab('activos')">Activos y QR</button>
+      <button type="button" class="tab-btn" [class.tab-active]="tab() === 'resumen'" (click)="setTab('resumen')">Sistema</button>
+    </nav>
+  </header>
+  @if (tab() === 'usuarios') { <app-usuarios-admin /> }
+  @if (tab() === 'activos') { <app-activos-registro /> }
+  @if (tab() === 'resumen') {
+    <section class="page-card">
+      <h2 class="text-lg font-semibold">Panel de sistema</h2>
+      <p class="mt-2 text-sm text-slate-grey">Monitoreo de actividad, auditoría y configuración global (próximas integraciones).</p>
+      <ul class="mt-4 space-y-2 text-sm text-pure-white">
+        <li>· Gestión de roles y permisos UI</li>
+        <li>· Registro de activos con QR imprimible</li>
+        <li>· Trail de auditoría en PostgreSQL</li>
+      </ul>
+    </section>
+  }
+</div>

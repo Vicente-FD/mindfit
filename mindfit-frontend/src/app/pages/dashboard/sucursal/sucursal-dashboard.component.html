@@ -1,0 +1,53 @@
+<div class="mx-auto max-w-lg space-y-4 pb-4">
+  <header class="rounded-2xl border border-white/5 bg-obsidian-grey p-4">
+    <h1 class="text-lg font-semibold text-pure-white">Reporte de fallas</h1>
+    <p class="text-xs text-slate-grey">Solo activos de su sede asignada</p>
+  </header>
+
+  <form class="page-card space-y-3" [formGroup]="reportForm" (ngSubmit)="enviarReporte()">
+    <div>
+      <label class="field-label">Activo *</label>
+      <select class="field-input" formControlName="activoId">
+        <option value="">Seleccione equipo</option>
+        @for (a of activos(); track a.id) {
+          <option [value]="a.id">{{ a.nombre }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="field-label">Prioridad *</label>
+      <select class="field-input" formControlName="prioridad">
+        @for (p of prioridades; track p.value) {
+          <option [value]="p.value">{{ p.label }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="field-label">Descripción *</label>
+      <textarea class="field-input" rows="4" formControlName="descripcion"></textarea>
+    </div>
+    <label class="upload-box block cursor-pointer rounded-xl border border-dashed border-white/15 p-4 text-center text-sm text-slate-grey">
+      <span>Adjuntar foto de la falla (comprimida)</span>
+      <input type="file" accept="image/*" class="hidden" (change)="onFoto($event)" />
+    </label>
+    <button type="submit" class="btn-primary w-full" [disabled]="saving() || reportForm.invalid">
+      @if (saving()) { Enviando... } @else { Enviar ticket }
+    </button>
+  </form>
+
+  <section class="page-card">
+    <h2 class="mb-3 text-sm font-semibold text-pure-white">Historial de la sede</h2>
+    @if (ordenes().length === 0) {
+      <p class="text-sm text-slate-grey">Aún no hay reportes en su sucursal.</p>
+    }
+    @for (o of ordenes(); track o.id) {
+      <article class="ot-card mb-2">
+        <p class="text-sm font-medium text-pure-white">{{ o.titulo }}</p>
+        <p class="text-xs text-slate-grey">{{ o.codigoOt }} · {{ estadoLabel(o.estado) }}</p>
+        @if (o.asignadoAId) {
+          <p class="mt-1 text-xs text-orange-energy">Técnico asignado (#{{ o.asignadoAId }})</p>
+        }
+      </article>
+    }
+  </section>
+</div>

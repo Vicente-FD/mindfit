@@ -20,6 +20,7 @@ class CreateUsuarioDto {
     sucursalId;
     telefono;
     estaActivo;
+    permisosUi;
 }
 exports.CreateUsuarioDto = CreateUsuarioDto;
 __decorate([
@@ -56,4 +57,9 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], CreateUsuarioDto.prototype, "estaActivo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsObject)(),
+    __metadata("design:type", Object)
+], CreateUsuarioDto.prototype, "permisosUi", void 0);
 //# sourceMappingURL=create-usuario.dto.js.map

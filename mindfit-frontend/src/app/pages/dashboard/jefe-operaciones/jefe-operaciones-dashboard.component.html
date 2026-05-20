@@ -1,0 +1,109 @@
+<div class="mx-auto max-w-6xl space-y-4">
+  <header class="page-card">
+    <h1 class="text-xl font-semibold text-pure-white">Jefe de Operaciones</h1>
+    <p class="mt-1 text-sm text-slate-grey">OTs, técnicos, activos QR y usuarios en todas las sedes</p>
+    <nav class="tab-nav mt-4 flex flex-wrap gap-2">
+      <button type="button" class="tab-btn" [class.tab-active]="tab() === 'ots'" (click)="setTab('ots')">Órdenes de trabajo</button>
+      <button type="button" class="tab-btn" [class.tab-active]="tab() === 'activos'" (click)="setTab('activos')">Activos y QR</button>
+      <button type="button" class="tab-btn" [class.tab-active]="tab() === 'usuarios'" (click)="setTab('usuarios')">Usuarios</button>
+      <button type="button" class="tab-btn" [class.tab-active]="tab() === 'metricas'" (click)="setTab('metricas')">Métricas</button>
+    </nav>
+  </header>
+
+  @if (tab() === 'ots') {
+    @if (kpis(); as k) {
+      <div class="grid grid-cols-2 gap-3">
+        <div class="metric-card">
+          <p class="metric-label">PE global</p>
+          <p class="metric-value text-status-green">{{ k.efectividadPe }}%</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-label">OTs reportadas</p>
+          <p class="metric-value">{{ k.otsReportadas }}</p>
+        </div>
+      </div>
+    }
+
+    <form class="page-card grid gap-3 sm:grid-cols-2" [formGroup]="otForm" (ngSubmit)="crearOt()">
+      <div class="sm:col-span-2">
+        <label class="field-label">Título OT</label>
+        <input class="field-input" formControlName="titulo" />
+      </div>
+      <div>
+        <label class="field-label">Sucursal</label>
+        <select class="field-input" formControlName="sucursalId">
+          <option value="">Seleccione</option>
+          @for (s of sucursales(); track s.id) {
+            <option [value]="s.id">{{ s.nombre }}</option>
+          }
+        </select>
+        </div>
+      <div>
+        <label class="field-label">Activo</label>
+        <select class="field-input" formControlName="activoId">
+          <option value="">Opcional</option>
+          @for (a of activos(); track a.id) {
+            <option [value]="a.id">{{ a.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Prioridad</label>
+        <select class="field-input" formControlName="prioridad">
+          @for (p of prioridades; track p.value) {
+            <option [value]="p.value">{{ p.label }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Asignar técnico</label>
+        <select class="field-input" formControlName="asignadoAId">
+          <option value="">Sin asignar</option>
+          @for (t of tecnicos(); track t.id) {
+            <option [value]="t.id">{{ t.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="field-label">Descripción</label>
+        <textarea class="field-input" rows="2" formControlName="descripcion"></textarea>
+      </div>
+      <button type="submit" class="btn-primary sm:col-span-2" [disabled]="otForm.invalid">Crear y asignar OT</button>
+    </form>
+
+    <section class="space-y-2">
+      @for (o of ordenes(); track o.id) {
+        <article class="ot-card">
+          <div class="flex justify-between gap-2">
+            <span class="text-sm font-semibold text-pure-white">{{ o.codigoOt }}</span>
+            <span class="text-xs text-slate-grey">{{ estadoLabel(o.estado) }}</span>
+          </div>
+          <p class="mt-1 text-sm text-pure-white">{{ o.titulo }}</p>
+          @if (o.estado === 'pendiente' || o.estado === 'asignada') {
+            <select class="field-input mt-2 text-xs" #sel>
+              <option value="">Asignar técnico...</option>
+              @for (t of tecnicos(); track t.id) {
+                <option [value]="t.id">{{ t.nombre }}</option>
+              }
+            </select>
+            <button type="button" class="btn-primary mt-2 w-full py-2 text-xs" (click)="asignar(o, sel.value)">Confirmar asignación</button>
+          }
+        </article>
+      }
+    </section>
+  }
+
+  @if (tab() === 'activos') {
+    <app-activos-registro />
+  }
+  @if (tab() === 'usuarios') {
+    <app-usuarios-admin />
+  }
+  @if (tab() === 'metricas') {
+    <section class="page-card">
+      <p class="text-sm text-slate-grey">
+        Para analítica ejecutiva completa use la cuenta Gerencia BI. Aquí ve el resumen PE en la pestaña OTs.
+      </p>
+    </section>
+  }
+</div>

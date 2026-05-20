@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { RolUsuario } from '../common/enums';
+import type { PermisosUi } from '../common/interfaces/permisos-ui.interface';
 import { Sucursal } from './sucursal.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
 import { EvidenciaOt } from './evidencia-ot.entity';
@@ -47,6 +48,9 @@ export class Usuario {
 
   @Column({ name: 'esta_activo', type: 'boolean', default: true })
   estaActivo: boolean;
+
+  @Column({ name: 'permisos_ui', type: 'jsonb', default: () => "'{}'" })
+  permisosUi: PermisosUi;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

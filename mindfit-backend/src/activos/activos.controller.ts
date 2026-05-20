@@ -54,7 +54,7 @@ export class ActivosController {
   }
 
   @Post()
-  @Roles(RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES, RolUsuario.JEFE_SUCURSAL)
+  @Roles(RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES)
   create(@Body() dto: CreateActivoDto) {
     return this.activosService.create(dto);
   }

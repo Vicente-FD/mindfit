@@ -42,12 +42,21 @@ let ActivosService = class ActivosService {
         return activo;
     }
     async findByUuid(uuidActivo) {
-        const activo = await this.repo().findOne({
-            where: { uuidActivo },
+        return this.findByPublicIdentifier(uuidActivo);
+    }
+    async findByPublicIdentifier(identifier) {
+        let activo = await this.repo().findOne({
+            where: { uuidActivo: identifier },
             relations: { sucursal: true },
         });
         if (!activo) {
-            throw new common_1.NotFoundException(`Activo con UUID ${uuidActivo} no encontrado`);
+            activo = await this.repo().findOne({
+                where: { codigoQrToken: identifier },
+                relations: { sucursal: true },
+            });
+        }
+        if (!activo) {
+            throw new common_1.NotFoundException(`Activo con identificador ${identifier} no encontrado`);
         }
         return activo;
     }

@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import { EstadoOrdenTrabajo, PrioridadOrden } from '../common/enums';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
 import { EvidenciaOt } from '../entities/evidencia-ot.entity';
@@ -22,9 +23,18 @@ export declare class OrdenesTrabajoService {
         sucursalId?: number;
     }): Promise<OrdenTrabajo[]>;
     findOne(id: number): Promise<OrdenTrabajo>;
+    findBySucursal(sucursalId: number): Promise<OrdenTrabajo[]>;
+    reportarFalla(dto: {
+        activoId: number;
+        descripcion: string;
+        prioridad: PrioridadOrden;
+        titulo?: string;
+    }, creadoPorId: number, sucursalId: number, fotoUrl?: string): Promise<OrdenTrabajo>;
     create(dto: CreateOrdenTrabajoDto, creadoPorId: number): Promise<OrdenTrabajo>;
     update(id: number, dto: UpdateOrdenTrabajoDto): Promise<OrdenTrabajo>;
     asignar(id: number, dto: AsignarOrdenDto): Promise<OrdenTrabajo>;
+    updateEstado(id: number, estado: EstadoOrdenTrabajo, tecnicoId: number): Promise<OrdenTrabajo>;
+    cerrarConArchivos(id: number, tecnicoId: number, comentario: string, urlAntes: string, urlDespues: string): Promise<OrdenTrabajo>;
     iniciar(id: number, tecnicoId: number): Promise<OrdenTrabajo>;
     agregarComentario(ordenId: number, autorId: number, dto: CreateComentarioDto): Promise<ComentarioOt>;
     agregarEvidencia(ordenId: number, cargadoPorId: number, dto: CreateEvidenciaDto): Promise<EvidenciaOt>;

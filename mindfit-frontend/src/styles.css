@@ -15,3 +15,45 @@
     @apply min-h-screen bg-deep-black text-pure-white antialiased;
   }
 }
+
+@layer components {
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-slate-grey;
+  }
+
+  .field-input {
+    @apply w-full rounded-xl border border-white/10 bg-deep-black px-4 py-3 text-pure-white outline-none transition placeholder:text-slate-grey/60 focus:border-orange-energy focus:ring-2 focus:ring-orange-energy/30;
+  }
+
+  .btn-primary {
+    @apply rounded-xl bg-orange-energy px-4 py-3 text-sm font-semibold text-deep-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply rounded-lg px-3 py-2 text-slate-grey transition hover:bg-white/5 hover:text-pure-white;
+  }
+
+  .page-card {
+    @apply rounded-2xl border border-white/5 bg-obsidian-grey p-6;
+  }
+
+  .page-title {
+    @apply text-xl font-semibold text-pure-white;
+  }
+
+  .page-desc {
+    @apply mt-2 text-sm text-slate-grey;
+  }
+
+  .stat-card {
+    @apply rounded-xl border border-white/5 bg-deep-black/60 p-4;
+  }
+
+  .stat-label {
+    @apply text-xs uppercase tracking-wide text-slate-grey;
+  }
+
+  .stat-value {
+    @apply mt-2 text-lg font-semibold;
+  }
+}

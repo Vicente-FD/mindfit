@@ -1,0 +1,112 @@
+.tecnico-page {
+  animation: fade-in 0.3s ease-out;
+}
+
+.status-dot {
+  display: inline-block;
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-status-green, #22c55e);
+  box-shadow: 0 0 8px rgb(34 197 94 / 0.8);
+}
+
+.metric-card {
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.05);
+  background: var(--color-obsidian-grey, #1a1a1c);
+  padding: 0.875rem 1rem;
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-slate-grey, #94a3b8);
+}
+
+.metric-value {
+  margin-top: 0.35rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-pure-white, #fff);
+}
+
+.ot-card {
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  background: var(--color-obsidian-grey, #1a1a1c);
+  padding: 1rem;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.ot-card-highlight {
+  border-color: var(--color-orange-energy, #ff6600);
+  box-shadow: 0 0 0 1px rgb(255 102 0 / 0.35), 0 8px 24px rgb(255 102 0 / 0.12);
+}
+
+.priority-badge {
+  border-radius: 9999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.priority-alta {
+  background: rgb(255 102 0 / 0.15);
+  color: var(--color-orange-energy, #ff6600);
+}
+
+.priority-media {
+  background: rgb(255 255 255 / 0.08);
+  color: var(--color-pure-white, #fff);
+}
+
+.priority-baja {
+  background: rgb(148 163 184 / 0.12);
+  color: var(--color-slate-grey, #94a3b8);
+}
+
+.timer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 102 0 / 0.25);
+  background: rgb(255 102 0 / 0.08);
+  padding: 0.35rem 0.75rem;
+}
+
+.timer-dot {
+  height: 0.4rem;
+  width: 0.4rem;
+  border-radius: 9999px;
+  background: var(--color-orange-energy, #ff6600);
+  animation: pulse-dot 1.2s infinite;
+}
+
+.qr-alert {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}

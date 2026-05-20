@@ -46,8 +46,10 @@ exports.UsuariosService = void 0;
 const common_1 = require("@nestjs/common");
 const bcrypt = __importStar(require("bcrypt"));
 const typeorm_1 = require("typeorm");
+const enums_1 = require("../common/enums");
 const usuario_entity_1 = require("../entities/usuario.entity");
 const transaction_context_service_1 = require("../common/database/transaction-context.service");
+const permisos_ui_interface_1 = require("../common/interfaces/permisos-ui.interface");
 let UsuariosService = class UsuariosService {
     dataSource;
     transactionContext;
@@ -70,6 +72,7 @@ let UsuariosService = class UsuariosService {
                 sucursalId: true,
                 telefono: true,
                 estaActivo: true,
+                permisosUi: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -87,6 +90,7 @@ let UsuariosService = class UsuariosService {
                 sucursalId: true,
                 telefono: true,
                 estaActivo: true,
+                permisosUi: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -112,6 +116,9 @@ let UsuariosService = class UsuariosService {
             sucursalId: dto.sucursalId ?? null,
             telefono: dto.telefono ?? null,
             estaActivo: dto.estaActivo ?? true,
+            permisosUi: dto.permisosUi ??
+                permisos_ui_interface_1.PERMISOS_BY_ROL[dto.rol] ??
+                permisos_ui_interface_1.PERMISOS_UI_DEFAULT,
         });
         const saved = await this.repo().save(usuario);
         return this.findOne(saved.id);
@@ -123,8 +130,26 @@ let UsuariosService = class UsuariosService {
         }
         if (dto.email) {
             dto.email = dto.email.toLowerCase();
+            if (dto.email !== usuario.email) {
+                const exists = await this.repo().findOne({
+                    where: { email: dto.email },
+                });
+                if (exists) {
+                    throw new common_1.ConflictException('El email ya está registrado');
+                }
+            }
         }
-        Object.assign(usuario, dto);
+        const rol = dto.rol ?? usuario.rol;
+        if (dto.rol !== undefined || dto.sucursalId !== undefined) {
+            const sucursalId = dto.sucursalId !== undefined ? dto.sucursalId : usuario.sucursalId;
+            if (rol === enums_1.RolUsuario.JEFE_SUCURSAL && !sucursalId) {
+                throw new common_1.BadRequestException('Jefe de sucursal requiere una sede asignada');
+            }
+            usuario.sucursalId =
+                rol === enums_1.RolUsuario.JEFE_SUCURSAL ? (sucursalId ?? null) : null;
+        }
+        const { sucursalId: _omit, ...rest } = dto;
+        Object.assign(usuario, rest);
         await this.repo().save(usuario);
         return this.findOne(id);
     }

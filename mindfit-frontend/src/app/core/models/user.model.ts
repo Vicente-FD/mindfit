@@ -1,0 +1,27 @@
+export type UserRole =
+  | 'admin'
+  | 'jefe_operaciones'
+  | 'tecnico'
+  | 'jefe_sucursal'
+  | 'gerente_bi';
+
+export interface AuthUser {
+  id: number;
+  email: string;
+  nombre: string;
+  rol: UserRole;
+  sucursalId: number | null;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  user: AuthUser;
+}
+
+export const ROLE_DASHBOARD_ROUTES: Record<UserRole, string> = {
+  admin: '/dashboard/admin',
+  jefe_operaciones: '/dashboard/jefe-operaciones',
+  tecnico: '/dashboard/tecnico',
+  jefe_sucursal: '/dashboard/sucursal',
+  gerente_bi: '/dashboard/gerente',
+};

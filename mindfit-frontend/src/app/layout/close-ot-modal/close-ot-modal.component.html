@@ -1,0 +1,49 @@
+<div class="fixed inset-0 z-[60] flex items-end justify-center bg-deep-black/85 p-4 backdrop-blur-sm sm:items-center">
+  <div class="w-full max-w-lg animate-modal rounded-2xl border border-white/10 bg-obsidian-grey p-5 shadow-2xl">
+    <div class="mb-4 flex items-start justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-pure-white">Solicitar cierre</h2>
+        <p class="text-xs text-slate-grey">{{ orden().codigoOt }} · {{ orden().titulo }}</p>
+      </div>
+      <button type="button" class="btn-ghost" (click)="close()" aria-label="Cerrar">✕</button>
+    </div>
+
+    <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+      <div>
+        <label class="field-label" for="comentario">Comentarios de la reparación *</label>
+        <textarea id="comentario" formControlName="comentario" rows="4" class="field-input resize-none" placeholder="Repuestos usados, observaciones técnicas..."></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="upload-box">
+            <span class="upload-icon">📷</span>
+            <span class="upload-label">Foto Antes</span>
+            <input type="file" accept="image/*" capture="environment" class="hidden" (change)="onFileSelected($event, 'antes')" />
+          </label>
+          @if (previewAntes()) {
+            <img [src]="previewAntes()!" alt="Antes" class="mt-2 h-24 w-full rounded-lg object-cover" />
+          }
+        </div>
+        <div>
+          <label class="upload-box">
+            <span class="upload-icon">📷</span>
+            <span class="upload-label">Foto Después</span>
+            <input type="file" accept="image/*" capture="environment" class="hidden" (change)="onFileSelected($event, 'despues')" />
+          </label>
+          @if (previewDespues()) {
+            <img [src]="previewDespues()!" alt="Después" class="mt-2 h-24 w-full rounded-lg object-cover" />
+          }
+        </div>
+      </div>
+
+      @if (error()) {
+        <p class="rounded-lg border border-orange-energy/30 bg-orange-energy/10 px-3 py-2 text-sm text-orange-energy">{{ error() }}</p>
+      }
+
+      <button type="submit" class="btn-close w-full" [disabled]="loading()">
+        @if (loading()) { Enviando evidencias... } @else { Confirmar cierre de OT }
+      </button>
+    </form>
+  </div>
+</div>

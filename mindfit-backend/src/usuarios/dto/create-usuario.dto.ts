@@ -7,8 +7,10 @@ import {
   IsString,
   MaxLength,
   MinLength,
+  IsObject,
 } from 'class-validator';
 import { RolUsuario } from '../../common/enums';
+import type { PermisosUi } from '../../common/interfaces/permisos-ui.interface';
 
 export class CreateUsuarioDto {
   @IsEmail()
@@ -37,4 +39,8 @@ export class CreateUsuarioDto {
   @IsOptional()
   @IsBoolean()
   estaActivo?: boolean;
+
+  @IsOptional()
+  @IsObject()
+  permisosUi?: PermisosUi;
 }
