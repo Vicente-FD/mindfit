@@ -10,6 +10,9 @@ export interface QrScanAlert {
 export class TecnicoUiService {
   readonly highlightOrderId = signal<number | null>(null);
   readonly qrAlert = signal<QrScanAlert | null>(null);
+  readonly assetSheetToken = signal<string | null>(null);
+  readonly pendingStartOrder = signal<WorkOrder | null>(null);
+  readonly pendingCloseOrder = signal<WorkOrder | null>(null);
 
   focusOrder(orderId: number): void {
     this.highlightOrderId.set(orderId);
@@ -26,6 +29,25 @@ export class TecnicoUiService {
 
   clearQrAlert(): void {
     this.qrAlert.set(null);
+  }
+
+  openAssetSheet(identifier: string): void {
+    this.assetSheetToken.set(identifier.trim());
+    this.clearQrAlert();
+  }
+
+  closeAssetSheet(): void {
+    this.assetSheetToken.set(null);
+  }
+
+  queueStart(orden: WorkOrder): void {
+    this.pendingStartOrder.set(orden);
+    this.focusOrder(orden.id);
+  }
+
+  queueClose(orden: WorkOrder): void {
+    this.pendingCloseOrder.set(orden);
+    this.focusOrder(orden.id);
   }
 
   clearHighlight(): void {

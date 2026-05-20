@@ -2,21 +2,32 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { WorkOrderPriority } from '../models/work-order.model';
 import {
+  ClasificacionOt,
   CloseWorkOrderPayload,
+  ListWorkOrdersParams,
   UpdateWorkOrderStatusPayload,
   WorkOrder,
+  WorkOrderPriority,
 } from '../models/work-order.model';
 
+export interface UpdateWorkOrderPayload {
+  titulo?: string;
+  descripcion?: string;
+  prioridad?: WorkOrderPriority;
+  clasificacion?: ClasificacionOt;
+  activoId?: number | null;
+  asignadoAId?: number | null;
+}
+
 export interface CreateWorkOrderPayload {
+  clasificacion?: ClasificacionOt;
   activoId?: number;
   sucursalId: number;
   titulo: string;
   descripcion?: string;
   prioridad?: WorkOrderPriority;
   tipoMantenimiento: 'correctivo' | 'preventivo';
-  asignadoAId?: number;
 }
 
 export interface ReportarFallaPayload {
@@ -37,6 +48,10 @@ export class WorkOrdersService {
     return this.http.get<WorkOrder[]>(`${this.baseUrl}/mis-asignadas`);
   }
 
+  getById(id: number): Observable<WorkOrder> {
+    return this.http.get<WorkOrder>(`${this.baseUrl}/${id}`);
+  }
+
   updateEstado(
     id: number,
     payload: UpdateWorkOrderStatusPayload,
@@ -44,15 +59,34 @@ export class WorkOrdersService {
     return this.http.patch<WorkOrder>(`${this.baseUrl}/${id}/estado`, payload);
   }
 
-  iniciarTrabajo(id: number): Observable<WorkOrder> {
-    return this.updateEstado(id, { estado: 'en_proceso' });
+  iniciarTrabajo(id: number, fotoAntes: File): Observable<WorkOrder> {
+    const formData = new FormData();
+    const ext = fotoAntes.name?.split('.').pop() || 'jpg';
+    formData.append('foto_antes', fotoAntes, fotoAntes.name || `antes.${ext}`);
+    return this.http.post<WorkOrder>(
+      `${this.baseUrl}/${id}/iniciar-trabajo`,
+      formData,
+    );
   }
 
-  listAll(sucursalId?: number, tecnicoId?: number): Observable<WorkOrder[]> {
-    let params = new HttpParams();
-    if (sucursalId != null) params = params.set('sucursalId', String(sucursalId));
-    if (tecnicoId != null) params = params.set('tecnicoId', String(tecnicoId));
-    return this.http.get<WorkOrder[]>(this.baseUrl, { params });
+  listAll(params: ListWorkOrdersParams = {}): Observable<WorkOrder[]> {
+    let httpParams = new HttpParams();
+    if (params.estado) {
+      httpParams = httpParams.set('estado', params.estado);
+    }
+    if (params.fechaInicio) {
+      httpParams = httpParams.set('fecha_inicio', params.fechaInicio);
+    }
+    if (params.fechaFin) {
+      httpParams = httpParams.set('fecha_fin', params.fechaFin);
+    }
+    if (params.sucursalId != null) {
+      httpParams = httpParams.set('sucursalId', String(params.sucursalId));
+    }
+    if (params.tecnicoId != null) {
+      httpParams = httpParams.set('tecnicoId', String(params.tecnicoId));
+    }
+    return this.http.get<WorkOrder[]>(this.baseUrl, { params: httpParams });
   }
 
   getMiSucursal(): Observable<WorkOrder[]> {
@@ -63,10 +97,18 @@ export class WorkOrdersService {
     return this.http.post<WorkOrder>(this.baseUrl, payload);
   }
 
-  asignar(id: number, asignadoAId: number): Observable<WorkOrder> {
+  asignar(id: number, tecnicoId: number): Observable<WorkOrder> {
     return this.http.patch<WorkOrder>(`${this.baseUrl}/${id}/asignar`, {
-      asignadoAId,
+      tecnicoId,
     });
+  }
+
+  update(id: number, payload: UpdateWorkOrderPayload): Observable<WorkOrder> {
+    return this.http.patch<WorkOrder>(`${this.baseUrl}/${id}`, payload);
+  }
+
+  remove(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
   reportarFalla(payload: ReportarFallaPayload): Observable<WorkOrder> {
@@ -84,14 +126,30 @@ export class WorkOrdersService {
     );
   }
 
+  aprobar(id: number): Observable<WorkOrder> {
+    return this.http.patch<WorkOrder>(`${this.baseUrl}/${id}/aprobar`, {});
+  }
+
+  rechazar(id: number, motivo: string): Observable<WorkOrder> {
+    return this.http.patch<WorkOrder>(`${this.baseUrl}/${id}/rechazar`, {
+      motivo,
+    });
+  }
+
+  revertirAprobacion(id: number): Observable<WorkOrder> {
+    return this.http.patch<WorkOrder>(
+      `${this.baseUrl}/${id}/revertir-aprobacion`,
+      {},
+    );
+  }
+
   cerrarOrden(id: number, payload: CloseWorkOrderPayload): Observable<WorkOrder> {
     const formData = new FormData();
     formData.append('comentario', payload.comentario);
-    formData.append('fotos_antes', payload.fotosAntes, payload.fotosAntes.name);
     formData.append(
-      'fotos_despues',
-      payload.fotosDespues,
-      payload.fotosDespues.name,
+      'foto_despues',
+      payload.fotoDespues,
+      payload.fotoDespues.name,
     );
 
     return this.http.post<WorkOrder>(`${this.baseUrl}/${id}/cerrar`, formData);

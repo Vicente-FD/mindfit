@@ -49,6 +49,7 @@ let AnalyticsService = class AnalyticsService {
                 categoria: filters.categoria,
             });
         }
+        qb.andWhere('ot.deleted_at IS NULL');
         const ordenes = await qb.getMany();
         const otsReportadas = ordenes.length;
         const otsResueltas = ordenes.filter((o) => [enums_1.EstadoOrdenTrabajo.FINALIZADA, enums_1.EstadoOrdenTrabajo.APROBADA].includes(o.estado)).length;

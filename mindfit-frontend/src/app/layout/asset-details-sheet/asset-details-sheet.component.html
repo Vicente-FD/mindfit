@@ -1,0 +1,97 @@
+<div class="sheet-backdrop" (click)="close()">
+  <section class="asset-sheet" (click)="$event.stopPropagation()">
+    <header class="asset-sheet__header">
+      @if (ficha(); as f) {
+        <div>
+          <p class="asset-sheet__code">{{ f.activo.codigoInventario || f.activo.codigoQrToken }}</p>
+          <h2 class="asset-sheet__title">{{ f.activo.nombre }}</h2>
+          <p class="asset-sheet__meta">
+            {{ f.activo.marca ?? '—' }}
+            @if (f.activo.modelo) { · {{ f.activo.modelo }} }
+            · {{ f.activo.sucursalNombre ?? 'Sede' }}
+          </p>
+          <span class="asset-sheet__estado">{{ estadoOperativoLabel() }}</span>
+        </div>
+      }
+      <button type="button" class="sheet-close" (click)="close()" aria-label="Cerrar">
+        <lucide-icon name="x" [size]="22" />
+      </button>
+    </header>
+
+    <div class="asset-sheet__body">
+      @if (loading()) {
+        <p class="sheet-loading">Cargando ficha del activo...</p>
+      } @else if (ficha(); as f) {
+        @if (miOrdenActiva(); as orden) {
+          <div class="banner-pendiente">
+            <p class="banner-pendiente__text">
+              ⚠️ Tienes un trabajo asignado pendiente para esta máquina
+            </p>
+            <p class="banner-pendiente__ot">{{ orden.codigoOt }} · {{ orden.estado.replace('_', ' ') }}</p>
+            <div class="banner-pendiente__actions">
+              <button type="button" class="btn-primary flex-1 text-sm" (click)="onPrimaryAction()">
+                @if (orden.estado === 'en_proceso') { Solicitar cierre } @else { Iniciar trabajo }
+              </button>
+              <button type="button" class="btn-ghost text-xs" (click)="verTarea()">Ver en lista</button>
+            </div>
+          </div>
+        } @else if (f.ordenesActivas.length === 0) {
+          <div class="banner-ok">🟢 Activo operativo y sin fallas reportadas</div>
+        } @else {
+          <div class="banner-info">
+            Existen {{ f.ordenesActivas.length }} OT(s) activas en este equipo, no asignadas a ti.
+          </div>
+        }
+
+        <h3 class="sheet-section-title">Historial de reparaciones</h3>
+        @if (f.historial.length === 0) {
+          <p class="sheet-empty">Sin intervenciones técnicas registradas para este activo.</p>
+        } @else {
+          <ol class="timeline">
+            @for (item of f.historial; track item.id) {
+              <li class="timeline__item">
+                <span class="timeline__node" aria-hidden="true"></span>
+                <div class="timeline__card">
+                  <header class="timeline__head">
+                    <span class="timeline__codigo">{{ item.codigoOt }}</span>
+                    @if (item.fechaResolucion) {
+                      <time class="timeline__fecha">
+                        {{ item.fechaResolucion | date: 'dd MMM yyyy' }}
+                      </time>
+                    }
+                  </header>
+                  <p class="timeline__text">{{ item.comentarioCierre || item.descripcion || item.titulo }}</p>
+                  @if (item.asignadoA) {
+                    <p class="timeline__meta">Técnico: {{ item.asignadoA.nombre }}</p>
+                  }
+                  @if (evidenciaAntes(item) || evidenciaDespues(item)) {
+                    <div class="timeline__fotos">
+                      @if (evidenciaAntes(item); as uA) {
+                        <button type="button" class="foto-thumb" (click)="openPreview(uA)">
+                          <img [src]="uA" alt="Antes" />
+                          <span>Antes</span>
+                        </button>
+                      }
+                      @if (evidenciaDespues(item); as uD) {
+                        <button type="button" class="foto-thumb" (click)="openPreview(uD)">
+                          <img [src]="uD" alt="Después" />
+                          <span>Después</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        }
+      }
+    </div>
+  </section>
+</div>
+
+@if (previewUrl(); as url) {
+  <div class="preview-backdrop" (click)="closePreview()">
+    <img [src]="url" alt="Vista ampliada" class="preview-img" (click)="$event.stopPropagation()" />
+  </div>
+}

@@ -45,6 +45,11 @@ export enum EstadoOrdenTrabajo {
   APROBADA = 'aprobada',
 }
 
+export enum ClasificacionOrden {
+  MAQUINA = 'maquina',
+  INFRAESTRUCTURA = 'infraestructura',
+}
+
 export enum TipoEvidencia {
   ANTES = 'antes',
   DESPUES = 'despues',

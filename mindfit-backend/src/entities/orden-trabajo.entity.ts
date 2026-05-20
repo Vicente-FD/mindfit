@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -9,6 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import {
+  ClasificacionOrden,
   EstadoOrdenTrabajo,
   PrioridadOrden,
   TipoMantenimiento,
@@ -26,6 +28,13 @@ export class OrdenTrabajo {
 
   @Column({ name: 'codigo_ot', type: 'varchar', length: 30, unique: true })
   codigoOt: string;
+
+  @Column({
+    type: 'varchar',
+    length: 30,
+    default: ClasificacionOrden.MAQUINA,
+  })
+  clasificacion: ClasificacionOrden;
 
   @Column({ name: 'activo_id', type: 'int', nullable: true })
   activoId: number | null;
@@ -99,11 +108,17 @@ export class OrdenTrabajo {
   @Column({ name: 'motivo_rechazo', type: 'text', nullable: true })
   motivoRechazo: string | null;
 
+  @Column({ name: 'fecha_aprobacion', type: 'timestamptz', nullable: true })
+  fechaAprobacion: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt: Date | null;
 
   @OneToMany(() => EvidenciaOt, (evidencia) => evidencia.ordenTrabajo)
   evidencias: EvidenciaOt[];

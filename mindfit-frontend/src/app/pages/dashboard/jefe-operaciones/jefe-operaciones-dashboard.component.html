@@ -1,7 +1,14 @@
 <div class="mx-auto max-w-6xl space-y-4">
-  <header class="page-card">
-    <h1 class="text-xl font-semibold text-pure-white">Centro de operaciones</h1>
-    <p class="mt-1 text-sm text-slate-grey">Crear y asignar órdenes de trabajo en todas las sedes</p>
+  <header class="page-card ops-header">
+    <div>
+      <h1 class="text-xl font-semibold text-pure-white">Centro de operaciones</h1>
+      <p class="mt-1 text-sm text-slate-grey">Crear y asignar órdenes de trabajo en todas las sedes</p>
+    </div>
+    @if (isActivas()) {
+      <button type="button" class="btn-create-ot" (click)="toggleCreateForm()">
+        {{ showCreateForm() ? 'Ocultar formulario' : '+ Crear Orden de Trabajo' }}
+      </button>
+    }
   </header>
 
   @if (kpis(); as k) {
@@ -17,79 +24,359 @@
     </div>
   }
 
-  <form class="page-card grid gap-3 sm:grid-cols-2" [formGroup]="otForm" (ngSubmit)="crearOt()">
-    <div class="sm:col-span-2">
-      <label class="field-label">Título OT</label>
-      <input class="field-input" formControlName="titulo" />
-    </div>
-    <div>
-      <label class="field-label">Sucursal</label>
-      <select class="field-input" formControlName="sucursalId">
-        <option value="">Seleccione</option>
-        @for (s of sucursales(); track s.id) {
-          <option [value]="s.id">{{ s.nombre }}</option>
-        }
-      </select>
-    </div>
-    <div>
-      <label class="field-label">Activo</label>
-      <select class="field-input" formControlName="activoId">
-        <option value="">Opcional</option>
-        @for (a of activos(); track a.id) {
-          <option [value]="a.id">{{ a.codigoInventario }} — {{ a.nombre }}</option>
-        }
-      </select>
-    </div>
-    <div>
-      <label class="field-label">Prioridad</label>
-      <select class="field-input" formControlName="prioridad">
-        @for (p of prioridades; track p.value) {
-          <option [value]="p.value">{{ p.label }}</option>
-        }
-      </select>
-    </div>
-    <div>
-      <label class="field-label">Asignar técnico</label>
-      <select class="field-input" formControlName="asignadoAId">
-        <option value="">Sin asignar</option>
-        @for (t of tecnicos(); track t.id) {
-          <option [value]="t.id">{{ t.nombre }}</option>
-        }
-      </select>
-    </div>
-    <div class="sm:col-span-2">
-      <label class="field-label">Descripción</label>
-      <textarea class="field-input" rows="2" formControlName="descripcion"></textarea>
-    </div>
-    <button type="submit" class="btn-primary sm:col-span-2" [disabled]="otForm.invalid">
-      Crear y asignar OT
+  <nav class="ops-tabs" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      class="ops-tab"
+      [class.ops-tab--active]="activeTab() === 'activas'"
+      [attr.aria-selected]="activeTab() === 'activas'"
+      (click)="switchTab('activas')"
+    >
+      Órdenes Activas
     </button>
-  </form>
+    <button
+      type="button"
+      role="tab"
+      class="ops-tab"
+      [class.ops-tab--active]="activeTab() === 'por_aprobar'"
+      [attr.aria-selected]="activeTab() === 'por_aprobar'"
+      (click)="switchTab('por_aprobar')"
+    >
+      Por Aprobar
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="ops-tab"
+      [class.ops-tab--active]="activeTab() === 'historico'"
+      [attr.aria-selected]="activeTab() === 'historico'"
+      (click)="switchTab('historico')"
+    >
+      Archivo Histórico
+    </button>
+  </nav>
 
-  <section class="space-y-2">
-    @for (o of ordenes(); track o.id) {
-      <article class="ot-card">
-        <div class="flex justify-between gap-2">
-          <span class="text-sm font-semibold text-pure-white">{{ o.codigoOt }}</span>
-          <span class="text-xs text-slate-grey">{{ estadoLabel(o.estado) }}</span>
+  @if (isHistorico()) {
+    <div class="historico-toolbar">
+      <button type="button" class="btn-report" (click)="openReportModal()">
+        <lucide-icon name="download" [size]="16" />
+        Generar Reporte PDF
+      </button>
+    </div>
+  }
+
+  @if (showCreateForm() && isActivas()) {
+    <form class="page-card ot-create-form" [formGroup]="otForm" (ngSubmit)="crearOt()">
+      <div class="tipo-falla">
+        <span class="field-label">Tipo de falla</span>
+        <div class="tipo-falla__opts">
+          <label class="tipo-falla__opt">
+            <input
+              type="radio"
+              name="clasificacion"
+              value="maquina"
+              [checked]="clasificacionTipo() === 'maquina'"
+              (change)="setClasificacion('maquina')"
+            />
+            Fallo en Máquina
+          </label>
+          <label class="tipo-falla__opt">
+            <input
+              type="radio"
+              name="clasificacion"
+              value="infraestructura"
+              [checked]="clasificacionTipo() === 'infraestructura'"
+              (change)="setClasificacion('infraestructura')"
+            />
+            Daño de Infraestructura
+          </label>
         </div>
-        <p class="mt-1 text-sm text-pure-white">{{ o.titulo }}</p>
-        @if (o.estado === 'pendiente' || o.estado === 'asignada') {
-          <select class="field-input mt-2 text-xs" #sel>
-            <option value="">Asignar técnico...</option>
+      </div>
+
+      <div class="ot-create-form__grid">
+        <div class="ot-create-form__full">
+          <label class="field-label">Título OT *</label>
+          <input class="field-input" formControlName="titulo" />
+        </div>
+        <div>
+          <label class="field-label">Sucursal *</label>
+          <select class="field-input" formControlName="sucursalId">
+            <option value="">Seleccione sede</option>
+            @for (s of sucursales(); track s.id) {
+              <option [value]="s.id">{{ s.nombre }}</option>
+            }
+          </select>
+        </div>
+        @if (clasificacionTipo() === 'maquina') {
+          <div>
+            <label class="field-label">Activo *</label>
+            <select
+              class="field-input"
+              formControlName="activoId"
+              [disabled]="!sucursalFormId()"
+            >
+              <option value="">
+                {{ sucursalFormId() ? 'Seleccione equipo' : 'Seleccione sucursal primero' }}
+              </option>
+              @for (a of activosFiltrados(); track a.id) {
+                <option [value]="a.id">
+                  {{ a.codigoInventario || a.codigoQrToken }} — {{ a.nombre }}
+                </option>
+              }
+            </select>
+          </div>
+        }
+        <div>
+          <label class="field-label">Prioridad</label>
+          <select class="field-input" formControlName="prioridad">
+            @for (p of prioridades; track p.value) {
+              <option [value]="p.value">{{ p.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Asignar técnico (opcional)</label>
+          <select class="field-input" formControlName="asignadoAId">
+            <option value="">Sin asignar aún</option>
             @for (t of tecnicos(); track t.id) {
               <option [value]="t.id">{{ t.nombre }}</option>
             }
           </select>
-          <button
-            type="button"
-            class="btn-primary mt-2 w-full py-2 text-xs"
-            (click)="asignar(o, sel.value)"
-          >
-            Confirmar asignación
-          </button>
+        </div>
+        <div class="ot-create-form__full">
+          <label class="field-label">Descripción</label>
+          <textarea class="field-input" rows="2" formControlName="descripcion"></textarea>
+        </div>
+      </div>
+      <button type="submit" class="btn-primary w-full" [disabled]="saving() || otForm.invalid">
+        @if (saving()) { Creando... } @else { Crear orden de trabajo }
+      </button>
+    </form>
+  }
+
+  <section class="ot-list">
+    @if (loadingOrdenes()) {
+      <p class="py-8 text-center text-sm text-slate-grey">Cargando órdenes...</p>
+    } @else if (ordenes().length === 0) {
+      <p class="text-sm text-slate-grey">
+        @if (isHistorico()) {
+          No hay órdenes aprobadas en el archivo histórico.
+        } @else if (isPorAprobar()) {
+          No hay órdenes pendientes de aprobación del jefe.
+        } @else {
+          No hay órdenes activas pendientes de gestión.
         }
+      </p>
+    } @else {
+    @for (o of ordenes(); track o.id) {
+      <article class="ot-card-compact">
+        <div class="ot-card-compact__top">
+          <span class="ot-card-compact__codigo">{{ o.codigoOt }}</span>
+          <div class="ot-card-compact__top-right">
+            @if (canModificarOrden(o)) {
+              <div class="ot-card-actions">
+                <button
+                  type="button"
+                  class="ot-action-btn"
+                  title="Editar"
+                  (click)="openEdit(o); $event.stopPropagation()"
+                >
+                  <lucide-icon name="pencil" [size]="14" />
+                </button>
+                <button
+                  type="button"
+                  class="ot-action-btn ot-action-btn--danger"
+                  title="Eliminar"
+                  (click)="openDelete(o); $event.stopPropagation()"
+                >
+                  <lucide-icon name="trash-2" [size]="14" />
+                </button>
+              </div>
+            }
+            <span [class]="estadoBadgeClass(o.estado)">{{ estadoLabel(o.estado) }}</span>
+          </div>
+        </div>
+
+        <div class="ot-card-compact__body">
+          <p class="ot-card-compact__titulo">{{ o.titulo }}</p>
+          <p class="ot-card-compact__meta">
+            {{ o.sucursal?.nombre ?? 'Sucursal #' + o.sucursalId }}
+            @if (esInfraestructura(o)) {
+              <span class="badge-infra">Infraestructura</span>
+            } @else if (o.activo) {
+              · {{ o.activo.codigoInventario || o.activo.codigoQrToken }} — {{ o.activo.nombre }}
+            }
+          </p>
+        </div>
+        <div class="ot-card-compact__tags">
+          <span [class]="prioridadClass(o.prioridad)">{{ prioridadLabel(o.prioridad) }}</span>
+        </div>
+
+        <div class="ot-card-compact__timeline">
+          <span class="timeline-item">
+            <lucide-icon name="clock" [size]="13" class="timeline-icon" />
+            <span class="timeline-label">Reportado:</span>
+            {{ formatFecha(o.createdAt) }}
+          </span>
+          @if (muestraEjecutado(o)) {
+            <span class="timeline-item">
+              <lucide-icon name="calendar" [size]="13" class="timeline-icon" />
+              <span class="timeline-label">Ejecutado:</span>
+              {{ formatFecha(o.fechaFinReal) }}
+            </span>
+          }
+        </div>
+
+        @if (isPorAprobar() && ultimoComentarioTecnico(o); as comentario) {
+          <p class="ot-card-compact__comentario">
+            <span class="comentario-label">Observaciones del técnico:</span>
+            {{ comentario }}
+          </p>
+        }
+
+        @if (isPorAprobar()) {
+          <div class="ot-evidencias">
+            <figure class="ot-evidencia">
+              <figcaption>Antes</figcaption>
+              @if (evidenciaAntes(o); as urlAntes) {
+                <button type="button" class="ot-evidencia__btn" (click)="openPreview(urlAntes)">
+                  <img [src]="urlAntes" alt="Evidencia antes del trabajo" loading="lazy" />
+                </button>
+              } @else {
+                <div class="ot-evidencia__placeholder">Sin foto</div>
+              }
+            </figure>
+            <figure class="ot-evidencia">
+              <figcaption>Después</figcaption>
+              @if (evidenciaDespues(o); as urlDespues) {
+                <button type="button" class="ot-evidencia__btn" (click)="openPreview(urlDespues)">
+                  <img [src]="urlDespues" alt="Evidencia después del trabajo" loading="lazy" />
+                </button>
+              } @else {
+                <div class="ot-evidencia__placeholder">Sin foto</div>
+              }
+            </figure>
+          </div>
+        }
+
+        <div class="ot-card-compact__footer">
+          @if (isHistorico() && puedeRevertirAprobacion(o)) {
+            <button
+              type="button"
+              class="btn-revert"
+              [disabled]="revertingId() === o.id"
+              (click)="revertirAprobacion(o)"
+            >
+              @if (revertingId() === o.id) {
+                Revirtiendo...
+              } @else {
+                <span class="inline-flex items-center gap-1">
+                  <lucide-icon name="rotate-ccw" [size]="14" />
+                  Revertir aprobación ({{ segundosRestantesRevertir(o) }}s)
+                </span>
+              }
+            </button>
+          } @else if (isPorAprobar()) {
+            <button
+              type="button"
+              class="btn-approve"
+              [disabled]="approvingId() === o.id"
+              (click)="aprobarOrden(o)"
+            >
+              @if (approvingId() === o.id) {
+                Aprobando...
+              } @else {
+                <span class="inline-flex items-center gap-1">
+                  <lucide-icon name="check" [size]="14" />
+                  Aprobar
+                </span>
+              }
+            </button>
+            <button type="button" class="btn-reject-card" (click)="openReject(o)">
+              <lucide-icon name="x-circle" [size]="14" />
+              Rechazar
+            </button>
+          } @else if (puedeAsignar(o)) {
+            <select class="ot-assign-select" #selTecnico>
+              <option value="">Seleccionar técnico</option>
+              @for (t of tecnicos(); track t.id) {
+                <option [value]="t.id">{{ t.nombre }}</option>
+              }
+            </select>
+            <button
+              type="button"
+              class="btn-assign"
+              (click)="asignar(o, selTecnico.value)"
+            >
+              Asignar
+            </button>
+          } @else if (tecnicoNombre(o); as nombre) {
+            <span class="tecnico-badge">👤 Asignado a: {{ nombre }}</span>
+            @if (elapsedLabel(o); as elapsed) {
+              <span class="cronometro-badge">{{ elapsed }}</span>
+            }
+          }
+        </div>
       </article>
+    }
     }
   </section>
 </div>
+
+@if (editTarget(); as orden) {
+  <app-edit-ot-modal
+    [orden]="orden"
+    [sucursales]="sucursales()"
+    [activos]="activos()"
+    [tecnicos]="tecnicos()"
+    (closed)="closeEdit()"
+    (saved)="onEditSaved()"
+  />
+}
+
+@if (deleteTarget(); as orden) {
+  <app-delete-ot-confirm-modal
+    [orden]="orden"
+    [deleting]="deleting()"
+    (closed)="closeDelete()"
+    (confirmed)="confirmDelete()"
+  />
+}
+
+@if (rejectTarget(); as orden) {
+  <app-reject-ot-modal
+    [orden]="orden"
+    [rejecting]="rejecting()"
+    (closed)="closeReject()"
+    (confirmed)="confirmReject($event)"
+  />
+}
+
+@if (showReportModal()) {
+  <app-ot-report-modal
+    [sucursales]="sucursales()"
+    [generating]="generatingPdf()"
+    (closed)="closeReportModal()"
+    (generate)="onGenerateReport($event)"
+  />
+}
+
+@if (previewUrl(); as url) {
+  <div class="evidencia-preview-backdrop" (click)="closePreview()">
+    <img
+      [src]="url"
+      alt="Vista ampliada de evidencia"
+      class="evidencia-preview-img"
+      (click)="$event.stopPropagation()"
+    />
+    <button
+      type="button"
+      class="evidencia-preview-close"
+      (click)="closePreview()"
+      aria-label="Cerrar vista ampliada"
+    >
+      <lucide-icon name="x" [size]="24" />
+    </button>
+  </div>
+}

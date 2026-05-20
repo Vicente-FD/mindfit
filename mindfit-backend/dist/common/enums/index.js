@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OperacionAuditoria = exports.TipoEvidencia = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.RolUsuario = void 0;
+exports.OperacionAuditoria = exports.TipoEvidencia = exports.ClasificacionOrden = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.RolUsuario = void 0;
 var RolUsuario;
 (function (RolUsuario) {
     RolUsuario["ADMIN"] = "admin";
@@ -48,6 +48,11 @@ var EstadoOrdenTrabajo;
     EstadoOrdenTrabajo["FINALIZADA"] = "finalizada";
     EstadoOrdenTrabajo["APROBADA"] = "aprobada";
 })(EstadoOrdenTrabajo || (exports.EstadoOrdenTrabajo = EstadoOrdenTrabajo = {}));
+var ClasificacionOrden;
+(function (ClasificacionOrden) {
+    ClasificacionOrden["MAQUINA"] = "maquina";
+    ClasificacionOrden["INFRAESTRUCTURA"] = "infraestructura";
+})(ClasificacionOrden || (exports.ClasificacionOrden = ClasificacionOrden = {}));
 var TipoEvidencia;
 (function (TipoEvidencia) {
     TipoEvidencia["ANTES"] = "antes";

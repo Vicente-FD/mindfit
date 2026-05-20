@@ -1,5 +1,6 @@
 import { Component, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 import { ImageCompressorService } from '../../core/services/image-compressor.service';
 import { WorkOrdersService } from '../../core/services/work-orders.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -7,7 +8,7 @@ import { WorkOrder } from '../../core/models/work-order.model';
 
 @Component({
   selector: 'app-close-ot-modal',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LucideAngularModule],
   templateUrl: './close-ot-modal.component.html',
   styleUrl: './close-ot-modal.component.css',
 })
@@ -20,40 +21,29 @@ export class CloseOtModalComponent {
   readonly orden = input.required<WorkOrder>();
   readonly closed = output<void>();
   readonly submitted = output<void>();
+  readonly ordenNoDisponible = output<void>();
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
-  readonly previewAntes = signal<string | null>(null);
   readonly previewDespues = signal<string | null>(null);
 
-  private fileAntes: File | null = null;
   private fileDespues: File | null = null;
 
   readonly form = this.fb.nonNullable.group({
-    comentario: ['', [Validators.required, Validators.minLength(10)]],
+    comentario: ['', [Validators.required, Validators.minLength(3)]],
   });
 
-  async onFileSelected(
-    event: Event,
-    tipo: 'antes' | 'despues',
-  ): Promise<void> {
+  async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
 
     try {
       const compressed = await this.compressor.compress(file);
-      const preview = URL.createObjectURL(compressed);
-
-      if (tipo === 'antes') {
-        this.revokePreview(this.previewAntes());
-        this.fileAntes = compressed;
-        this.previewAntes.set(preview);
-      } else {
-        this.revokePreview(this.previewDespues());
-        this.fileDespues = compressed;
-        this.previewDespues.set(preview);
-      }
+      this.revokePreview(this.previewDespues());
+      this.fileDespues = compressed;
+      this.previewDespues.set(URL.createObjectURL(compressed));
+      this.error.set(null);
     } catch {
       this.error.set('No se pudo procesar la imagen seleccionada');
     }
@@ -64,8 +54,8 @@ export class CloseOtModalComponent {
       this.form.markAllAsTouched();
       return;
     }
-    if (!this.fileAntes || !this.fileDespues) {
-      this.error.set('Debes adjuntar la foto del Antes y del Después');
+    if (!this.fileDespues) {
+      this.error.set('Debes adjuntar la foto del estado final (Después)');
       return;
     }
 
@@ -75,8 +65,7 @@ export class CloseOtModalComponent {
     this.workOrders
       .cerrarOrden(this.orden().id, {
         comentario: this.form.controls.comentario.value,
-        fotosAntes: this.fileAntes,
-        fotosDespues: this.fileDespues,
+        fotoDespues: this.fileDespues,
       })
       .subscribe({
         next: () => {
@@ -87,16 +76,23 @@ export class CloseOtModalComponent {
         },
         error: (err) => {
           this.loading.set(false);
+          if (err?.status === 404) {
+            this.toast.error('Esta orden ya no está disponible (fue eliminada)');
+            this.ordenNoDisponible.emit();
+            this.close();
+            return;
+          }
           const msg =
             err?.error?.message ??
             'No se pudo cerrar la orden. Intenta nuevamente.';
-          this.error.set(Array.isArray(msg) ? msg.join(', ') : String(msg));
+          const text = Array.isArray(msg) ? msg.join(', ') : String(msg);
+          this.error.set(text);
+          this.toast.error(text);
         },
       });
   }
 
   close(): void {
-    this.revokePreview(this.previewAntes());
     this.revokePreview(this.previewDespues());
     this.closed.emit();
   }

@@ -54,6 +54,8 @@ export class AnalyticsService {
       });
     }
 
+    qb.andWhere('ot.deleted_at IS NULL');
+
     const ordenes = await qb.getMany();
 
     const otsReportadas = ordenes.length;

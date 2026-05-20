@@ -1,3 +1,3 @@
 export declare class AsignarOrdenDto {
-    asignadoAId: number;
+    tecnicoId: number;
 }

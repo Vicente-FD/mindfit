@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SchemaFixService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("typeorm");
+const ot_codigo_sequence_1 = require("../ordenes-trabajo/ot-codigo.sequence");
 let SchemaFixService = SchemaFixService_1 = class SchemaFixService {
     dataSource;
     logger = new common_1.Logger(SchemaFixService_1.name);
@@ -20,9 +21,41 @@ let SchemaFixService = SchemaFixService_1 = class SchemaFixService {
         this.dataSource = dataSource;
     }
     async onModuleInit() {
+        await this.ensureOtSchema();
         await this.backfillCodigosInventario();
         await this.backfillSucursalSiglas();
         await this.backfillEstadoSesion();
+    }
+    async ensureOtSchema() {
+        await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS clasificacion VARCHAR(30) DEFAULT 'maquina';
+    `);
+        await this.dataSource.query(`
+      UPDATE ordenes_trabajo SET clasificacion = 'maquina' WHERE clasificacion IS NULL;
+    `);
+        await this.dataSource.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'ordenes_trabajo_clasificacion_check'
+        ) THEN
+          ALTER TABLE ordenes_trabajo
+          ADD CONSTRAINT ordenes_trabajo_clasificacion_check
+          CHECK (clasificacion IN ('maquina', 'infraestructura'));
+        END IF;
+      END $$;
+    `).catch(() => { });
+        await (0, ot_codigo_sequence_1.syncOtCaseSequence)((sql) => this.dataSource.query(sql));
+        await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+    `);
+        await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS fecha_aprobacion TIMESTAMPTZ;
+    `);
+        this.logger.log('Esquema OT (clasificación + secuencia) verificado');
     }
     async backfillCodigosInventario() {
         const hasQr = await this.columnExists('activos', 'codigo_qr_token');

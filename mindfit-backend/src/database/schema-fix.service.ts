@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { syncOtCaseSequence } from '../ordenes-trabajo/ot-codigo.sequence';
 
 /**
  * Rellena columnas nuevas en datos existentes tras synchronize (columnas nullable).
@@ -12,9 +13,42 @@ export class SchemaFixService implements OnModuleInit {
   constructor(private readonly dataSource: DataSource) {}
 
   async onModuleInit(): Promise<void> {
+    await this.ensureOtSchema();
     await this.backfillCodigosInventario();
     await this.backfillSucursalSiglas();
     await this.backfillEstadoSesion();
+  }
+
+  private async ensureOtSchema(): Promise<void> {
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS clasificacion VARCHAR(30) DEFAULT 'maquina';
+    `);
+    await this.dataSource.query(`
+      UPDATE ordenes_trabajo SET clasificacion = 'maquina' WHERE clasificacion IS NULL;
+    `);
+    await this.dataSource.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'ordenes_trabajo_clasificacion_check'
+        ) THEN
+          ALTER TABLE ordenes_trabajo
+          ADD CONSTRAINT ordenes_trabajo_clasificacion_check
+          CHECK (clasificacion IN ('maquina', 'infraestructura'));
+        END IF;
+      END $$;
+    `).catch(() => {});
+    await syncOtCaseSequence((sql) => this.dataSource.query(sql));
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS fecha_aprobacion TIMESTAMPTZ;
+    `);
+    this.logger.log('Esquema OT (clasificación + secuencia) verificado');
   }
 
   private async backfillCodigosInventario(): Promise<void> {

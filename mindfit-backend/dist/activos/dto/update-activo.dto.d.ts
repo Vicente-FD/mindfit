@@ -1,5 +1,14 @@
-import { CreateActivoDto } from './create-activo.dto';
-declare const UpdateActivoDto_base: import("@nestjs/mapped-types").MappedType<Partial<CreateActivoDto>>;
-export declare class UpdateActivoDto extends UpdateActivoDto_base {
+import { CategoriaActivo, EstadoOperacionalActivo } from '../../common/enums';
+export declare class UpdateActivoDto {
+    nombre?: string;
+    marcaId?: number;
+    modelo?: string;
+    numeroSerie?: string;
+    categoria?: CategoriaActivo;
+    sucursalId?: number;
+    fechaCompra?: string;
+    fechaVencimientoGarantia?: string;
+    costoAdquisicion?: number;
+    documentacionUrls?: string[];
+    estadoOperacional?: EstadoOperacionalActivo;
 }
-export {};

@@ -1,0 +1,105 @@
+<div class="modal-backdrop" (click)="close()">
+  <div class="history-modal" (click)="$event.stopPropagation()">
+    <header class="history-modal__header">
+      <div>
+        <h3 class="history-modal__title">Historial de arreglos</h3>
+        @if (activoNombre()) {
+          <p class="history-modal__subtitle">{{ activoNombre() }}</p>
+        }
+      </div>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Cerrar">
+        <lucide-icon name="x" [size]="20" />
+      </button>
+    </header>
+
+    <div class="history-modal__body">
+      @if (loading()) {
+        <p class="history-empty">Cargando historial...</p>
+      } @else if (items().length === 0) {
+        <div class="history-empty">
+          <lucide-icon name="history" [size]="32" class="history-empty__icon" />
+          <p>Sin intervenciones técnicas registradas para este activo.</p>
+        </div>
+      } @else {
+        <ol class="timeline">
+          @for (item of items(); track item.id) {
+            <li class="timeline__item">
+              <span class="timeline__node" aria-hidden="true"></span>
+              <div class="timeline__card">
+                <header class="timeline__head">
+                  <span class="timeline__codigo">{{ item.codigoOt }}</span>
+                  @if (item.fechaResolucion) {
+                    <time class="timeline__fecha">
+                      {{ item.fechaResolucion | date: 'dd MMM yyyy, HH:mm' }}
+                    </time>
+                  }
+                </header>
+
+                <section class="timeline__section">
+                  <h4 class="timeline__label">La solicitud</h4>
+                  <p class="timeline__text">
+                    {{ item.descripcion || item.titulo }}
+                  </p>
+                  <p class="timeline__meta">
+                    Reportado por <strong>{{ item.creadoPor.nombre }}</strong>
+                    · Prioridad {{ prioridadLabel(item.prioridad) }}
+                  </p>
+                </section>
+
+                <section class="timeline__section">
+                  <h4 class="timeline__label">El trabajo realizado</h4>
+                  <p class="timeline__text">
+                    {{ item.comentarioCierre || 'Sin comentario de cierre registrado.' }}
+                  </p>
+                  @if (item.asignadoA) {
+                    <p class="timeline__meta">
+                      Técnico: <strong>{{ item.asignadoA.nombre }}</strong>
+                    </p>
+                  }
+                </section>
+
+                @if (duracionTexto(item); as duracion) {
+                  <p class="timeline__duracion">{{ duracion }}</p>
+                }
+
+                @if (evidenciaAntes(item) || evidenciaDespues(item)) {
+                  <div class="timeline__evidencias">
+                    <figure class="evidencia">
+                      <figcaption>Antes</figcaption>
+                      @if (evidenciaAntes(item); as urlAntes) {
+                        <button type="button" class="evidencia__btn" (click)="openPreview(urlAntes)">
+                          <img [src]="urlAntes" alt="Evidencia antes" />
+                        </button>
+                      } @else {
+                        <div class="evidencia__placeholder">Sin foto</div>
+                      }
+                    </figure>
+                    <figure class="evidencia">
+                      <figcaption>Después</figcaption>
+                      @if (evidenciaDespues(item); as urlDespues) {
+                        <button type="button" class="evidencia__btn" (click)="openPreview(urlDespues)">
+                          <img [src]="urlDespues" alt="Evidencia después" />
+                        </button>
+                      } @else {
+                        <div class="evidencia__placeholder">Sin foto</div>
+                      }
+                    </figure>
+                  </div>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+      }
+    </div>
+  </div>
+</div>
+
+@if (previewUrl(); as url) {
+  <div class="preview-backdrop" (click)="closePreview()">
+    <img [src]="url" alt="Vista ampliada" class="preview-img" (click)="$event.stopPropagation()" />
+    <button type="button" class="preview-close" (click)="closePreview()" aria-label="Cerrar vista">
+      <lucide-icon name="x" [size]="24" />
+    </button>
+  </div>
+}

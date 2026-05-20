@@ -20,6 +20,7 @@ const comentario_ot_entity_1 = require("./comentario-ot.entity");
 let OrdenTrabajo = class OrdenTrabajo {
     id;
     codigoOt;
+    clasificacion;
     activoId;
     activo;
     sucursalId;
@@ -38,8 +39,10 @@ let OrdenTrabajo = class OrdenTrabajo {
     fechaInicioReal;
     fechaFinReal;
     motivoRechazo;
+    fechaAprobacion;
     createdAt;
     updatedAt;
+    deletedAt;
     evidencias;
     comentarios;
 };
@@ -52,6 +55,14 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'codigo_ot', type: 'varchar', length: 30, unique: true }),
     __metadata("design:type", String)
 ], OrdenTrabajo.prototype, "codigoOt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        type: 'varchar',
+        length: 30,
+        default: enums_1.ClasificacionOrden.MAQUINA,
+    }),
+    __metadata("design:type", String)
+], OrdenTrabajo.prototype, "clasificacion", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'activo_id', type: 'int', nullable: true }),
     __metadata("design:type", Object)
@@ -143,6 +154,10 @@ __decorate([
     __metadata("design:type", Object)
 ], OrdenTrabajo.prototype, "motivoRechazo", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: 'fecha_aprobacion', type: 'timestamptz', nullable: true }),
+    __metadata("design:type", Object)
+], OrdenTrabajo.prototype, "fechaAprobacion", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)
 ], OrdenTrabajo.prototype, "createdAt", void 0);
@@ -150,6 +165,10 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ name: 'updated_at' }),
     __metadata("design:type", Date)
 ], OrdenTrabajo.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.DeleteDateColumn)({ name: 'deleted_at' }),
+    __metadata("design:type", Object)
+], OrdenTrabajo.prototype, "deletedAt", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => evidencia_ot_entity_1.EvidenciaOt, (evidencia) => evidencia.ordenTrabajo),
     __metadata("design:type", Array)

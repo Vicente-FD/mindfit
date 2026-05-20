@@ -1,22 +1,14 @@
 import {
-  IsDateString,
   IsEnum,
   IsInt,
   IsOptional,
   IsString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
-import {
-  EstadoOrdenTrabajo,
-  PrioridadOrden,
-  TipoMantenimiento,
-} from '../../common/enums';
+import { ClasificacionOrden, PrioridadOrden } from '../../common/enums';
 
 export class UpdateOrdenTrabajoDto {
-  @IsOptional()
-  @IsInt()
-  activoId?: number;
-
   @IsOptional()
   @IsString()
   @MaxLength(200)
@@ -31,22 +23,18 @@ export class UpdateOrdenTrabajoDto {
   prioridad?: PrioridadOrden;
 
   @IsOptional()
-  @IsEnum(TipoMantenimiento)
-  tipoMantenimiento?: TipoMantenimiento;
+  @IsEnum(ClasificacionOrden)
+  clasificacion?: ClasificacionOrden;
 
+  @ValidateIf(
+    (o: UpdateOrdenTrabajoDto) =>
+      o.clasificacion === ClasificacionOrden.MAQUINA,
+  )
   @IsOptional()
-  @IsEnum(EstadoOrdenTrabajo)
-  estado?: EstadoOrdenTrabajo;
+  @IsInt()
+  activoId?: number | null;
 
   @IsOptional()
   @IsInt()
-  tiempoEstimadoMinutos?: number;
-
-  @IsOptional()
-  @IsDateString()
-  fechaProgramacion?: string;
-
-  @IsOptional()
-  @IsString()
-  motivoRechazo?: string;
+  asignadoAId?: number | null;
 }

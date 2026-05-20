@@ -1,0 +1,67 @@
+<div class="report-overlay" (click)="close()">
+  <div class="report-modal animate-modal-in" (click)="$event.stopPropagation()">
+    <div class="report-modal__header">
+      <div>
+        <h2 class="text-lg font-semibold text-pure-white">Generar reporte PDF</h2>
+        <p class="text-xs text-slate-grey">Seleccione el rango y la sucursal del informe</p>
+      </div>
+      <button type="button" class="btn-ghost" (click)="close()" aria-label="Cerrar">
+        <lucide-icon name="x" [size]="18" />
+      </button>
+    </div>
+
+    <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label class="field-label" for="fechaInicio">Fecha de inicio (desde)</label>
+          <input
+            id="fechaInicio"
+            type="date"
+            class="field-input"
+            formControlName="fechaInicio"
+            (change)="validateRange()"
+          />
+        </div>
+        <div>
+          <label class="field-label" for="fechaFin">Fecha de término (hasta)</label>
+          <input
+            id="fechaFin"
+            type="date"
+            class="field-input"
+            formControlName="fechaFin"
+            (change)="validateRange()"
+          />
+        </div>
+      </div>
+
+      @if (fechaInvalida()) {
+        <p class="text-xs text-orange-energy">La fecha de término debe ser posterior o igual a la de inicio.</p>
+      }
+
+      <div>
+        <label class="field-label" for="sucursalId">Sucursal</label>
+        <select id="sucursalId" class="field-input" formControlName="sucursalId">
+          <option value="">Todas las sucursales</option>
+          @for (s of sucursales(); track s.id) {
+            <option [value]="s.id">{{ s.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      <button
+        type="submit"
+        class="btn-report-pdf w-full"
+        [disabled]="generating() || form.invalid || fechaInvalida()"
+      >
+        @if (generating()) {
+          Generando PDF...
+        } @else {
+          <span class="inline-flex items-center justify-center gap-2">
+            <lucide-icon name="download" [size]="16" />
+            Descargar reporte
+          </span>
+        }
+      </button>
+    </form>
+  </div>
+</div>

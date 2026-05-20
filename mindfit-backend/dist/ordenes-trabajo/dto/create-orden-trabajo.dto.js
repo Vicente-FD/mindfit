@@ -13,6 +13,7 @@ exports.CreateOrdenTrabajoDto = void 0;
 const class_validator_1 = require("class-validator");
 const enums_1 = require("../../common/enums");
 class CreateOrdenTrabajoDto {
+    clasificacion;
     activoId;
     sucursalId;
     titulo;
@@ -25,6 +26,11 @@ class CreateOrdenTrabajoDto {
 exports.CreateOrdenTrabajoDto = CreateOrdenTrabajoDto;
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(enums_1.ClasificacionOrden),
+    __metadata("design:type", String)
+], CreateOrdenTrabajoDto.prototype, "clasificacion", void 0);
+__decorate([
+    (0, class_validator_1.ValidateIf)((o) => (o.clasificacion ?? enums_1.ClasificacionOrden.MAQUINA) === enums_1.ClasificacionOrden.MAQUINA),
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], CreateOrdenTrabajoDto.prototype, "activoId", void 0);

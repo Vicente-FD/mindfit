@@ -1,12 +1,9 @@
-import { EstadoOrdenTrabajo, PrioridadOrden, TipoMantenimiento } from '../../common/enums';
+import { ClasificacionOrden, PrioridadOrden } from '../../common/enums';
 export declare class UpdateOrdenTrabajoDto {
-    activoId?: number;
     titulo?: string;
     descripcion?: string;
     prioridad?: PrioridadOrden;
-    tipoMantenimiento?: TipoMantenimiento;
-    estado?: EstadoOrdenTrabajo;
-    tiempoEstimadoMinutos?: number;
-    fechaProgramacion?: string;
-    motivoRechazo?: string;
+    clasificacion?: ClasificacionOrden;
+    activoId?: number | null;
+    asignadoAId?: number | null;
 }

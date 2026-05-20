@@ -12,11 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AsignarOrdenDto = void 0;
 const class_validator_1 = require("class-validator");
 class AsignarOrdenDto {
-    asignadoAId;
+    tecnicoId;
 }
 exports.AsignarOrdenDto = AsignarOrdenDto;
 __decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
-], AsignarOrdenDto.prototype, "asignadoAId", void 0);
+], AsignarOrdenDto.prototype, "tecnicoId", void 0);
 //# sourceMappingURL=asignar-orden.dto.js.map

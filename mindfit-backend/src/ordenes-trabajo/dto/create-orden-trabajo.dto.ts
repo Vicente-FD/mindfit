@@ -5,11 +5,23 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
-import { PrioridadOrden, TipoMantenimiento } from '../../common/enums';
+import {
+  ClasificacionOrden,
+  PrioridadOrden,
+  TipoMantenimiento,
+} from '../../common/enums';
 
 export class CreateOrdenTrabajoDto {
   @IsOptional()
+  @IsEnum(ClasificacionOrden)
+  clasificacion?: ClasificacionOrden;
+
+  @ValidateIf(
+    (o: CreateOrdenTrabajoDto) =>
+      (o.clasificacion ?? ClasificacionOrden.MAQUINA) === ClasificacionOrden.MAQUINA,
+  )
   @IsInt()
   activoId?: number;
 

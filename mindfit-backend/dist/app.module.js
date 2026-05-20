@@ -13,6 +13,7 @@ const config_1 = require("@nestjs/config");
 const typeorm_1 = require("@nestjs/typeorm");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
+const debug_controller_1 = require("./common/debug.controller");
 const auth_module_1 = require("./auth/auth.module");
 const jwt_auth_guard_1 = require("./common/guards/jwt-auth.guard");
 const roles_guard_1 = require("./common/guards/roles.guard");
@@ -82,7 +83,7 @@ exports.AppModule = AppModule = __decorate([
             ordenes_trabajo_module_1.OrdenesTrabajoModule,
             analytics_module_1.AnalyticsModule,
         ],
-        controllers: [app_controller_1.AppController],
+        controllers: [app_controller_1.AppController, debug_controller_1.DebugController],
         providers: [
             app_service_1.AppService,
             schema_fix_service_1.SchemaFixService,

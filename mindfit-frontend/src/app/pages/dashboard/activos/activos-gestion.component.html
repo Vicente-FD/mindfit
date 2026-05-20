@@ -126,7 +126,19 @@
             {{ marcaLabel(a) }} · {{ a.categoria }} · {{ a.sucursal?.nombre }}
           </p>
         </div>
-        <button type="button" class="btn-primary text-xs" (click)="openQr(a)">Ver etiqueta QR</button>
+        <div class="activo-actions">
+          <button type="button" class="btn-qr" (click)="openQr(a)" title="Etiqueta QR">
+            <lucide-icon name="qr-code" [size]="16" />
+            <span class="hidden sm:inline">Etiqueta QR</span>
+          </button>
+          <button type="button" class="btn-historial" (click)="openHistory(a)" title="Historial">
+            <lucide-icon name="history" [size]="16" />
+            <span>Historial</span>
+          </button>
+          <button type="button" class="btn-editar" (click)="openEdit(a)" title="Editar">
+            <lucide-icon name="pencil" [size]="18" />
+          </button>
+        </div>
       </article>
     }
   </section>
@@ -134,4 +146,20 @@
 
 @if (qrActivo(); as activo) {
   <app-qr-label-modal [activo]="activo" (closed)="closeQr()" />
+}
+
+@if (editActivo(); as activo) {
+  <app-edit-asset-modal
+    [activo]="activo"
+    (closed)="closeEdit()"
+    (saved)="onEditSaved()"
+  />
+}
+
+@if (historyActivo(); as activo) {
+  <app-asset-history-modal
+    [activoId]="activo.id"
+    [activoNombre]="activo.nombre"
+    (closed)="closeHistory()"
+  />
 }

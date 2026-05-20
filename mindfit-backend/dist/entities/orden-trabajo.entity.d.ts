@@ -1,4 +1,4 @@
-import { EstadoOrdenTrabajo, PrioridadOrden, TipoMantenimiento } from '../common/enums';
+import { ClasificacionOrden, EstadoOrdenTrabajo, PrioridadOrden, TipoMantenimiento } from '../common/enums';
 import { Activo } from './activo.entity';
 import { Sucursal } from './sucursal.entity';
 import { Usuario } from './usuario.entity';
@@ -7,6 +7,7 @@ import { ComentarioOt } from './comentario-ot.entity';
 export declare class OrdenTrabajo {
     id: number;
     codigoOt: string;
+    clasificacion: ClasificacionOrden;
     activoId: number | null;
     activo: Activo | null;
     sucursalId: number;
@@ -25,8 +26,10 @@ export declare class OrdenTrabajo {
     fechaInicioReal: Date | null;
     fechaFinReal: Date | null;
     motivoRechazo: string | null;
+    fechaAprobacion: Date | null;
     createdAt: Date;
     updatedAt: Date;
+    deletedAt: Date | null;
     evidencias: EvidenciaOt[];
     comentarios: ComentarioOt[];
 }

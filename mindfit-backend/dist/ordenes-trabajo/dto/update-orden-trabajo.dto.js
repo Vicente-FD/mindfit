@@ -13,22 +13,14 @@ exports.UpdateOrdenTrabajoDto = void 0;
 const class_validator_1 = require("class-validator");
 const enums_1 = require("../../common/enums");
 class UpdateOrdenTrabajoDto {
-    activoId;
     titulo;
     descripcion;
     prioridad;
-    tipoMantenimiento;
-    estado;
-    tiempoEstimadoMinutos;
-    fechaProgramacion;
-    motivoRechazo;
+    clasificacion;
+    activoId;
+    asignadoAId;
 }
 exports.UpdateOrdenTrabajoDto = UpdateOrdenTrabajoDto;
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsInt)(),
-    __metadata("design:type", Number)
-], UpdateOrdenTrabajoDto.prototype, "activoId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -47,27 +39,18 @@ __decorate([
 ], UpdateOrdenTrabajoDto.prototype, "prioridad", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(enums_1.TipoMantenimiento),
+    (0, class_validator_1.IsEnum)(enums_1.ClasificacionOrden),
     __metadata("design:type", String)
-], UpdateOrdenTrabajoDto.prototype, "tipoMantenimiento", void 0);
+], UpdateOrdenTrabajoDto.prototype, "clasificacion", void 0);
 __decorate([
+    (0, class_validator_1.ValidateIf)((o) => o.clasificacion === enums_1.ClasificacionOrden.MAQUINA),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(enums_1.EstadoOrdenTrabajo),
-    __metadata("design:type", String)
-], UpdateOrdenTrabajoDto.prototype, "estado", void 0);
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Object)
+], UpdateOrdenTrabajoDto.prototype, "activoId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
-    __metadata("design:type", Number)
-], UpdateOrdenTrabajoDto.prototype, "tiempoEstimadoMinutos", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsDateString)(),
-    __metadata("design:type", String)
-], UpdateOrdenTrabajoDto.prototype, "fechaProgramacion", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], UpdateOrdenTrabajoDto.prototype, "motivoRechazo", void 0);
+    __metadata("design:type", Object)
+], UpdateOrdenTrabajoDto.prototype, "asignadoAId", void 0);
 //# sourceMappingURL=update-orden-trabajo.dto.js.map

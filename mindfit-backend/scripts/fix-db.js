@@ -67,6 +67,32 @@ async function run() {
     `);
 
     await client.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS clasificacion VARCHAR(30) DEFAULT 'maquina';
+    `);
+    await client.query(`
+      UPDATE ordenes_trabajo SET clasificacion = 'maquina' WHERE clasificacion IS NULL;
+    `);
+    await client.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+    `);
+
+    await client.query(`
+      CREATE SEQUENCE IF NOT EXISTS ot_case_number_seq START 1;
+    `);
+    await client.query(`
+      SELECT setval(
+        'ot_case_number_seq',
+        COALESCE((
+          SELECT MAX((regexp_match(codigo_ot, '^OT-[0-9]+-([0-9]+)$'))[1]::int)
+          FROM ordenes_trabajo
+        ), 0),
+        true
+      );
+    `);
+
+    await client.query(`
       UPDATE sucursales SET sigla = 'LF' WHERE nombre ILIKE '%La Florida%' AND (sigla IS NULL OR sigla = '');
       UPDATE sucursales SET sigla = 'LC' WHERE nombre ILIKE '%Las Condes%' AND (sigla IS NULL OR sigla = '');
       UPDATE sucursales SET sigla = 'VM' WHERE nombre ILIKE '%Viña del Mar%' AND (sigla IS NULL OR sigla = '');

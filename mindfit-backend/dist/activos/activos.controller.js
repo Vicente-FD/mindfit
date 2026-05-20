@@ -26,11 +26,17 @@ let ActivosController = class ActivosController {
     constructor(activosService) {
         this.activosService = activosService;
     }
+    getFichaPublica(uuidActivo) {
+        return this.activosService.getFichaPublica(uuidActivo);
+    }
     findByUuid(uuidActivo) {
         return this.activosService.findByUuid(uuidActivo);
     }
     findAll(filters) {
         return this.activosService.findAll(filters);
+    }
+    getHistorial(id) {
+        return this.activosService.getHistorial(id);
     }
     findOne(id) {
         return this.activosService.findOne(id);
@@ -43,6 +49,14 @@ let ActivosController = class ActivosController {
     }
 };
 exports.ActivosController = ActivosController;
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Get)('publico/:uuidActivo/ficha'),
+    __param(0, (0, common_1.Param)('uuidActivo')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ActivosController.prototype, "getFichaPublica", null);
 __decorate([
     (0, public_decorator_1.Public)(),
     (0, common_1.Get)('publico/:uuidActivo'),
@@ -59,6 +73,14 @@ __decorate([
     __metadata("design:paramtypes", [filter_activos_dto_1.FilterActivosDto]),
     __metadata("design:returntype", void 0)
 ], ActivosController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)(':id/historial'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.TECNICO, enums_1.RolUsuario.JEFE_SUCURSAL, enums_1.RolUsuario.GERENTE_BI),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], ActivosController.prototype, "getHistorial", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.TECNICO, enums_1.RolUsuario.JEFE_SUCURSAL, enums_1.RolUsuario.GERENTE_BI),

@@ -21,6 +21,12 @@ export class ActivosController {
   constructor(private readonly activosService: ActivosService) {}
 
   @Public()
+  @Get('publico/:uuidActivo/ficha')
+  getFichaPublica(@Param('uuidActivo') uuidActivo: string) {
+    return this.activosService.getFichaPublica(uuidActivo);
+  }
+
+  @Public()
   @Get('publico/:uuidActivo')
   findByUuid(@Param('uuidActivo') uuidActivo: string) {
     return this.activosService.findByUuid(uuidActivo);
@@ -36,6 +42,18 @@ export class ActivosController {
   )
   findAll(@Query() filters: FilterActivosDto) {
     return this.activosService.findAll(filters);
+  }
+
+  @Get(':id/historial')
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.TECNICO,
+    RolUsuario.JEFE_SUCURSAL,
+    RolUsuario.GERENTE_BI,
+  )
+  getHistorial(@Param('id', ParseIntPipe) id: number) {
+    return this.activosService.getHistorial(id);
   }
 
   @Get(':id')

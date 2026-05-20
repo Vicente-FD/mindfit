@@ -1,0 +1,79 @@
+<div class="modal-backdrop" (click)="close()">
+  <div class="edit-modal" (click)="$event.stopPropagation()">
+    <header class="edit-modal__header">
+      <div>
+        <h3 class="edit-modal__title">Editar activo</h3>
+        <p class="edit-modal__subtitle">{{ activo().codigoInventario || activo().codigoQrToken }}</p>
+      </div>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Cerrar">
+        <lucide-icon name="x" [size]="20" />
+      </button>
+    </header>
+
+    <form class="edit-modal__form" [formGroup]="form" (ngSubmit)="submit()">
+      <div>
+        <label class="field-label">Nombre del equipo *</label>
+        <input class="field-input" formControlName="nombre" />
+      </div>
+      <div class="edit-modal__grid">
+        <div>
+          <label class="field-label">Marca *</label>
+          <select class="field-input" formControlName="marcaId">
+            <option value="">Seleccione marca</option>
+            @for (m of marcas(); track m.id) {
+              <option [value]="m.id">{{ m.nombre }} ({{ m.sigla }})</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Modelo</label>
+          <input class="field-input" formControlName="modelo" />
+        </div>
+        <div>
+          <label class="field-label">Nº serie</label>
+          <input class="field-input" formControlName="numeroSerie" />
+        </div>
+        <div>
+          <label class="field-label">Categoría *</label>
+          <select class="field-input" formControlName="categoria">
+            @for (c of categorias; track c.value) {
+              <option [value]="c.value">{{ c.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Sucursal *</label>
+          <select class="field-input" formControlName="sucursalId">
+            <option value="">Seleccione sede</option>
+            @for (s of sucursales(); track s.id) {
+              <option [value]="s.id">{{ s.nombre }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Estado operacional *</label>
+          <select class="field-input" formControlName="estadoOperacional">
+            @for (e of estados; track e.value) {
+              <option [value]="e.value">{{ e.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Fecha compra</label>
+          <input type="date" class="field-input" formControlName="fechaCompra" />
+        </div>
+        <div>
+          <label class="field-label">Fin garantía</label>
+          <input type="date" class="field-input" formControlName="fechaVencimientoGarantia" />
+        </div>
+        <div>
+          <label class="field-label">Costo adquisición (CLP)</label>
+          <input type="number" class="field-input" formControlName="costoAdquisicion" />
+        </div>
+      </div>
+      <button type="submit" class="btn-primary w-full" [disabled]="saving() || form.invalid">
+        @if (saving()) { Guardando... } @else { Guardar cambios }
+      </button>
+    </form>
+  </div>
+</div>

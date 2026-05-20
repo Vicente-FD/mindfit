@@ -1,47 +1,72 @@
 <div class="fixed inset-0 z-[60] flex items-end justify-center bg-deep-black/85 p-4 backdrop-blur-sm sm:items-center">
-  <div class="w-full max-w-lg animate-modal rounded-2xl border border-white/10 bg-obsidian-grey p-5 shadow-2xl">
+  <div class="w-full max-w-lg animate-modal rounded-2xl border border-white/10 bg-obsidian-grey p-5 shadow-2xl" (click)="$event.stopPropagation()">
     <div class="mb-4 flex items-start justify-between gap-3">
       <div>
         <h2 class="text-lg font-semibold text-pure-white">Solicitar cierre</h2>
         <p class="text-xs text-slate-grey">{{ orden().codigoOt }} · {{ orden().titulo }}</p>
       </div>
-      <button type="button" class="btn-ghost" (click)="close()" aria-label="Cerrar">✕</button>
+      <button type="button" class="btn-ghost" (click)="close()" aria-label="Cerrar">
+        <lucide-icon name="x" [size]="18" />
+      </button>
     </div>
+
+    <p class="mb-3 text-xs text-slate-grey">
+      La foto del estado inicial ya fue registrada al iniciar. Solo necesitas el resultado final.
+    </p>
 
     <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
       <div>
-        <label class="field-label" for="comentario">Comentarios de la reparación *</label>
-        <textarea id="comentario" formControlName="comentario" rows="4" class="field-input resize-none" placeholder="Repuestos usados, observaciones técnicas..."></textarea>
+        <label class="field-label" for="comentario">Observaciones técnicas / repuestos *</label>
+        <textarea
+          id="comentario"
+          formControlName="comentario"
+          rows="4"
+          class="field-input resize-none"
+          placeholder="Repuestos usados, observaciones técnicas..."
+        ></textarea>
+        @if (form.controls.comentario.invalid && form.controls.comentario.touched) {
+          <p class="mt-1 text-xs text-orange-energy">Mínimo 3 caracteres en las observaciones.</p>
+        }
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="upload-box">
-            <span class="upload-icon">📷</span>
-            <span class="upload-label">Foto Antes</span>
-            <input type="file" accept="image/*" capture="environment" class="hidden" (change)="onFileSelected($event, 'antes')" />
-          </label>
-          @if (previewAntes()) {
-            <img [src]="previewAntes()!" alt="Antes" class="mt-2 h-24 w-full rounded-lg object-cover" />
-          }
-        </div>
-        <div>
-          <label class="upload-box">
-            <span class="upload-icon">📷</span>
-            <span class="upload-label">Foto Después</span>
-            <input type="file" accept="image/*" capture="environment" class="hidden" (change)="onFileSelected($event, 'despues')" />
-          </label>
-          @if (previewDespues()) {
-            <img [src]="previewDespues()!" alt="Después" class="mt-2 h-24 w-full rounded-lg object-cover" />
-          }
-        </div>
+      <div>
+        <label class="upload-box">
+          <span class="upload-icon">📷</span>
+          <span class="upload-label">Foto Después *</span>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            class="hidden"
+            (change)="onFileSelected($event)"
+          />
+        </label>
+        @if (previewDespues()) {
+          <img
+            [src]="previewDespues()!"
+            alt="Después"
+            class="mt-2 h-40 w-full rounded-lg object-cover border border-white/10"
+          />
+        }
       </div>
 
       @if (error()) {
-        <p class="rounded-lg border border-orange-energy/30 bg-orange-energy/10 px-3 py-2 text-sm text-orange-energy">{{ error() }}</p>
+        <p class="rounded-lg border border-orange-energy/30 bg-orange-energy/10 px-3 py-2 text-sm text-orange-energy">
+          {{ error() }}
+        </p>
       }
 
-      <button type="submit" class="btn-close w-full" [disabled]="loading()">
+      @if (!loading() && (form.invalid || !previewDespues())) {
+        <p class="text-xs text-slate-grey">
+          Completa las observaciones (mín. 3 caracteres) y adjunta la foto «Después» para confirmar.
+        </p>
+      }
+
+      <button
+        type="submit"
+        class="btn-close w-full"
+        [disabled]="loading() || form.invalid || !previewDespues()"
+      >
         @if (loading()) { Enviando evidencias... } @else { Confirmar cierre de OT }
       </button>
     </form>

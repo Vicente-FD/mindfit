@@ -5,6 +5,7 @@ export declare class SchemaFixService implements OnModuleInit {
     private readonly logger;
     constructor(dataSource: DataSource);
     onModuleInit(): Promise<void>;
+    private ensureOtSchema;
     private backfillCodigosInventario;
     private backfillSucursalSiglas;
     private backfillEstadoSesion;

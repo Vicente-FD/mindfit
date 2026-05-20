@@ -1,5 +1,6 @@
-import { PrioridadOrden, TipoMantenimiento } from '../../common/enums';
+import { ClasificacionOrden, PrioridadOrden, TipoMantenimiento } from '../../common/enums';
 export declare class CreateOrdenTrabajoDto {
+    clasificacion?: ClasificacionOrden;
     activoId?: number;
     sucursalId: number;
     titulo: string;

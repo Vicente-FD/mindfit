@@ -5,6 +5,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { SessionHeartbeatService } from '../../core/services/session-heartbeat.service';
 import { UserRole } from '../../core/models/user.model';
 import { QrScannerModalComponent } from '../qr-scanner-modal/qr-scanner-modal.component';
+import { AssetDetailsSheetComponent } from '../asset-details-sheet/asset-details-sheet.component';
+import { TecnicoUiService } from '../../core/services/tecnico-ui.service';
+import { WorkOrder } from '../../core/models/work-order.model';
 
 interface NavItem {
   label: string;
@@ -20,6 +23,7 @@ interface NavItem {
     RouterLink,
     RouterLinkActive,
     QrScannerModalComponent,
+    AssetDetailsSheetComponent,
     LucideAngularModule,
   ],
   templateUrl: './dashboard-layout.component.html',
@@ -28,6 +32,7 @@ interface NavItem {
 export class DashboardLayoutComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly sessionHeartbeat = inject(SessionHeartbeatService);
+  readonly tecnicoUi = inject(TecnicoUiService);
 
   readonly user = this.auth.user;
   readonly showScanner = signal(false);
@@ -111,6 +116,18 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
 
   closeScanner(): void {
     this.showScanner.set(false);
+  }
+
+  onSheetStart(orden: WorkOrder): void {
+    this.tecnicoUi.queueStart(orden);
+  }
+
+  onSheetClose(orden: WorkOrder): void {
+    this.tecnicoUi.queueClose(orden);
+  }
+
+  onSheetViewTask(orden: WorkOrder): void {
+    this.tecnicoUi.focusOrder(orden.id);
   }
 
   logout(): void {

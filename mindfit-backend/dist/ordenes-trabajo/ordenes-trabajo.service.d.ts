@@ -1,5 +1,7 @@
 import { DataSource } from 'typeorm';
-import { EstadoOrdenTrabajo, PrioridadOrden } from '../common/enums';
+import { ClasificacionOrden, EstadoOrdenTrabajo, PrioridadOrden, TipoMantenimiento } from '../common/enums';
+import { Usuario } from '../entities/usuario.entity';
+import { Activo } from '../entities/activo.entity';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
 import { EvidenciaOt } from '../entities/evidencia-ot.entity';
@@ -21,7 +23,14 @@ export declare class OrdenesTrabajoService {
     findAll(filters?: {
         tecnicoId?: number;
         sucursalId?: number;
+        estado?: 'activas' | 'por_aprobar' | 'finalizadas';
+        fechaInicio?: string;
+        fechaFin?: string;
+        includeComentarios?: boolean;
+        includeEvidencias?: boolean;
     }): Promise<OrdenTrabajo[]>;
+    private startOfDay;
+    private endOfDay;
     findOne(id: number): Promise<OrdenTrabajo>;
     findBySucursal(sucursalId: number): Promise<OrdenTrabajo[]>;
     reportarFalla(dto: {
@@ -31,13 +40,49 @@ export declare class OrdenesTrabajoService {
         titulo?: string;
     }, creadoPorId: number, sucursalId: number, fotoUrl?: string): Promise<OrdenTrabajo>;
     create(dto: CreateOrdenTrabajoDto, creadoPorId: number): Promise<OrdenTrabajo>;
+    private assertOrdenEditable;
     update(id: number, dto: UpdateOrdenTrabajoDto): Promise<OrdenTrabajo>;
-    asignar(id: number, dto: AsignarOrdenDto): Promise<OrdenTrabajo>;
-    updateEstado(id: number, estado: EstadoOrdenTrabajo, tecnicoId: number): Promise<OrdenTrabajo>;
-    cerrarConArchivos(id: number, tecnicoId: number, comentario: string, urlAntes: string, urlDespues: string): Promise<OrdenTrabajo>;
-    iniciar(id: number, tecnicoId: number): Promise<OrdenTrabajo>;
+    remove(id: number): Promise<void>;
+    asignar(id: number, dto: AsignarOrdenDto): Promise<{
+        tecnicoAsignado: Usuario | null;
+        id: number;
+        codigoOt: string;
+        clasificacion: ClasificacionOrden;
+        activoId: number | null;
+        activo: Activo | null;
+        sucursalId: number;
+        sucursal: import("../entities").Sucursal;
+        creadoPorId: number;
+        creadoPor: Usuario;
+        asignadoAId: number | null;
+        asignadoA: Usuario | null;
+        titulo: string;
+        descripcion: string | null;
+        prioridad: PrioridadOrden;
+        tipoMantenimiento: TipoMantenimiento;
+        estado: EstadoOrdenTrabajo;
+        tiempoEstimadoMinutos: number | null;
+        fechaProgramacion: Date | null;
+        fechaInicioReal: Date | null;
+        fechaFinReal: Date | null;
+        motivoRechazo: string | null;
+        fechaAprobacion: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        evidencias: EvidenciaOt[];
+        comentarios: ComentarioOt[];
+    }>;
+    updateEstado(id: number, estado: EstadoOrdenTrabajo, tecnicoId: number, urlFotoAntes?: string): Promise<OrdenTrabajo>;
+    cerrarConArchivos(id: number, tecnicoId: number, comentario: string, urlDespues: string): Promise<OrdenTrabajo>;
+    private esTecnicoAsignado;
+    iniciarConEvidencia(id: number, tecnicoId: number, urlFotoAntes: string): Promise<OrdenTrabajo>;
+    iniciar(id: number, tecnicoId: number): Promise<void>;
     agregarComentario(ordenId: number, autorId: number, dto: CreateComentarioDto): Promise<ComentarioOt>;
     agregarEvidencia(ordenId: number, cargadoPorId: number, dto: CreateEvidenciaDto): Promise<EvidenciaOt>;
     cerrar(id: number, tecnicoId: number, dto: CerrarOrdenDto): Promise<OrdenTrabajo>;
     aprobar(id: number): Promise<OrdenTrabajo>;
+    private static readonly REVERTIR_APROBACION_MS;
+    revertirAprobacion(id: number): Promise<OrdenTrabajo>;
+    rechazar(id: number, motivo: string): Promise<OrdenTrabajo>;
 }

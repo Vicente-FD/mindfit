@@ -1,0 +1,97 @@
+<div class="modal-backdrop" (click)="close()">
+  <div class="edit-ot-modal" (click)="$event.stopPropagation()">
+    <header class="edit-ot-modal__header">
+      <div>
+        <h3 class="edit-ot-modal__title">Editar orden de trabajo</h3>
+        <p class="edit-ot-modal__subtitle">{{ orden().codigoOt }}</p>
+      </div>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Cerrar">
+        <lucide-icon name="x" [size]="20" />
+      </button>
+    </header>
+
+    <form class="edit-ot-modal__form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="tipo-falla">
+        <span class="field-label">Tipo de falla</span>
+        <div class="tipo-falla__opts">
+          <label class="tipo-falla__opt">
+            <input
+              type="radio"
+              name="editClasificacion"
+              value="maquina"
+              [checked]="clasificacionTipo() === 'maquina'"
+              (change)="setClasificacion('maquina')"
+            />
+            Fallo en Máquina
+          </label>
+          <label class="tipo-falla__opt">
+            <input
+              type="radio"
+              name="editClasificacion"
+              value="infraestructura"
+              [checked]="clasificacionTipo() === 'infraestructura'"
+              (change)="setClasificacion('infraestructura')"
+            />
+            Daño de Infraestructura
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="field-label">Título OT *</label>
+        <input class="field-input" formControlName="titulo" />
+      </div>
+
+      <div>
+        <label class="field-label">Sucursal</label>
+        <select class="field-input" formControlName="sucursalId">
+          @for (s of sucursales(); track s.id) {
+            <option [value]="s.id">{{ s.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      @if (clasificacionTipo() === 'maquina') {
+        <div>
+          <label class="field-label">Activo *</label>
+          <select class="field-input" formControlName="activoId">
+            <option value="">Seleccione equipo</option>
+            @for (a of activosFiltrados(); track a.id) {
+              <option [value]="a.id">
+                {{ a.codigoInventario || a.codigoQrToken }} — {{ a.nombre }}
+              </option>
+            }
+          </select>
+        </div>
+      }
+
+      <div>
+        <label class="field-label">Prioridad</label>
+        <select class="field-input" formControlName="prioridad">
+          @for (p of prioridades; track p.value) {
+            <option [value]="p.value">{{ p.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="field-label">Técnico asignado</label>
+        <select class="field-input" formControlName="asignadoAId">
+          <option value="">Sin asignar</option>
+          @for (t of tecnicos(); track t.id) {
+            <option [value]="t.id">{{ t.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="field-label">Descripción</label>
+        <textarea class="field-input" rows="2" formControlName="descripcion"></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary w-full" [disabled]="saving() || form.invalid">
+        @if (saving()) { Guardando... } @else { Guardar cambios }
+      </button>
+    </form>
+  </div>
+</div>

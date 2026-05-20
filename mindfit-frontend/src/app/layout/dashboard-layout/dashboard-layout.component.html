@@ -67,3 +67,13 @@
 @if (showScanner()) {
   <app-qr-scanner-modal (closed)="closeScanner()" />
 }
+
+@if (showQrFab() && tecnicoUi.assetSheetToken(); as token) {
+  <app-asset-details-sheet
+    [identifier]="token"
+    (closed)="tecnicoUi.closeAssetSheet()"
+    (startWork)="onSheetStart($event)"
+    (requestClose)="onSheetClose($event)"
+    (viewTask)="onSheetViewTask($event)"
+  />
+}

@@ -1,0 +1,42 @@
+<div class="reject-overlay" (click)="close()">
+  <div class="reject-modal animate-modal-in" (click)="$event.stopPropagation()">
+    <div class="reject-modal__header">
+      <div>
+        <h2 class="text-lg font-semibold text-pure-white">Rechazar cierre de OT</h2>
+        <p class="text-xs text-slate-grey">{{ orden().codigoOt }} · {{ orden().titulo }}</p>
+      </div>
+      <button type="button" class="btn-ghost" (click)="close()" aria-label="Cerrar">
+        <lucide-icon name="x" [size]="18" />
+      </button>
+    </div>
+
+    <p class="mb-3 text-sm text-slate-grey">
+      La orden volverá a <strong class="text-pure-white">Órdenes Activas</strong> en estado
+      <em>en proceso</em> para que el técnico corrija el trabajo.
+    </p>
+
+    <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+      <div>
+        <label class="field-label" for="motivo">Motivo del rechazo *</label>
+        <textarea
+          id="motivo"
+          rows="3"
+          class="field-input resize-none"
+          formControlName="motivo"
+          placeholder="Indique qué debe corregir el técnico..."
+        ></textarea>
+        @if (form.controls.motivo.invalid && form.controls.motivo.touched) {
+          <p class="mt-1 text-xs text-orange-energy">Mínimo 3 caracteres.</p>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="btn-reject w-full"
+        [disabled]="rejecting() || form.invalid"
+      >
+        @if (rejecting()) { Rechazando... } @else { Confirmar rechazo }
+      </button>
+    </form>
+  </div>
+</div>

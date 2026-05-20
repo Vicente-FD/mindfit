@@ -5,11 +5,15 @@ import {
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import {
+  ClasificacionOrden,
   EstadoOrdenTrabajo,
   PrioridadOrden,
+  RolUsuario,
   TipoEvidencia,
   TipoMantenimiento,
 } from '../common/enums';
+import { Usuario } from '../entities/usuario.entity';
+import { Activo } from '../entities/activo.entity';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
 import { EvidenciaOt } from '../entities/evidencia-ot.entity';
@@ -20,6 +24,8 @@ import { AsignarOrdenDto } from './dto/asignar-orden.dto';
 import { CreateComentarioDto } from './dto/create-comentario.dto';
 import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
 import { CerrarOrdenDto } from './dto/cerrar-orden.dto';
+import { nextOtCodigo } from './ot-codigo.sequence';
+import { agentDebugLog } from '../common/agent-debug-log';
 
 @Injectable()
 export class OrdenesTrabajoService {
@@ -41,12 +47,19 @@ export class OrdenesTrabajoService {
   }
 
   private async generarCodigoOt(): Promise<string> {
-    const year = new Date().getFullYear();
-    const count = await this.ordenRepo().count();
-    return `OT-${year}-${String(count + 1).padStart(5, '0')}`;
+    const manager = this.transactionContext.getManager(this.dataSource);
+    return nextOtCodigo((sql) => manager.query(sql));
   }
 
-  findAll(filters?: { tecnicoId?: number; sucursalId?: number }) {
+  findAll(filters?: {
+    tecnicoId?: number;
+    sucursalId?: number;
+    estado?: 'activas' | 'por_aprobar' | 'finalizadas';
+    fechaInicio?: string;
+    fechaFin?: string;
+    includeComentarios?: boolean;
+    includeEvidencias?: boolean;
+  }) {
     const qb = this.ordenRepo()
       .createQueryBuilder('ot')
       .leftJoinAndSelect('ot.activo', 'activo')
@@ -54,6 +67,14 @@ export class OrdenesTrabajoService {
       .leftJoinAndSelect('ot.creadoPor', 'creadoPor')
       .leftJoinAndSelect('ot.asignadoA', 'asignadoA')
       .orderBy('ot.createdAt', 'DESC');
+
+    if (filters?.includeComentarios) {
+      qb.leftJoinAndSelect('ot.comentarios', 'comentarios');
+    }
+
+    if (filters?.includeEvidencias) {
+      qb.leftJoinAndSelect('ot.evidencias', 'evidencias');
+    }
 
     if (filters?.tecnicoId) {
       qb.andWhere('ot.asignado_a_id = :tecnicoId', {
@@ -66,7 +87,50 @@ export class OrdenesTrabajoService {
       });
     }
 
+    if (filters?.estado === 'activas') {
+      qb.andWhere('ot.estado IN (:...estadosActivos)', {
+        estadosActivos: [
+          EstadoOrdenTrabajo.PENDIENTE,
+          EstadoOrdenTrabajo.ASIGNADA,
+          EstadoOrdenTrabajo.EN_PROCESO,
+        ],
+      });
+    } else if (filters?.estado === 'por_aprobar') {
+      qb.andWhere('ot.estado = :estadoPorAprobar', {
+        estadoPorAprobar: EstadoOrdenTrabajo.FINALIZADA,
+      });
+    } else if (filters?.estado === 'finalizadas') {
+      qb.andWhere('ot.estado = :estadoArchivo', {
+        estadoArchivo: EstadoOrdenTrabajo.APROBADA,
+      });
+    }
+
+    if (filters?.fechaInicio) {
+      qb.andWhere('ot.created_at >= :fechaInicio', {
+        fechaInicio: this.startOfDay(filters.fechaInicio),
+      });
+    }
+    if (filters?.fechaFin) {
+      qb.andWhere('ot.created_at <= :fechaFin', {
+        fechaFin: this.endOfDay(filters.fechaFin),
+      });
+    }
+
+    qb.andWhere('ot.deleted_at IS NULL');
+
     return qb.getMany();
+  }
+
+  private startOfDay(isoDate: string): Date {
+    const d = new Date(isoDate);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  private endOfDay(isoDate: string): Date {
+    const d = new Date(isoDate);
+    d.setHours(23, 59, 59, 999);
+    return d;
   }
 
   async findOne(id: number) {
@@ -125,9 +189,35 @@ export class OrdenesTrabajoService {
   }
 
   async create(dto: CreateOrdenTrabajoDto, creadoPorId: number) {
+    const clasificacion = dto.clasificacion ?? ClasificacionOrden.MAQUINA;
+    const manager = this.transactionContext.getManager(this.dataSource);
+
+    if (clasificacion === ClasificacionOrden.MAQUINA) {
+      if (dto.activoId == null) {
+        throw new BadRequestException(
+          'activoId es obligatorio para OT de máquina',
+        );
+      }
+      const activo = await manager.findOne(Activo, {
+        where: { id: dto.activoId },
+      });
+      if (!activo) {
+        throw new BadRequestException('Activo no encontrado');
+      }
+      if (activo.sucursalId !== dto.sucursalId) {
+        throw new BadRequestException(
+          'El activo no pertenece a la sucursal seleccionada',
+        );
+      }
+    }
+
     const orden = this.ordenRepo().create({
       codigoOt: await this.generarCodigoOt(),
-      activoId: dto.activoId ?? null,
+      clasificacion,
+      activoId:
+        clasificacion === ClasificacionOrden.INFRAESTRUCTURA
+          ? null
+          : (dto.activoId ?? null),
       sucursalId: dto.sucursalId,
       creadoPorId,
       titulo: dto.titulo,
@@ -140,34 +230,147 @@ export class OrdenesTrabajoService {
         ? new Date(dto.fechaProgramacion)
         : null,
     });
-    return this.ordenRepo().save(orden);
+    const saved = await this.ordenRepo().save(orden);
+    return this.findOne(saved.id);
+  }
+
+  private assertOrdenEditable(estado: EstadoOrdenTrabajo): void {
+    if (
+      estado === EstadoOrdenTrabajo.FINALIZADA ||
+      estado === EstadoOrdenTrabajo.APROBADA
+    ) {
+      throw new BadRequestException(
+        'No se puede modificar una orden finalizada o aprobada',
+      );
+    }
   }
 
   async update(id: number, dto: UpdateOrdenTrabajoDto) {
     const orden = await this.findOne(id);
-    Object.assign(orden, {
-      ...dto,
-      fechaProgramacion: dto.fechaProgramacion
-        ? new Date(dto.fechaProgramacion)
-        : orden.fechaProgramacion,
-    });
-    return this.ordenRepo().save(orden);
+    this.assertOrdenEditable(orden.estado);
+    const manager = this.transactionContext.getManager(this.dataSource);
+
+    if (dto.titulo != null) orden.titulo = dto.titulo;
+    if (dto.descripcion !== undefined) {
+      orden.descripcion = dto.descripcion || null;
+    }
+    if (dto.prioridad != null) orden.prioridad = dto.prioridad;
+
+    if (dto.clasificacion != null) {
+      orden.clasificacion = dto.clasificacion;
+      if (dto.clasificacion === ClasificacionOrden.INFRAESTRUCTURA) {
+        orden.activoId = null;
+      }
+    }
+
+    const clasificacionEfectiva =
+      dto.clasificacion ?? orden.clasificacion ?? ClasificacionOrden.MAQUINA;
+
+    if (clasificacionEfectiva === ClasificacionOrden.MAQUINA) {
+      if (dto.activoId !== undefined) {
+        if (dto.activoId == null) {
+          throw new BadRequestException(
+            'activoId es obligatorio para OT de máquina',
+          );
+        }
+        const activo = await manager.findOne(Activo, {
+          where: { id: dto.activoId },
+        });
+        if (!activo) {
+          throw new BadRequestException('Activo no encontrado');
+        }
+        if (activo.sucursalId !== orden.sucursalId) {
+          throw new BadRequestException(
+            'El activo no pertenece a la sucursal de la OT',
+          );
+        }
+        orden.activoId = dto.activoId;
+      } else if (
+        dto.clasificacion === ClasificacionOrden.MAQUINA &&
+        orden.activoId == null
+      ) {
+        throw new BadRequestException(
+          'Debe indicar activoId al clasificar como máquina',
+        );
+      }
+    }
+
+    if (dto.asignadoAId !== undefined) {
+      if (dto.asignadoAId == null) {
+        orden.asignadoAId = null;
+        if (orden.estado === EstadoOrdenTrabajo.ASIGNADA) {
+          orden.estado = EstadoOrdenTrabajo.PENDIENTE;
+        }
+      } else {
+        const tecnico = await manager.findOne(Usuario, {
+          where: { id: dto.asignadoAId, rol: RolUsuario.TECNICO },
+        });
+        if (!tecnico?.estaActivo) {
+          throw new BadRequestException('Técnico no válido o inactivo');
+        }
+        orden.asignadoAId = dto.asignadoAId;
+        if (orden.estado === EstadoOrdenTrabajo.PENDIENTE) {
+          orden.estado = EstadoOrdenTrabajo.ASIGNADA;
+        }
+      }
+    }
+
+    await this.ordenRepo().save(orden);
+    return this.findOne(id);
+  }
+
+  async remove(id: number): Promise<void> {
+    const orden = await this.findOne(id);
+    this.assertOrdenEditable(orden.estado);
+    const result = await this.ordenRepo().softDelete(id);
+    if (!result.affected) {
+      throw new NotFoundException(`Orden de trabajo ${id} no encontrada`);
+    }
   }
 
   async asignar(id: number, dto: AsignarOrdenDto) {
+    const manager = this.transactionContext.getManager(this.dataSource);
+    const tecnico = await manager.findOne(Usuario, {
+      where: { id: dto.tecnicoId, rol: RolUsuario.TECNICO },
+    });
+    if (!tecnico?.estaActivo) {
+      throw new BadRequestException('Técnico no válido o inactivo');
+    }
+
     const orden = await this.findOne(id);
-    orden.asignadoAId = dto.asignadoAId;
+    if (
+      orden.estado !== EstadoOrdenTrabajo.PENDIENTE &&
+      orden.estado !== EstadoOrdenTrabajo.ASIGNADA
+    ) {
+      throw new BadRequestException(
+        'Solo se puede asignar técnico en OT pendiente o asignada',
+      );
+    }
+
+    orden.asignadoAId = dto.tecnicoId;
     orden.estado = EstadoOrdenTrabajo.ASIGNADA;
-    return this.ordenRepo().save(orden);
+    await this.ordenRepo().save(orden);
+
+    const updated = await this.findOne(id);
+    return {
+      ...updated,
+      tecnicoAsignado: updated.asignadoA,
+    };
   }
 
   async updateEstado(
     id: number,
     estado: EstadoOrdenTrabajo,
     tecnicoId: number,
+    urlFotoAntes?: string,
   ) {
     if (estado === EstadoOrdenTrabajo.EN_PROCESO) {
-      return this.iniciar(id, tecnicoId);
+      if (!urlFotoAntes) {
+        throw new BadRequestException(
+          'La foto_antes es obligatoria para iniciar el trabajo',
+        );
+      }
+      return this.iniciarConEvidencia(id, tecnicoId, urlFotoAntes);
     }
     throw new BadRequestException(
       `Transición de estado no permitida para el técnico: ${estado}`,
@@ -178,12 +381,14 @@ export class OrdenesTrabajoService {
     id: number,
     tecnicoId: number,
     comentario: string,
-    urlAntes: string,
     urlDespues: string,
   ) {
     const orden = await this.findOne(id);
 
-    if (orden.asignadoAId !== tecnicoId) {
+    if (
+      orden.asignadoAId != null &&
+      !this.esTecnicoAsignado(orden.asignadoAId, tecnicoId)
+    ) {
       throw new BadRequestException(
         'Solo el técnico asignado puede cerrar esta orden',
       );
@@ -197,29 +402,89 @@ export class OrdenesTrabajoService {
 
     await this.agregarComentario(id, tecnicoId, { comentario });
     await this.agregarEvidencia(id, tecnicoId, {
-      tipoEvidencia: TipoEvidencia.ANTES,
-      urlImagen: urlAntes,
-    });
-    await this.agregarEvidencia(id, tecnicoId, {
       tipoEvidencia: TipoEvidencia.DESPUES,
       urlImagen: urlDespues,
     });
 
-    orden.estado = EstadoOrdenTrabajo.FINALIZADA;
-    orden.fechaFinReal = new Date();
-    return this.ordenRepo().save(orden);
+    await this.ordenRepo().update(id, {
+      estado: EstadoOrdenTrabajo.FINALIZADA,
+      fechaFinReal: new Date(),
+    });
+    return this.findOne(id);
   }
 
-  async iniciar(id: number, tecnicoId: number) {
+  private esTecnicoAsignado(
+    asignadoAId: number | null | undefined,
+    tecnicoId: number,
+  ): boolean {
+    return (
+      asignadoAId != null && Number(asignadoAId) === Number(tecnicoId)
+    );
+  }
+
+  async iniciarConEvidencia(
+    id: number,
+    tecnicoId: number,
+    urlFotoAntes: string,
+  ) {
     const orden = await this.findOne(id);
-    if (orden.asignadoAId !== tecnicoId) {
+    if (
+      orden.asignadoAId != null &&
+      !this.esTecnicoAsignado(orden.asignadoAId, tecnicoId)
+    ) {
+      // #region agent log
+      agentDebugLog({ runId: 'post-fix', hypothesisId: 'D', location: 'ordenes-trabajo.service.ts:iniciarConEvidencia', message: 'rejected wrong tecnico', data: { id, asignadoAId: orden.asignadoAId, tecnicoId } });
+      // #endregion
       throw new BadRequestException(
         'Solo el técnico asignado puede iniciar esta orden',
       );
     }
-    orden.estado = EstadoOrdenTrabajo.EN_PROCESO;
-    orden.fechaInicioReal = new Date();
-    return this.ordenRepo().save(orden);
+    if (
+      orden.estado !== EstadoOrdenTrabajo.ASIGNADA &&
+      orden.estado !== EstadoOrdenTrabajo.PENDIENTE
+    ) {
+      // #region agent log
+      agentDebugLog({ runId: 'post-fix', hypothesisId: 'D', location: 'ordenes-trabajo.service.ts:iniciarConEvidencia', message: 'rejected bad estado', data: { id, estado: orden.estado, tecnicoId } });
+      // #endregion
+      throw new BadRequestException(
+        'Solo se pueden iniciar órdenes pendientes o asignadas',
+      );
+    }
+
+    if (orden.asignadoAId == null) {
+      orden.asignadoAId = tecnicoId;
+    }
+
+    const evidenciaAntes = await this.evidenciaRepo().findOne({
+      where: {
+        ordenTrabajoId: id,
+        tipoEvidencia: TipoEvidencia.ANTES,
+      },
+    });
+    if (!evidenciaAntes) {
+      await this.agregarEvidencia(id, tecnicoId, {
+        tipoEvidencia: TipoEvidencia.ANTES,
+        urlImagen: urlFotoAntes,
+      });
+    }
+
+    await this.ordenRepo().update(id, {
+      estado: EstadoOrdenTrabajo.EN_PROCESO,
+      fechaInicioReal: new Date(),
+      asignadoAId: orden.asignadoAId,
+    });
+
+    const refreshed = await this.findOne(id);
+    // #region agent log
+    agentDebugLog({ runId: 'post-fix', hypothesisId: 'B,C', location: 'ordenes-trabajo.service.ts:iniciarConEvidencia', message: 'after update', data: { id, estado: refreshed.estado, fechaInicioReal: refreshed.fechaInicioReal, asignadoAId: refreshed.asignadoAId } });
+    // #endregion
+    return refreshed;
+  }
+
+  async iniciar(id: number, tecnicoId: number) {
+    throw new BadRequestException(
+      'Use PATCH /ordenes-trabajo/:id/estado con foto_antes para iniciar',
+    );
   }
 
   async agregarComentario(
@@ -254,7 +519,7 @@ export class OrdenesTrabajoService {
   async cerrar(id: number, tecnicoId: number, dto: CerrarOrdenDto) {
     const orden = await this.findOne(id);
 
-    if (orden.asignadoAId !== tecnicoId) {
+    if (!this.esTecnicoAsignado(orden.asignadoAId, tecnicoId)) {
       throw new BadRequestException(
         'Solo el técnico asignado puede cerrar esta orden',
       );
@@ -287,20 +552,53 @@ export class OrdenesTrabajoService {
       );
     }
 
-    const evidencias = await this.evidenciaRepo().find({
-      where: { ordenTrabajoId: id },
-    });
-    const tipos = new Set(evidencias.map((e) => e.tipoEvidencia));
-    if (
-      !tipos.has(TipoEvidencia.ANTES) ||
-      !tipos.has(TipoEvidencia.DESPUES)
-    ) {
+    orden.estado = EstadoOrdenTrabajo.APROBADA;
+    orden.motivoRechazo = null;
+    orden.fechaAprobacion = new Date();
+    await this.ordenRepo().save(orden);
+    return this.findOne(id);
+  }
+
+  private static readonly REVERTIR_APROBACION_MS = 2 * 60 * 1000;
+
+  async revertirAprobacion(id: number) {
+    const orden = await this.findOne(id);
+    if (orden.estado !== EstadoOrdenTrabajo.APROBADA) {
       throw new BadRequestException(
-        'La orden debe tener evidencias antes y después para ser aprobada',
+        'Solo se puede revertir una orden aprobada en el archivo histórico',
+      );
+    }
+    if (!orden.fechaAprobacion) {
+      throw new BadRequestException(
+        'No se puede revertir: falta fecha de aprobación',
+      );
+    }
+    const elapsed =
+      Date.now() - new Date(orden.fechaAprobacion).getTime();
+    if (elapsed > OrdenesTrabajoService.REVERTIR_APROBACION_MS) {
+      throw new BadRequestException(
+        'El plazo de 2 minutos para revertir la aprobación ha expirado',
       );
     }
 
-    orden.estado = EstadoOrdenTrabajo.APROBADA;
-    return this.ordenRepo().save(orden);
+    orden.estado = EstadoOrdenTrabajo.FINALIZADA;
+    orden.fechaAprobacion = null;
+    await this.ordenRepo().save(orden);
+    return this.findOne(id);
+  }
+
+  async rechazar(id: number, motivo: string) {
+    const orden = await this.findOne(id);
+    if (orden.estado !== EstadoOrdenTrabajo.FINALIZADA) {
+      throw new BadRequestException(
+        'Solo se pueden rechazar órdenes pendientes de aprobación (finalizada)',
+      );
+    }
+
+    orden.estado = EstadoOrdenTrabajo.EN_PROCESO;
+    orden.fechaFinReal = null;
+    orden.motivoRechazo = motivo.trim();
+    await this.ordenRepo().save(orden);
+    return this.findOne(id);
   }
 }

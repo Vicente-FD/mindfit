@@ -11,11 +11,20 @@ import {
 } from '../../../core/models/analytics.model';
 import { Sucursal } from '../../../core/models/sucursal.model';
 import { Marca } from '../../../core/models/marca.model';
+import { LucideAngularModule } from 'lucide-angular';
 import { QrLabelModalComponent } from '../../../shared/qr-label-modal/qr-label-modal.component';
+import { EditAssetModalComponent } from '../../../shared/edit-asset-modal/edit-asset-modal.component';
+import { AssetHistoryModalComponent } from '../../../shared/asset-history-modal/asset-history-modal.component';
 
 @Component({
   selector: 'app-activos-gestion',
-  imports: [ReactiveFormsModule, QrLabelModalComponent],
+  imports: [
+    ReactiveFormsModule,
+    LucideAngularModule,
+    QrLabelModalComponent,
+    EditAssetModalComponent,
+    AssetHistoryModalComponent,
+  ],
   templateUrl: './activos-gestion.component.html',
   styleUrl: './activos-gestion.component.css',
 })
@@ -33,6 +42,8 @@ export class ActivosGestionComponent implements OnInit {
   readonly showForm = signal(false);
   readonly saving = signal(false);
   readonly qrActivo = signal<Activo | null>(null);
+  readonly editActivo = signal<Activo | null>(null);
+  readonly historyActivo = signal<Activo | null>(null);
 
   readonly anios = Array.from({ length: 8 }, (_, i) => new Date().getFullYear() - i);
 
@@ -133,6 +144,26 @@ export class ActivosGestionComponent implements OnInit {
 
   closeQr(): void {
     this.qrActivo.set(null);
+  }
+
+  openEdit(activo: Activo): void {
+    this.editActivo.set(activo);
+  }
+
+  closeEdit(): void {
+    this.editActivo.set(null);
+  }
+
+  onEditSaved(): void {
+    this.loadActivos();
+  }
+
+  openHistory(activo: Activo): void {
+    this.historyActivo.set(activo);
+  }
+
+  closeHistory(): void {
+    this.historyActivo.set(null);
   }
 
   marcaLabel(activo: Activo): string {
