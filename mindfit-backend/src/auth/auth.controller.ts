@@ -1,4 +1,4 @@
-import { Body, Controller, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
@@ -14,6 +14,11 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Get('me')
+  getMe(@CurrentUser() user: JwtPayload) {
+    return this.authService.getSessionProfile(user.sub);
   }
 
   @Post('logout')

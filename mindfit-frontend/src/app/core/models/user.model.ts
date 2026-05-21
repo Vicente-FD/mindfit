@@ -1,3 +1,5 @@
+import { PermisosUi } from './permisos-ui.model';
+
 export type UserRole =
   | 'admin'
   | 'jefe_operaciones'
@@ -16,11 +18,17 @@ export interface AuthUser {
   sucursalId: number | null;
   sucursalNombre?: string | null;
   estadoSesion?: EstadoSesion;
+  permisosUi: PermisosUi;
 }
 
 export interface LoginResponse {
   accessToken: string;
   user: AuthUser;
+}
+
+export interface SessionProfileResponse {
+  user: AuthUser;
+  forceLogout: boolean;
 }
 
 export const ROLE_DASHBOARD_ROUTES: Record<UserRole, string> = {

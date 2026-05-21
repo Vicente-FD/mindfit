@@ -7,6 +7,7 @@ class JwtPayload {
     email;
     rol;
     sucursalId;
+    tokenVersion;
 }
 exports.JwtPayload = JwtPayload;
 //# sourceMappingURL=jwt-payload.interface.js.map

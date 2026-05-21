@@ -1,4 +1,4 @@
-import { Component, inject, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 import { NgxScannerQrcodeComponent, ScannerQRCodeResult } from 'ngx-scanner-qrcode';
 import { TecnicoUiService } from '../../core/services/tecnico-ui.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -13,7 +13,10 @@ export class QrScannerModalComponent {
   private readonly tecnicoUi = inject(TecnicoUiService);
   private readonly toast = inject(ToastService);
 
+  /** `tecnico`: abre ficha técnico; `emit`: devuelve identificador al padre */
+  readonly mode = input<'tecnico' | 'emit'>('tecnico');
   readonly closed = output<void>();
+  readonly scanned = output<string>();
   readonly processing = signal(false);
   private lastToken: string | null = null;
 
@@ -26,10 +29,16 @@ export class QrScannerModalComponent {
     this.lastToken = raw;
     this.processing.set(true);
 
-    this.tecnicoUi.openAssetSheet(raw.trim());
+    const token = raw.trim();
+    if (this.mode() === 'emit') {
+      this.scanned.emit(token);
+      this.toast.success('Código QR leído');
+    } else {
+      this.tecnicoUi.openAssetSheet(token);
+      this.toast.success('Ficha del activo cargada');
+    }
     this.processing.set(false);
     this.closed.emit();
-    this.toast.success('Ficha del activo cargada');
   }
 
   close(): void {

@@ -46,6 +46,77 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         const manager = this.transactionContext.getManager(this.dataSource);
         return (0, ot_codigo_sequence_1.nextOtCodigo)((sql) => manager.query(sql));
     }
+    manager() {
+        return this.transactionContext.getManager(this.dataSource);
+    }
+    static ESTADOS_OT_BLOQUEAN_OPERATIVO = [
+        enums_1.EstadoOrdenTrabajo.PENDIENTE,
+        enums_1.EstadoOrdenTrabajo.ASIGNADA,
+        enums_1.EstadoOrdenTrabajo.EN_PROCESO,
+        enums_1.EstadoOrdenTrabajo.FINALIZADA,
+    ];
+    async actualizarEstadoActivo(manager, activoId, estado) {
+        await manager.update(activo_entity_1.Activo, activoId, { estadoOperacional: estado });
+    }
+    async contarOtCorrectivasAbiertas(manager, activoId, excluirOtId) {
+        const qb = manager
+            .getRepository(orden_trabajo_entity_1.OrdenTrabajo)
+            .createQueryBuilder('ot')
+            .where('ot.activo_id = :activoId', { activoId })
+            .andWhere('ot.tipo_mantenimiento = :tipo', {
+            tipo: enums_1.TipoMantenimiento.CORRECTIVO,
+        })
+            .andWhere('ot.estado IN (:...estados)', {
+            estados: OrdenesTrabajoService_1.ESTADOS_OT_BLOQUEAN_OPERATIVO,
+        })
+            .andWhere('ot.deleted_at IS NULL');
+        if (excluirOtId != null) {
+            qb.andWhere('ot.id != :excluirOtId', { excluirOtId });
+        }
+        return qb.getCount();
+    }
+    async restaurarActivoOperativoSiAplica(manager, activoId, excluirOtId) {
+        const abiertas = await this.contarOtCorrectivasAbiertas(manager, activoId, excluirOtId);
+        if (abiertas === 0) {
+            await this.actualizarEstadoActivo(manager, activoId, enums_1.EstadoOperacionalActivo.OPERATIVO);
+        }
+    }
+    async syncActivoAlCrearOt(manager, orden) {
+        if (orden.activoId == null)
+            return;
+        if (orden.tipoMantenimiento !== enums_1.TipoMantenimiento.CORRECTIVO)
+            return;
+        await this.actualizarEstadoActivo(manager, orden.activoId, enums_1.EstadoOperacionalActivo.FUERA_SERVICIO);
+    }
+    estadoActivoAlIniciarTrabajo(tipoMantenimiento) {
+        if (tipoMantenimiento === enums_1.TipoMantenimiento.PREVENTIVO) {
+            return enums_1.EstadoOperacionalActivo.MANTENIMIENTO_PREVENTIVO;
+        }
+        return enums_1.EstadoOperacionalActivo.EN_REPARACION;
+    }
+    async syncActivoAlIniciarTrabajo(manager, orden) {
+        if (orden.activoId == null)
+            return;
+        if (orden.tipoMantenimiento !== enums_1.TipoMantenimiento.CORRECTIVO &&
+            orden.tipoMantenimiento !== enums_1.TipoMantenimiento.PREVENTIVO) {
+            return;
+        }
+        await this.actualizarEstadoActivo(manager, orden.activoId, this.estadoActivoAlIniciarTrabajo(orden.tipoMantenimiento));
+    }
+    async syncActivoTrasCierreOt(manager, orden) {
+        if (orden.activoId == null)
+            return;
+        if (orden.tipoMantenimiento !== enums_1.TipoMantenimiento.CORRECTIVO)
+            return;
+        if (orden.estado === enums_1.EstadoOrdenTrabajo.APROBADA ||
+            orden.estado === enums_1.EstadoOrdenTrabajo.RECHAZADA) {
+            await this.restaurarActivoOperativoSiAplica(manager, orden.activoId, orden.id);
+            return;
+        }
+        if (orden.estado === enums_1.EstadoOrdenTrabajo.EN_PROCESO) {
+            await this.actualizarEstadoActivo(manager, orden.activoId, enums_1.EstadoOperacionalActivo.EN_REPARACION);
+        }
+    }
     findAll(filters) {
         const qb = this.ordenRepo()
             .createQueryBuilder('ot')
@@ -154,7 +225,7 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
     }
     async create(dto, creadoPorId) {
         const clasificacion = dto.clasificacion ?? enums_1.ClasificacionOrden.MAQUINA;
-        const manager = this.transactionContext.getManager(this.dataSource);
+        const manager = this.manager();
         if (clasificacion === enums_1.ClasificacionOrden.MAQUINA) {
             if (dto.activoId == null) {
                 throw new common_1.BadRequestException('activoId es obligatorio para OT de máquina');
@@ -169,7 +240,7 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
                 throw new common_1.BadRequestException('El activo no pertenece a la sucursal seleccionada');
             }
         }
-        const orden = this.ordenRepo().create({
+        const orden = manager.create(orden_trabajo_entity_1.OrdenTrabajo, {
             codigoOt: await this.generarCodigoOt(),
             clasificacion,
             activoId: clasificacion === enums_1.ClasificacionOrden.INFRAESTRUCTURA
@@ -187,7 +258,8 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
                 ? new Date(dto.fechaProgramacion)
                 : null,
         });
-        const saved = await this.ordenRepo().save(orden);
+        const saved = await manager.save(orden_trabajo_entity_1.OrdenTrabajo, orden);
+        await this.syncActivoAlCrearOt(manager, saved);
         return this.findOne(saved.id);
     }
     assertOrdenEditable(estado) {
@@ -372,12 +444,14 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
                 urlImagen: urlFotoAntes,
             });
         }
-        await this.ordenRepo().update(id, {
+        const manager = this.manager();
+        await manager.update(orden_trabajo_entity_1.OrdenTrabajo, id, {
             estado: enums_1.EstadoOrdenTrabajo.EN_PROCESO,
             fechaInicioReal: new Date(),
             asignadoAId: orden.asignadoAId,
         });
         const refreshed = await this.findOne(id);
+        await this.syncActivoAlIniciarTrabajo(manager, refreshed);
         (0, agent_debug_log_1.agentDebugLog)({ runId: 'post-fix', hypothesisId: 'B,C', location: 'ordenes-trabajo.service.ts:iniciarConEvidencia', message: 'after update', data: { id, estado: refreshed.estado, fechaInicioReal: refreshed.fechaInicioReal, asignadoAId: refreshed.asignadoAId } });
         return refreshed;
     }
@@ -425,10 +499,12 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         if (orden.estado !== enums_1.EstadoOrdenTrabajo.FINALIZADA) {
             throw new common_1.BadRequestException('Solo se pueden aprobar órdenes en estado finalizada');
         }
+        const manager = this.manager();
         orden.estado = enums_1.EstadoOrdenTrabajo.APROBADA;
         orden.motivoRechazo = null;
         orden.fechaAprobacion = new Date();
-        await this.ordenRepo().save(orden);
+        await manager.save(orden_trabajo_entity_1.OrdenTrabajo, orden);
+        await this.syncActivoTrasCierreOt(manager, orden);
         return this.findOne(id);
     }
     static REVERTIR_APROBACION_MS = 2 * 60 * 1000;
@@ -444,9 +520,13 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         if (elapsed > OrdenesTrabajoService_1.REVERTIR_APROBACION_MS) {
             throw new common_1.BadRequestException('El plazo de 2 minutos para revertir la aprobación ha expirado');
         }
+        const manager = this.manager();
         orden.estado = enums_1.EstadoOrdenTrabajo.FINALIZADA;
         orden.fechaAprobacion = null;
-        await this.ordenRepo().save(orden);
+        await manager.save(orden_trabajo_entity_1.OrdenTrabajo, orden);
+        if (orden.activoId != null && orden.tipoMantenimiento === enums_1.TipoMantenimiento.CORRECTIVO) {
+            await this.actualizarEstadoActivo(manager, orden.activoId, enums_1.EstadoOperacionalActivo.EN_REPARACION);
+        }
         return this.findOne(id);
     }
     async rechazar(id, motivo) {
@@ -455,18 +535,21 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         if (motivoRechazo.length < 3) {
             throw new common_1.BadRequestException('El motivo de rechazo debe tener al menos 3 caracteres');
         }
+        const manager = this.manager();
         if (orden.estado === enums_1.EstadoOrdenTrabajo.FINALIZADA) {
             orden.estado = enums_1.EstadoOrdenTrabajo.EN_PROCESO;
             orden.fechaFinReal = null;
             orden.motivoRechazo = motivoRechazo;
-            await this.ordenRepo().save(orden);
+            await manager.save(orden_trabajo_entity_1.OrdenTrabajo, orden);
+            await this.syncActivoTrasCierreOt(manager, orden);
             return this.findOne(id);
         }
         if (orden.estado === enums_1.EstadoOrdenTrabajo.PENDIENTE) {
             orden.estado = enums_1.EstadoOrdenTrabajo.RECHAZADA;
             orden.motivoRechazo = motivoRechazo;
             orden.asignadoAId = null;
-            await this.ordenRepo().save(orden);
+            await manager.save(orden_trabajo_entity_1.OrdenTrabajo, orden);
+            await this.syncActivoTrasCierreOt(manager, orden);
             return this.findOne(id);
         }
         throw new common_1.BadRequestException('Solo se pueden rechazar tickets en estado pendiente o cierres en estado finalizada');

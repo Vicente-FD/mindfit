@@ -29,6 +29,7 @@ var EstadoOperacionalActivo;
     EstadoOperacionalActivo["OPERATIVO"] = "operativo";
     EstadoOperacionalActivo["FUERA_SERVICIO"] = "fuera_servicio";
     EstadoOperacionalActivo["MANTENIMIENTO_PREVENTIVO"] = "mantenimiento_preventivo";
+    EstadoOperacionalActivo["EN_REPARACION"] = "en_reparacion";
 })(EstadoOperacionalActivo || (exports.EstadoOperacionalActivo = EstadoOperacionalActivo = {}));
 var PrioridadOrden;
 (function (PrioridadOrden) {

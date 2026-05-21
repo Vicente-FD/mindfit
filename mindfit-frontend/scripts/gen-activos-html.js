@@ -35,7 +35,7 @@ fs.writeFileSync(p, `<motion-panel class="space-y-4">
 
     @if (selectedActivo(); as activo) {
       <section id="qr-print-sheet" class="qr-ficha page-card text-center">
-        <img src="assets/mindfit-logo.png" alt="Mindfit" class="qr-logo mx-auto" />
+        <img src="logo2.svg" alt="Mindfit" class="qr-logo mx-auto" />
         <p class="mt-2 text-xs uppercase tracking-widest text-orange-energy">Mindfit Ops</p>
         <p class="mt-1 text-sm text-pure-white">{{ activo.nombre }}</p>
         <div class="my-4 flex justify-center">

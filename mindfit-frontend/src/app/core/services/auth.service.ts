@@ -5,11 +5,12 @@ import { tap, finalize } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AuthUser,
-  EstadoSesion,
   LoginResponse,
   ROLE_DASHBOARD_ROUTES,
+  SessionProfileResponse,
   UserRole,
 } from '../models/user.model';
+import { PermisosUi, hasPermiso, resolvePermisosUi } from '../models/permisos-ui.model';
 
 const TOKEN_KEY = 'mindfit_token';
 const USER_KEY = 'mindfit_user';
@@ -21,6 +22,11 @@ export class AuthService {
 
   readonly token = this.tokenSignal.asReadonly();
   readonly user = this.userSignal.asReadonly();
+  readonly permisosUi = computed(() => {
+    const u = this.userSignal();
+    if (!u) return null;
+    return resolvePermisosUi(u.rol, u.permisosUi);
+  });
   readonly isAuthenticated = computed(() => !!this.tokenSignal());
   readonly role = computed(() => this.userSignal()?.rol ?? null);
 
@@ -37,12 +43,21 @@ export class AuthService {
       })
       .pipe(
         tap((response) => {
-          localStorage.setItem(TOKEN_KEY, response.accessToken);
-          localStorage.setItem(USER_KEY, JSON.stringify(response.user));
-          this.tokenSignal.set(response.accessToken);
-          this.userSignal.set(response.user);
+          this.persistSession(response.accessToken, response.user);
         }),
       );
+  }
+
+  refreshSessionProfile() {
+    return this.http.get<SessionProfileResponse>(`${environment.apiUrl}/auth/me`);
+  }
+
+  applySessionProfile(profile: SessionProfileResponse): void {
+    if (profile.forceLogout) {
+      this.forceLogout();
+      return;
+    }
+    this.patchUser(profile.user);
   }
 
   logout(): void {
@@ -50,21 +65,40 @@ export class AuthService {
     if (token) {
       this.http
         .post(`${environment.apiUrl}/auth/logout`, {})
-        .pipe(
-          finalize(() => this.clearSessionAndRedirect()),
-        )
+        .pipe(finalize(() => this.clearSessionAndRedirect()))
         .subscribe({ error: () => this.clearSessionAndRedirect() });
     } else {
       this.clearSessionAndRedirect();
     }
   }
 
+  forceLogout(): void {
+    this.clearSessionAndRedirect();
+  }
+
   patchUser(partial: Partial<AuthUser>): void {
     const current = this.userSignal();
     if (!current) return;
-    const updated = { ...current, ...partial };
+    const updated: AuthUser = {
+      ...current,
+      ...partial,
+      permisosUi: partial.permisosUi ?? current.permisosUi,
+    };
     this.userSignal.set(updated);
     localStorage.setItem(USER_KEY, JSON.stringify(updated));
+  }
+
+  canAccess(permiso: keyof PermisosUi): boolean {
+    const u = this.userSignal();
+    if (!u) return false;
+    return hasPermiso(u.rol, u.permisosUi, permiso);
+  }
+
+  private persistSession(token: string, user: AuthUser): void {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    this.tokenSignal.set(token);
+    this.userSignal.set(user);
   }
 
   private clearSessionAndRedirect(): void {
@@ -114,7 +148,11 @@ export class AuthService {
     const raw = localStorage.getItem(USER_KEY);
     if (!raw) return null;
     try {
-      return JSON.parse(raw) as AuthUser;
+      const parsed = JSON.parse(raw) as AuthUser;
+      if (!parsed.permisosUi) {
+        parsed.permisosUi = resolvePermisosUi(parsed.rol, {});
+      }
+      return parsed;
     } catch {
       return null;
     }

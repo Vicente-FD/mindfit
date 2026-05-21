@@ -8,6 +8,7 @@ import {
   CategoriaActivo,
   EstadoOrdenTrabajo,
   RolUsuario,
+  TipoMantenimiento,
 } from '../common/enums';
 import { AnalyticsFiltersDto } from './dto/analytics-filters.dto';
 
@@ -17,6 +18,7 @@ export interface KpisResponse {
   otsResueltas: number;
   gastoAcumuladoMantenimiento: number;
   mttrHoras: number;
+  mtbfHoras: number | null;
   fallasPorCategoria: { categoria: string; total: number }[];
   otsPorSucursal: { sucursal: string; total: number }[];
 }
@@ -104,6 +106,7 @@ export class AnalyticsService {
       });
     }
 
+    activoQb.andWhere('a.deleted_at IS NULL');
     const activos = await activoQb.getMany();
     const gastoAcumuladoMantenimiento = activos.reduce((acc, a) => {
       const cost = a.costoAdquisicion ? parseFloat(a.costoAdquisicion) : 0;
@@ -122,12 +125,33 @@ export class AnalyticsService {
       sucursalMap.set(name, (sucursalMap.get(name) ?? 0) + 1);
     }
 
+    const now = Date.now();
+    let totalOperatingHours = 0;
+    for (const a of activos) {
+      const start = a.fechaCompra
+        ? new Date(a.fechaCompra).getTime()
+        : new Date(a.createdAt).getTime();
+      totalOperatingHours += Math.max(0, (now - start) / 3600000);
+    }
+
+    const fallasRegistradas = ordenes.filter(
+      (o) =>
+        o.tipoMantenimiento === TipoMantenimiento.CORRECTIVO &&
+        o.activoId != null,
+    ).length;
+
+    const mtbfHoras =
+      fallasRegistradas > 0
+        ? Math.round((totalOperatingHours / fallasRegistradas) * 10) / 10
+        : null;
+
     return {
       efectividadPe,
       otsReportadas,
       otsResueltas,
       gastoAcumuladoMantenimiento: Math.round(gastoAcumuladoMantenimiento),
       mttrHoras,
+      mtbfHoras,
       fallasPorCategoria: Array.from(fallasMap.entries()).map(
         ([categoria, total]) => ({ categoria, total }),
       ),

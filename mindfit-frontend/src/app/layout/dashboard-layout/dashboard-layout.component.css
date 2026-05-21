@@ -25,6 +25,11 @@
   height: 32px;
   width: auto;
   object-fit: contain;
+  background: transparent;
+}
+
+.brand-logo--header {
+  height: 2rem;
 }
 
 .brand-text {

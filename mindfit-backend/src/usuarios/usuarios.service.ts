@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
-import { RolUsuario } from '../common/enums';
+import { EstadoSesionUsuario, RolUsuario } from '../common/enums';
 import { Usuario } from '../entities/usuario.entity';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import {
@@ -23,6 +23,10 @@ export class UsuariosService {
     private readonly dataSource: DataSource,
     private readonly transactionContext: TransactionContextService,
   ) {}
+
+  private async invalidateTokens(userId: number): Promise<void> {
+    await this.repo().increment({ id: userId }, 'tokenVersion', 1);
+  }
 
   private repo() {
     return this.transactionContext.getRepository(Usuario, this.dataSource);
@@ -141,6 +145,12 @@ export class UsuariosService {
 
     const { sucursalId: _omit, ...rest } = dto;
     Object.assign(usuario, rest);
+
+    if (dto.estaActivo === false) {
+      await this.invalidateTokens(id);
+      usuario.estadoSesion = EstadoSesionUsuario.DESCONECTADO;
+    }
+
     await this.repo().save(usuario);
     return this.findOne(id);
   }
@@ -158,6 +168,7 @@ export class UsuariosService {
   async remove(id: number) {
     const usuario = await this.findOne(id);
     usuario.estaActivo = false;
+    await this.invalidateTokens(id);
     await this.repo().save(usuario);
     await this.repo().softDelete(id);
     return { deleted: true };

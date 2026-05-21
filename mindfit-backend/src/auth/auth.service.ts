@@ -4,9 +4,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { EstadoSesionUsuario } from '../common/enums';
+import {
+  PERMISOS_BY_ROL,
+  PERMISOS_UI_DEFAULT,
+  PermisosUi,
+} from '../common/interfaces/permisos-ui.interface';
 import { Usuario } from '../entities/usuario.entity';
 import { LoginDto } from './dto/login.dto';
-import { AuthResponseDto } from './dto/auth-response.dto';
+import { AuthResponseDto, SessionProfileDto } from './dto/auth-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -34,18 +39,26 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    const payload = {
-      sub: usuario.id,
-      email: usuario.email,
-      rol: usuario.rol,
-    };
-
     usuario.estadoSesion = EstadoSesionUsuario.CONECTADO;
     await this.usuarioRepository.save(usuario);
 
     return {
-      accessToken: await this.jwtService.signAsync(payload),
+      accessToken: await this.signToken(usuario),
       user: this.toAuthUser(usuario),
+    };
+  }
+
+  async getSessionProfile(userId: number): Promise<SessionProfileDto> {
+    const usuario = await this.usuarioRepository.findOne({
+      where: { id: userId },
+      relations: { sucursal: true },
+    });
+    if (!usuario || !usuario.estaActivo) {
+      throw new UnauthorizedException('Sesión finalizada');
+    }
+    return {
+      user: this.toAuthUser(usuario),
+      forceLogout: false,
     };
   }
 
@@ -57,9 +70,33 @@ export class AuthService {
   async updateSesion(
     userId: number,
     estado: EstadoSesionUsuario,
-  ): Promise<{ estadoSesion: EstadoSesionUsuario }> {
-    const usuario = await this.setEstadoSesion(userId, estado);
-    return { estadoSesion: usuario.estadoSesion };
+  ): Promise<SessionProfileDto> {
+    const usuario = await this.usuarioRepository.findOne({
+      where: { id: userId },
+      relations: { sucursal: true },
+    });
+    if (!usuario || !usuario.estaActivo) {
+      throw new UnauthorizedException('Sesión finalizada');
+    }
+    usuario.estadoSesion = estado;
+    await this.usuarioRepository.save(usuario);
+    return {
+      user: this.toAuthUser(usuario),
+      forceLogout: false,
+    };
+  }
+
+  async invalidateTokens(userId: number): Promise<void> {
+    await this.usuarioRepository.increment({ id: userId }, 'tokenVersion', 1);
+  }
+
+  private async signToken(usuario: Usuario): Promise<string> {
+    return this.jwtService.signAsync({
+      sub: usuario.id,
+      email: usuario.email,
+      rol: usuario.rol,
+      tokenVersion: usuario.tokenVersion ?? 0,
+    });
   }
 
   private async setEstadoSesion(
@@ -77,7 +114,14 @@ export class AuthService {
     return this.usuarioRepository.save(usuario);
   }
 
-  private toAuthUser(usuario: Usuario) {
+  private resolvePermisos(usuario: Usuario): PermisosUi {
+    return {
+      ...(PERMISOS_BY_ROL[usuario.rol] ?? PERMISOS_UI_DEFAULT),
+      ...(usuario.permisosUi ?? {}),
+    };
+  }
+
+  private toAuthUser(usuario: Usuario): AuthResponseDto['user'] {
     return {
       id: usuario.id,
       email: usuario.email,
@@ -86,6 +130,7 @@ export class AuthService {
       sucursalId: usuario.sucursalId,
       sucursalNombre: usuario.sucursal?.nombre ?? null,
       estadoSesion: usuario.estadoSesion,
+      permisosUi: this.resolvePermisos(usuario),
     };
   }
 }

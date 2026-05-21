@@ -6,6 +6,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../../core/services/auth.service';
 import { ActivosService, Activo } from '../../../core/services/activos.service';
 import { WorkOrdersService } from '../../../core/services/work-orders.service';
@@ -13,6 +14,7 @@ import { ImageCompressorService } from '../../../core/services/image-compressor.
 import { ToastService } from '../../../core/services/toast.service';
 import { WorkOrder } from '../../../core/models/work-order.model';
 import { PRIORIDADES_OT } from '../../../core/models/analytics.model';
+import { QrScannerModalComponent } from '../../../layout/qr-scanner-modal/qr-scanner-modal.component';
 
 function requiredImageFile(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
@@ -21,7 +23,7 @@ function requiredImageFile(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-sucursal-dashboard',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LucideAngularModule, QrScannerModalComponent],
   templateUrl: './sucursal-dashboard.component.html',
   styleUrl: './sucursal-dashboard.component.css',
 })
@@ -40,6 +42,8 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
   readonly saving = signal(false);
   readonly imagePreview = signal<string | null>(null);
   readonly processingFoto = signal(false);
+  readonly showScanner = signal(false);
+  readonly preselectedActivoNombre = signal<string | null>(null);
 
   readonly reporteForm = this.fb.nonNullable.group({
     activoId: ['', Validators.required],
@@ -54,14 +58,49 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
       this.toast.error('Su usuario no tiene sucursal asignada');
       return;
     }
+    this.loadActivos();
+    this.loadOrdenes();
+  }
+
+  loadActivos(): void {
+    const sucursalId = this.user()?.sucursalId;
+    if (!sucursalId) return;
     this.activosService.list({ sucursalId }).subscribe({
       next: (a) => this.activos.set(a),
     });
-    this.loadOrdenes();
   }
 
   ngOnDestroy(): void {
     this.revokePreview();
+  }
+
+  openQrScanner(): void {
+    this.showScanner.set(true);
+  }
+
+  closeQrScanner(): void {
+    this.showScanner.set(false);
+  }
+
+  onQrScanned(identifier: string): void {
+    const sucursalId = this.user()?.sucursalId;
+    if (!sucursalId) {
+      this.toast.error('Su usuario no tiene sucursal asignada');
+      return;
+    }
+
+    this.activosService.getPublic(identifier).subscribe({
+      next: (activo) => {
+        if (activo.sucursalId !== sucursalId) {
+          this.toast.error('Este equipo no pertenece a su sede');
+          return;
+        }
+        this.reporteForm.patchValue({ activoId: String(activo.id) });
+        this.preselectedActivoNombre.set(activo.nombre);
+        this.toast.success(`Activo seleccionado: ${activo.nombre}`);
+      },
+      error: () => this.toast.error('No se encontró el activo del código QR'),
+    });
   }
 
   loadOrdenes(): void {
@@ -119,6 +158,7 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
           this.saving.set(false);
           this.resetForm();
           this.toast.success('Ticket de falla enviado');
+          this.loadActivos();
           this.loadOrdenes();
         },
         error: (err) => {
@@ -131,6 +171,7 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
 
   private resetForm(): void {
     this.revokePreview();
+    this.preselectedActivoNombre.set(null);
     this.reporteForm.reset({
       activoId: '',
       prioridad: 'media',
@@ -143,6 +184,32 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
     const url = this.imagePreview();
     if (url) URL.revokeObjectURL(url);
     this.imagePreview.set(null);
+  }
+
+  activoSeleccionado(): Activo | null {
+    const id = this.reporteForm.controls.activoId.value;
+    if (!id) return null;
+    return this.activos().find((a) => String(a.id) === String(id)) ?? null;
+  }
+
+  healthDotClass(estado: string): string {
+    const map: Record<string, string> = {
+      operativo: 'health-dot health-dot--operativo',
+      fuera_servicio: 'health-dot health-dot--downtime',
+      mantenimiento_preventivo: 'health-dot health-dot--preventivo',
+      en_reparacion: 'health-dot health-dot--reparacion',
+    };
+    return map[estado] ?? 'health-dot';
+  }
+
+  healthLabel(estado: string): string {
+    const map: Record<string, string> = {
+      operativo: 'Operativo',
+      fuera_servicio: 'Fuera de servicio',
+      mantenimiento_preventivo: 'En mantenimiento preventivo',
+      en_reparacion: 'En reparación',
+    };
+    return map[estado] ?? estado;
   }
 
   estadoLabel(estado: string): string {

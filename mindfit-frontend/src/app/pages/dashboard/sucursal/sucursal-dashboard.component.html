@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-lg space-y-4 pb-4">
+<div class="sucursal-page mx-auto max-w-lg space-y-4 pb-4">
   <header class="rounded-2xl border border-white/5 bg-obsidian-grey p-4">
     <h1 class="text-lg font-semibold text-pure-white">Reporte de fallas</h1>
     <p class="text-xs text-slate-grey">Solo activos de su sede asignada</p>
@@ -7,12 +7,27 @@
   <form class="page-card space-y-3" [formGroup]="reporteForm" (ngSubmit)="enviarReporte()">
     <div>
       <label class="field-label">Activo *</label>
-      <select class="field-input" formControlName="activoId">
-        <option value="">Seleccione equipo</option>
-        @for (a of activos(); track a.id) {
-          <option [value]="a.id">{{ a.nombre }}</option>
+      <div class="flex items-center gap-2">
+        @if (activoSeleccionado(); as sel) {
+          <span
+            class="health-dot-wrap"
+            [attr.title]="healthLabel(sel.estadoOperacional)"
+          >
+            <span [class]="healthDotClass(sel.estadoOperacional)"></span>
+          </span>
         }
-      </select>
+        <select class="field-input min-w-0 flex-1" formControlName="activoId">
+          <option value="">Seleccione equipo</option>
+          @for (a of activos(); track a.id) {
+            <option [value]="a.id">
+              {{ a.nombre }} — {{ healthLabel(a.estadoOperacional) }}
+            </option>
+          }
+        </select>
+      </div>
+      @if (preselectedActivoNombre(); as nombre) {
+        <p class="mt-1 text-xs text-status-green">Seleccionado por QR: {{ nombre }}</p>
+      }
     </div>
     <div>
       <label class="field-label">Prioridad *</label>
@@ -97,4 +112,21 @@
       </article>
     }
   </section>
+
+  <button
+    type="button"
+    class="qr-fab-sucursal"
+    (click)="openQrScanner()"
+    aria-label="Escanear QR del activo"
+  >
+    <lucide-icon name="camera" [size]="26" />
+  </button>
 </div>
+
+@if (showScanner()) {
+  <app-qr-scanner-modal
+    mode="emit"
+    (scanned)="onQrScanned($event)"
+    (closed)="closeQrScanner()"
+  />
+}

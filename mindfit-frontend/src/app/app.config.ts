@@ -29,6 +29,7 @@ import {
   Plus,
   Warehouse,
   Building2,
+  Camera,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -64,6 +65,7 @@ export const appConfig: ApplicationConfig = {
         Plus,
         Warehouse,
         Building2,
+        Camera,
       }),
     ),
     provideRouter(routes),

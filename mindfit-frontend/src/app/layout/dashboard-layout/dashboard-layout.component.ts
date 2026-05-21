@@ -4,6 +4,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../core/services/auth.service';
 import { SessionHeartbeatService } from '../../core/services/session-heartbeat.service';
 import { UserRole } from '../../core/models/user.model';
+import { PermisosUi } from '../../core/models/permisos-ui.model';
 import { QrScannerModalComponent } from '../qr-scanner-modal/qr-scanner-modal.component';
 import { AssetDetailsSheetComponent } from '../asset-details-sheet/asset-details-sheet.component';
 import { TecnicoUiService } from '../../core/services/tecnico-ui.service';
@@ -14,6 +15,7 @@ interface NavItem {
   route: string;
   icon: string;
   roles: UserRole[];
+  permiso?: keyof PermisosUi;
 }
 
 @Component({
@@ -56,6 +58,7 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
       route: '/dashboard/jefe-operaciones',
       icon: 'clipboard-list',
       roles: ['jefe_operaciones'],
+      permiso: 'verAsignacionOt',
     },
     {
       label: 'Control de inventario',
@@ -68,12 +71,14 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
       route: '/dashboard/activos',
       icon: 'package',
       roles: ['admin', 'jefe_operaciones'],
+      permiso: 'verGestionActivos',
     },
     {
       label: 'Personal y Permisos',
       route: '/dashboard/usuarios',
       icon: 'users',
       roles: ['admin', 'jefe_operaciones'],
+      permiso: 'verGestionUsuarios',
     },
     {
       label: 'Sedes y Sucursales',
@@ -92,6 +97,7 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
       route: '/dashboard/sucursal',
       icon: 'alert-triangle',
       roles: ['jefe_sucursal'],
+      permiso: 'verReportesSucursal',
     },
     {
       label: 'Mis Tareas',
@@ -104,13 +110,18 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
       route: '/dashboard/gerente',
       icon: 'bar-chart-3',
       roles: ['gerente_bi', 'jefe_operaciones'],
+      permiso: 'verDashboardEjecutivo',
     },
   ];
 
   readonly visibleNav = computed(() => {
     const rol = this.user()?.rol;
     if (!rol) return [];
-    return this.navItems.filter((item) => item.roles.includes(rol));
+    return this.navItems.filter((item) => {
+      if (!item.roles.includes(rol)) return false;
+      if (item.permiso && !this.auth.canAccess(item.permiso)) return false;
+      return true;
+    });
   });
 
   readonly ubicacionLabel = computed(() => {

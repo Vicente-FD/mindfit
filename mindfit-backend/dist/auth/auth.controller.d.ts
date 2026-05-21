@@ -6,10 +6,9 @@ export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
     login(dto: LoginDto): Promise<import("./dto/auth-response.dto").AuthResponseDto>;
+    getMe(user: JwtPayload): Promise<import("./dto/auth-response.dto").SessionProfileDto>;
     logout(user: JwtPayload): Promise<{
         ok: true;
     }>;
-    updateSesion(user: JwtPayload, dto: UpdateSesionDto): Promise<{
-        estadoSesion: import("../common/enums").EstadoSesionUsuario;
-    }>;
+    updateSesion(user: JwtPayload, dto: UpdateSesionDto): Promise<import("./dto/auth-response.dto").SessionProfileDto>;
 }

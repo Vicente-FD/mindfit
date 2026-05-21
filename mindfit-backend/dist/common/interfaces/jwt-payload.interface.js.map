@@ -1,1 +1,1 @@
-{"version":3,"file":"jwt-payload.interface.js","sourceRoot":"","sources":["../../../src/common/interfaces/jwt-payload.interface.ts"],"names":[],"mappings":";;;AAEA,MAAa,UAAU;IACrB,GAAG,CAAS;IACZ,EAAE,CAAS;IACX,KAAK,CAAS;IACd,GAAG,CAAa;IAChB,UAAU,CAAgB;CAC3B;AAND,gCAMC"}
+{"version":3,"file":"jwt-payload.interface.js","sourceRoot":"","sources":["../../../src/common/interfaces/jwt-payload.interface.ts"],"names":[],"mappings":";;;AAEA,MAAa,UAAU;IACrB,GAAG,CAAS;IACZ,EAAE,CAAS;IACX,KAAK,CAAS;IACd,GAAG,CAAa;IAChB,UAAU,CAAgB;IAC1B,YAAY,CAAS;CACtB;AAPD,gCAOC"}

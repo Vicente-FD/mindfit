@@ -12,6 +12,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
     validate(payload: {
         sub: number;
         email: string;
+        tokenVersion?: number;
     }): Promise<JwtPayload>;
 }
 export {};

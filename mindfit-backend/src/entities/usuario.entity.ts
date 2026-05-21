@@ -61,6 +61,10 @@ export class Usuario {
   @Column({ name: 'permisos_ui', type: 'jsonb', default: () => "'{}'" })
   permisosUi: PermisosUi;
 
+  /** Incrementar para invalidar JWT activos (cierre de sesión forzado). */
+  @Column({ name: 'token_version', type: 'int', default: 0 })
+  tokenVersion: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

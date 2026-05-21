@@ -57,6 +57,9 @@ let UsuariosService = class UsuariosService {
         this.dataSource = dataSource;
         this.transactionContext = transactionContext;
     }
+    async invalidateTokens(userId) {
+        await this.repo().increment({ id: userId }, 'tokenVersion', 1);
+    }
     repo() {
         return this.transactionContext.getRepository(usuario_entity_1.Usuario, this.dataSource);
     }
@@ -157,6 +160,10 @@ let UsuariosService = class UsuariosService {
         }
         const { sucursalId: _omit, ...rest } = dto;
         Object.assign(usuario, rest);
+        if (dto.estaActivo === false) {
+            await this.invalidateTokens(id);
+            usuario.estadoSesion = enums_1.EstadoSesionUsuario.DESCONECTADO;
+        }
         await this.repo().save(usuario);
         return this.findOne(id);
     }
@@ -172,6 +179,7 @@ let UsuariosService = class UsuariosService {
     async remove(id) {
         const usuario = await this.findOne(id);
         usuario.estaActivo = false;
+        await this.invalidateTokens(id);
         await this.repo().save(usuario);
         await this.repo().softDelete(id);
         return { deleted: true };

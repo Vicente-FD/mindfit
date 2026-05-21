@@ -1,4 +1,5 @@
 import { EstadoSesionUsuario, RolUsuario } from '../../common/enums';
+import type { PermisosUi } from '../../common/interfaces/permisos-ui.interface';
 export declare class AuthResponseDto {
     accessToken: string;
     user: {
@@ -9,5 +10,10 @@ export declare class AuthResponseDto {
         sucursalId: number | null;
         sucursalNombre: string | null;
         estadoSesion: EstadoSesionUsuario;
+        permisosUi: PermisosUi;
     };
+}
+export declare class SessionProfileDto {
+    user: AuthResponseDto['user'];
+    forceLogout: boolean;
 }

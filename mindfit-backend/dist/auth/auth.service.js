@@ -52,6 +52,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const bcrypt = __importStar(require("bcrypt"));
 const typeorm_2 = require("typeorm");
 const enums_1 = require("../common/enums");
+const permisos_ui_interface_1 = require("../common/interfaces/permisos-ui.interface");
 const usuario_entity_1 = require("../entities/usuario.entity");
 let AuthService = class AuthService {
     usuarioRepository;
@@ -72,16 +73,24 @@ let AuthService = class AuthService {
         if (!passwordValid) {
             throw new common_1.UnauthorizedException('Credenciales inválidas');
         }
-        const payload = {
-            sub: usuario.id,
-            email: usuario.email,
-            rol: usuario.rol,
-        };
         usuario.estadoSesion = enums_1.EstadoSesionUsuario.CONECTADO;
         await this.usuarioRepository.save(usuario);
         return {
-            accessToken: await this.jwtService.signAsync(payload),
+            accessToken: await this.signToken(usuario),
             user: this.toAuthUser(usuario),
+        };
+    }
+    async getSessionProfile(userId) {
+        const usuario = await this.usuarioRepository.findOne({
+            where: { id: userId },
+            relations: { sucursal: true },
+        });
+        if (!usuario || !usuario.estaActivo) {
+            throw new common_1.UnauthorizedException('Sesión finalizada');
+        }
+        return {
+            user: this.toAuthUser(usuario),
+            forceLogout: false,
         };
     }
     async logout(userId) {
@@ -89,8 +98,30 @@ let AuthService = class AuthService {
         return { ok: true };
     }
     async updateSesion(userId, estado) {
-        const usuario = await this.setEstadoSesion(userId, estado);
-        return { estadoSesion: usuario.estadoSesion };
+        const usuario = await this.usuarioRepository.findOne({
+            where: { id: userId },
+            relations: { sucursal: true },
+        });
+        if (!usuario || !usuario.estaActivo) {
+            throw new common_1.UnauthorizedException('Sesión finalizada');
+        }
+        usuario.estadoSesion = estado;
+        await this.usuarioRepository.save(usuario);
+        return {
+            user: this.toAuthUser(usuario),
+            forceLogout: false,
+        };
+    }
+    async invalidateTokens(userId) {
+        await this.usuarioRepository.increment({ id: userId }, 'tokenVersion', 1);
+    }
+    async signToken(usuario) {
+        return this.jwtService.signAsync({
+            sub: usuario.id,
+            email: usuario.email,
+            rol: usuario.rol,
+            tokenVersion: usuario.tokenVersion ?? 0,
+        });
     }
     async setEstadoSesion(userId, estado) {
         const usuario = await this.usuarioRepository.findOne({
@@ -103,6 +134,12 @@ let AuthService = class AuthService {
         usuario.estadoSesion = estado;
         return this.usuarioRepository.save(usuario);
     }
+    resolvePermisos(usuario) {
+        return {
+            ...(permisos_ui_interface_1.PERMISOS_BY_ROL[usuario.rol] ?? permisos_ui_interface_1.PERMISOS_UI_DEFAULT),
+            ...(usuario.permisosUi ?? {}),
+        };
+    }
     toAuthUser(usuario) {
         return {
             id: usuario.id,
@@ -112,6 +149,7 @@ let AuthService = class AuthService {
             sucursalId: usuario.sucursalId,
             sucursalNombre: usuario.sucursal?.nombre ?? null,
             estadoSesion: usuario.estadoSesion,
+            permisosUi: this.resolvePermisos(usuario),
         };
     }
 };

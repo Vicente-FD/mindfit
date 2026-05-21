@@ -19,6 +19,7 @@ const ESTADOS_OPERACIONAL = [
   { value: 'operativo', label: 'Operativo' },
   { value: 'fuera_servicio', label: 'Fuera de servicio' },
   { value: 'mantenimiento_preventivo', label: 'Mantenimiento preventivo' },
+  { value: 'en_reparacion', label: 'En reparación' },
 ] as const;
 
 @Component({

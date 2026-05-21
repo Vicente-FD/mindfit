@@ -21,7 +21,8 @@ export declare enum CategoriaActivo {
 export declare enum EstadoOperacionalActivo {
     OPERATIVO = "operativo",
     FUERA_SERVICIO = "fuera_servicio",
-    MANTENIMIENTO_PREVENTIVO = "mantenimiento_preventivo"
+    MANTENIMIENTO_PREVENTIVO = "mantenimiento_preventivo",
+    EN_REPARACION = "en_reparacion"
 }
 export declare enum PrioridadOrden {
     BAJA = "baja",

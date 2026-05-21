@@ -17,6 +17,7 @@ export declare class Usuario {
     estaActivo: boolean;
     estadoSesion: EstadoSesionUsuario;
     permisosUi: PermisosUi;
+    tokenVersion: number;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;

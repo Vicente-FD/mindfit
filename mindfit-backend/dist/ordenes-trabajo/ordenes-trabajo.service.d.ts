@@ -23,6 +23,15 @@ export declare class OrdenesTrabajoService {
     private evidenciaRepo;
     private comentarioRepo;
     private generarCodigoOt;
+    private manager;
+    private static readonly ESTADOS_OT_BLOQUEAN_OPERATIVO;
+    private actualizarEstadoActivo;
+    private contarOtCorrectivasAbiertas;
+    private restaurarActivoOperativoSiAplica;
+    private syncActivoAlCrearOt;
+    private estadoActivoAlIniciarTrabajo;
+    private syncActivoAlIniciarTrabajo;
+    private syncActivoTrasCierreOt;
     findAll(filters?: {
         tecnicoId?: number;
         sucursalId?: number;

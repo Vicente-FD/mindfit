@@ -53,8 +53,15 @@
         <p class="text-xs text-slate-grey">Tiempo medio reparación</p>
       </div>
       <div class="kpi-card">
-        <p class="metric-label">OTs reportadas</p>
-        <p class="kpi-value">{{ k.otsReportadas }}</p>
+        <p class="metric-label">MTBF</p>
+        <p class="kpi-value text-status-green">
+          @if (k.mtbfHoras != null) {
+            {{ k.mtbfHoras }} h
+          } @else {
+            —
+          }
+        </p>
+        <p class="text-xs text-slate-grey">Tiempo medio entre fallas</p>
       </div>
     </div>
 

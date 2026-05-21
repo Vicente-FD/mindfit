@@ -22,6 +22,7 @@ let SchemaFixService = SchemaFixService_1 = class SchemaFixService {
     }
     async onModuleInit() {
         await this.ensureOtSchema();
+        await this.ensureActivoEstadoOperacionalEnum();
         await this.backfillCodigosInventario();
         await this.backfillSucursalSiglas();
         await this.backfillEstadoSesion();
@@ -54,6 +55,9 @@ let SchemaFixService = SchemaFixService_1 = class SchemaFixService {
         await this.dataSource.query(`
       ALTER TABLE ordenes_trabajo
       ADD COLUMN IF NOT EXISTS fecha_aprobacion TIMESTAMPTZ;
+    `);
+        await this.dataSource.query(`
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS token_version INT NOT NULL DEFAULT 0;
     `);
         await this.dataSource.query(`
       ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
@@ -123,6 +127,34 @@ let SchemaFixService = SchemaFixService_1 = class SchemaFixService {
       );
     `);
         this.logger.log('Esquema OT (clasificación + secuencia) verificado');
+    }
+    async ensureActivoEstadoOperacionalEnum() {
+        const types = await this.dataSource.query(`
+      SELECT t.typname
+      FROM pg_type t
+      JOIN pg_enum e ON e.enumtypid = t.oid
+      JOIN pg_attribute a ON a.atttypid = t.oid
+      JOIN pg_class c ON c.oid = a.attrelid
+      WHERE c.relname = 'activos' AND a.attname = 'estado_operacional'
+      LIMIT 1
+    `);
+        const typeName = types[0]?.typname;
+        if (!typeName)
+            return;
+        await this.dataSource.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_enum e
+          JOIN pg_type t ON t.oid = e.enumtypid
+          WHERE t.typname = '${typeName}' AND e.enumlabel = 'en_reparacion'
+        ) THEN
+          ALTER TYPE "${typeName}" ADD VALUE 'en_reparacion';
+        END IF;
+      END $$;
+    `).catch((err) => {
+            this.logger.warn(`Enum estado operacional: ${String(err)}`);
+        });
     }
     async migrateBodegaToGlobal() {
         const tableExists = await this.dataSource.query(`

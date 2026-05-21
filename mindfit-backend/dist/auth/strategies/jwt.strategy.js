@@ -37,12 +37,17 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         if (!usuario) {
             throw new common_1.UnauthorizedException('Usuario no válido o inactivo');
         }
+        const tokenVersion = payload.tokenVersion ?? 0;
+        if ((usuario.tokenVersion ?? 0) !== tokenVersion) {
+            throw new common_1.UnauthorizedException('Sesión invalidada. Inicie sesión nuevamente.');
+        }
         return {
             sub: usuario.id,
             id: usuario.id,
             email: usuario.email,
             rol: usuario.rol,
             sucursalId: usuario.sucursalId,
+            tokenVersion: usuario.tokenVersion ?? 0,
         };
     }
 };

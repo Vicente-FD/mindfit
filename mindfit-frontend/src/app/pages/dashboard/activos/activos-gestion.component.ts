@@ -169,4 +169,24 @@ export class ActivosGestionComponent implements OnInit {
   marcaLabel(activo: Activo): string {
     return activo.marcaRelacion?.nombre ?? activo.marca ?? '—';
   }
+
+  healthDotClass(estado: string): string {
+    const map: Record<string, string> = {
+      operativo: 'health-dot health-dot--operativo',
+      fuera_servicio: 'health-dot health-dot--downtime',
+      mantenimiento_preventivo: 'health-dot health-dot--preventivo',
+      en_reparacion: 'health-dot health-dot--reparacion',
+    };
+    return map[estado] ?? 'health-dot';
+  }
+
+  healthLabel(estado: string): string {
+    const map: Record<string, string> = {
+      operativo: 'Operativo',
+      fuera_servicio: 'Fuera de servicio',
+      mantenimiento_preventivo: 'Mantenimiento preventivo',
+      en_reparacion: 'En reparación',
+    };
+    return map[estado] ?? estado;
+  }
 }

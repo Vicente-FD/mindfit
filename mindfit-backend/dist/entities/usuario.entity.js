@@ -29,6 +29,7 @@ let Usuario = class Usuario {
     estaActivo;
     estadoSesion;
     permisosUi;
+    tokenVersion;
     createdAt;
     updatedAt;
     deletedAt;
@@ -92,6 +93,10 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'permisos_ui', type: 'jsonb', default: () => "'{}'" }),
     __metadata("design:type", Object)
 ], Usuario.prototype, "permisosUi", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'token_version', type: 'int', default: 0 }),
+    __metadata("design:type", Number)
+], Usuario.prototype, "tokenVersion", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)

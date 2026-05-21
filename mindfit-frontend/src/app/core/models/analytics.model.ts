@@ -19,6 +19,7 @@ export interface KpisResponse {
   otsResueltas: number;
   gastoAcumuladoMantenimiento: number;
   mttrHoras: number;
+  mtbfHoras: number | null;
   fallasPorCategoria: { categoria: string; total: number }[];
   otsPorSucursal: { sucursal: string; total: number }[];
 }

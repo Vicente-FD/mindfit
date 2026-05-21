@@ -6,7 +6,9 @@ import {
 } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { switchMap, of } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { UsuariosService } from '../../../core/services/usuarios.service';
+import { resolvePermisosUi } from '../../../core/models/permisos-ui.model';
 import { SucursalesService } from '../../../core/services/sucursales.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Usuario, PermisosUi } from '../../../core/models/usuario.model';
@@ -58,6 +60,7 @@ const PERMISOS_DEFAULTS: PermisosUi = {
 })
 export class UsuariosAdminComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly auth = inject(AuthService);
   private readonly usuariosService = inject(UsuariosService);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly toast = inject(ToastService);
@@ -314,6 +317,7 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
           this.toast.success('Usuario actualizado');
           this.selected.set(updated);
           this.editForm.patchValue({ nuevaPassword: '' });
+          this.syncCurrentUserSession(updated);
           this.load();
         },
         error: (err) => {
@@ -333,6 +337,7 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
           this.selected.set(updated);
           this.editForm.patchValue({ estaActivo: updated.estaActivo });
         }
+        this.syncCurrentUserSession(updated);
         this.load();
       },
       error: () => this.toast.error('Error al actualizar estado'),
@@ -369,5 +374,19 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   sessionIcon(estado?: EstadoSesion): string {
     if (estado === 'reposo') return '🌙';
     return '';
+  }
+
+  private syncCurrentUserSession(updated: Usuario): void {
+    const me = this.auth.getUser();
+    if (!me || me.id !== updated.id) return;
+    this.auth.patchUser({
+      nombre: updated.nombre,
+      email: updated.email,
+      rol: updated.rol,
+      sucursalId: updated.sucursalId,
+      sucursalNombre: updated.sucursal?.nombre ?? null,
+      estadoSesion: updated.estadoSesion,
+      permisosUi: resolvePermisosUi(updated.rol, updated.permisosUi ?? {}),
+    });
   }
 }

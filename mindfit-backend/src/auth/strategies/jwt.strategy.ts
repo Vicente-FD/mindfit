@@ -21,7 +21,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: number; email: string }): Promise<JwtPayload> {
+  async validate(payload: {
+    sub: number;
+    email: string;
+    tokenVersion?: number;
+  }): Promise<JwtPayload> {
     const usuario = await this.usuarioRepository.findOne({
       where: { id: payload.sub, estaActivo: true },
     });
@@ -30,12 +34,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Usuario no válido o inactivo');
     }
 
+    const tokenVersion = payload.tokenVersion ?? 0;
+    if ((usuario.tokenVersion ?? 0) !== tokenVersion) {
+      throw new UnauthorizedException('Sesión invalidada. Inicie sesión nuevamente.');
+    }
+
     return {
       sub: usuario.id,
       id: usuario.id,
       email: usuario.email,
       rol: usuario.rol,
       sucursalId: usuario.sucursalId,
+      tokenVersion: usuario.tokenVersion ?? 0,
     };
   }
 }

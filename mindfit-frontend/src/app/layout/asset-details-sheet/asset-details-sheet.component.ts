@@ -59,6 +59,7 @@ export class AssetDetailsSheetComponent {
       operativo: 'Operativo',
       fuera_servicio: 'Fuera de servicio',
       mantenimiento_preventivo: 'Mantenimiento preventivo',
+      en_reparacion: 'En reparación',
     };
     return map[f.activo.estadoOperacional] ?? f.activo.estadoOperacional;
   });

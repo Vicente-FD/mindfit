@@ -3,9 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import {
   ClasificacionOrden,
+  EstadoOperacionalActivo,
   EstadoOrdenTrabajo,
   PrioridadOrden,
   RolUsuario,
@@ -52,6 +53,139 @@ export class OrdenesTrabajoService {
   private async generarCodigoOt(): Promise<string> {
     const manager = this.transactionContext.getManager(this.dataSource);
     return nextOtCodigo((sql) => manager.query(sql));
+  }
+
+  private manager(): EntityManager {
+    return this.transactionContext.getManager(this.dataSource);
+  }
+
+  /** OTs correctivas que mantienen el activo fuera de operación normal. */
+  private static readonly ESTADOS_OT_BLOQUEAN_OPERATIVO: EstadoOrdenTrabajo[] = [
+    EstadoOrdenTrabajo.PENDIENTE,
+    EstadoOrdenTrabajo.ASIGNADA,
+    EstadoOrdenTrabajo.EN_PROCESO,
+    EstadoOrdenTrabajo.FINALIZADA,
+  ];
+
+  private async actualizarEstadoActivo(
+    manager: EntityManager,
+    activoId: number,
+    estado: EstadoOperacionalActivo,
+  ): Promise<void> {
+    await manager.update(Activo, activoId, { estadoOperacional: estado });
+  }
+
+  private async contarOtCorrectivasAbiertas(
+    manager: EntityManager,
+    activoId: number,
+    excluirOtId?: number,
+  ): Promise<number> {
+    const qb = manager
+      .getRepository(OrdenTrabajo)
+      .createQueryBuilder('ot')
+      .where('ot.activo_id = :activoId', { activoId })
+      .andWhere('ot.tipo_mantenimiento = :tipo', {
+        tipo: TipoMantenimiento.CORRECTIVO,
+      })
+      .andWhere('ot.estado IN (:...estados)', {
+        estados: OrdenesTrabajoService.ESTADOS_OT_BLOQUEAN_OPERATIVO,
+      })
+      .andWhere('ot.deleted_at IS NULL');
+
+    if (excluirOtId != null) {
+      qb.andWhere('ot.id != :excluirOtId', { excluirOtId });
+    }
+
+    return qb.getCount();
+  }
+
+  private async restaurarActivoOperativoSiAplica(
+    manager: EntityManager,
+    activoId: number,
+    excluirOtId?: number,
+  ): Promise<void> {
+    const abiertas = await this.contarOtCorrectivasAbiertas(
+      manager,
+      activoId,
+      excluirOtId,
+    );
+    if (abiertas === 0) {
+      await this.actualizarEstadoActivo(
+        manager,
+        activoId,
+        EstadoOperacionalActivo.OPERATIVO,
+      );
+    }
+  }
+
+  private async syncActivoAlCrearOt(
+    manager: EntityManager,
+    orden: OrdenTrabajo,
+  ): Promise<void> {
+    if (orden.activoId == null) return;
+    if (orden.tipoMantenimiento !== TipoMantenimiento.CORRECTIVO) return;
+
+    await this.actualizarEstadoActivo(
+      manager,
+      orden.activoId,
+      EstadoOperacionalActivo.FUERA_SERVICIO,
+    );
+  }
+
+  private estadoActivoAlIniciarTrabajo(
+    tipoMantenimiento: TipoMantenimiento,
+  ): EstadoOperacionalActivo {
+    if (tipoMantenimiento === TipoMantenimiento.PREVENTIVO) {
+      return EstadoOperacionalActivo.MANTENIMIENTO_PREVENTIVO;
+    }
+    return EstadoOperacionalActivo.EN_REPARACION;
+  }
+
+  private async syncActivoAlIniciarTrabajo(
+    manager: EntityManager,
+    orden: OrdenTrabajo,
+  ): Promise<void> {
+    if (orden.activoId == null) return;
+    if (
+      orden.tipoMantenimiento !== TipoMantenimiento.CORRECTIVO &&
+      orden.tipoMantenimiento !== TipoMantenimiento.PREVENTIVO
+    ) {
+      return;
+    }
+
+    await this.actualizarEstadoActivo(
+      manager,
+      orden.activoId,
+      this.estadoActivoAlIniciarTrabajo(orden.tipoMantenimiento),
+    );
+  }
+
+  private async syncActivoTrasCierreOt(
+    manager: EntityManager,
+    orden: OrdenTrabajo,
+  ): Promise<void> {
+    if (orden.activoId == null) return;
+    if (orden.tipoMantenimiento !== TipoMantenimiento.CORRECTIVO) return;
+
+    if (
+      orden.estado === EstadoOrdenTrabajo.APROBADA ||
+      orden.estado === EstadoOrdenTrabajo.RECHAZADA
+    ) {
+      await this.restaurarActivoOperativoSiAplica(
+        manager,
+        orden.activoId,
+        orden.id,
+      );
+      return;
+    }
+
+    if (orden.estado === EstadoOrdenTrabajo.EN_PROCESO) {
+      await this.actualizarEstadoActivo(
+        manager,
+        orden.activoId,
+        EstadoOperacionalActivo.EN_REPARACION,
+      );
+    }
   }
 
   findAll(filters?: {
@@ -196,7 +330,7 @@ export class OrdenesTrabajoService {
 
   async create(dto: CreateOrdenTrabajoDto, creadoPorId: number) {
     const clasificacion = dto.clasificacion ?? ClasificacionOrden.MAQUINA;
-    const manager = this.transactionContext.getManager(this.dataSource);
+    const manager = this.manager();
 
     if (clasificacion === ClasificacionOrden.MAQUINA) {
       if (dto.activoId == null) {
@@ -217,7 +351,7 @@ export class OrdenesTrabajoService {
       }
     }
 
-    const orden = this.ordenRepo().create({
+    const orden = manager.create(OrdenTrabajo, {
       codigoOt: await this.generarCodigoOt(),
       clasificacion,
       activoId:
@@ -236,7 +370,8 @@ export class OrdenesTrabajoService {
         ? new Date(dto.fechaProgramacion)
         : null,
     });
-    const saved = await this.ordenRepo().save(orden);
+    const saved = await manager.save(OrdenTrabajo, orden);
+    await this.syncActivoAlCrearOt(manager, saved);
     return this.findOne(saved.id);
   }
 
@@ -509,13 +644,15 @@ export class OrdenesTrabajoService {
       });
     }
 
-    await this.ordenRepo().update(id, {
+    const manager = this.manager();
+    await manager.update(OrdenTrabajo, id, {
       estado: EstadoOrdenTrabajo.EN_PROCESO,
       fechaInicioReal: new Date(),
       asignadoAId: orden.asignadoAId,
     });
 
     const refreshed = await this.findOne(id);
+    await this.syncActivoAlIniciarTrabajo(manager, refreshed);
     // #region agent log
     agentDebugLog({ runId: 'post-fix', hypothesisId: 'B,C', location: 'ordenes-trabajo.service.ts:iniciarConEvidencia', message: 'after update', data: { id, estado: refreshed.estado, fechaInicioReal: refreshed.fechaInicioReal, asignadoAId: refreshed.asignadoAId } });
     // #endregion
@@ -593,10 +730,12 @@ export class OrdenesTrabajoService {
       );
     }
 
+    const manager = this.manager();
     orden.estado = EstadoOrdenTrabajo.APROBADA;
     orden.motivoRechazo = null;
     orden.fechaAprobacion = new Date();
-    await this.ordenRepo().save(orden);
+    await manager.save(OrdenTrabajo, orden);
+    await this.syncActivoTrasCierreOt(manager, orden);
     return this.findOne(id);
   }
 
@@ -622,9 +761,17 @@ export class OrdenesTrabajoService {
       );
     }
 
+    const manager = this.manager();
     orden.estado = EstadoOrdenTrabajo.FINALIZADA;
     orden.fechaAprobacion = null;
-    await this.ordenRepo().save(orden);
+    await manager.save(OrdenTrabajo, orden);
+    if (orden.activoId != null && orden.tipoMantenimiento === TipoMantenimiento.CORRECTIVO) {
+      await this.actualizarEstadoActivo(
+        manager,
+        orden.activoId,
+        EstadoOperacionalActivo.EN_REPARACION,
+      );
+    }
     return this.findOne(id);
   }
 
@@ -637,11 +784,14 @@ export class OrdenesTrabajoService {
       );
     }
 
+    const manager = this.manager();
+
     if (orden.estado === EstadoOrdenTrabajo.FINALIZADA) {
       orden.estado = EstadoOrdenTrabajo.EN_PROCESO;
       orden.fechaFinReal = null;
       orden.motivoRechazo = motivoRechazo;
-      await this.ordenRepo().save(orden);
+      await manager.save(OrdenTrabajo, orden);
+      await this.syncActivoTrasCierreOt(manager, orden);
       return this.findOne(id);
     }
 
@@ -649,7 +799,8 @@ export class OrdenesTrabajoService {
       orden.estado = EstadoOrdenTrabajo.RECHAZADA;
       orden.motivoRechazo = motivoRechazo;
       orden.asignadoAId = null;
-      await this.ordenRepo().save(orden);
+      await manager.save(OrdenTrabajo, orden);
+      await this.syncActivoTrasCierreOt(manager, orden);
       return this.findOne(id);
     }
 

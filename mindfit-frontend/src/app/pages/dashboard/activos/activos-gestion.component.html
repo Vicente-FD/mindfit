@@ -117,7 +117,15 @@
     }
     @for (a of activos(); track a.id) {
       <article class="activo-row">
-        <div>
+        <div class="activo-main">
+          <span
+            class="health-dot-wrap"
+            [attr.title]="healthLabel(a.estadoOperacional)"
+            [attr.aria-label]="healthLabel(a.estadoOperacional)"
+          >
+            <span [class]="healthDotClass(a.estadoOperacional)"></span>
+          </span>
+          <div>
           <p class="font-mono text-sm font-semibold text-orange-energy">
             {{ a.codigoInventario || a.codigoQrToken }}
           </p>
@@ -125,6 +133,7 @@
           <p class="text-xs text-slate-grey">
             {{ marcaLabel(a) }} · {{ a.categoria }} · {{ a.sucursal?.nombre }}
           </p>
+          </div>
         </div>
         <div class="activo-actions">
           <button type="button" class="btn-qr" (click)="openQr(a)" title="Etiqueta QR">

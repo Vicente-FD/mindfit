@@ -8,6 +8,7 @@ export declare class UsuariosService {
     private readonly dataSource;
     private readonly transactionContext;
     constructor(dataSource: DataSource, transactionContext: TransactionContextService);
+    private invalidateTokens;
     private repo;
     findAll(): Promise<Usuario[]>;
     findOne(id: number): Promise<Usuario>;

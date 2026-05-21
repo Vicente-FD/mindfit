@@ -6,4 +6,5 @@ export class JwtPayload {
   email: string;
   rol: RolUsuario;
   sucursalId: number | null;
+  tokenVersion: number;
 }
