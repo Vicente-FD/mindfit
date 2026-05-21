@@ -51,6 +51,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'sucursales',
+        canActivate: [rolesGuard(['admin'])],
+        loadComponent: () =>
+          import('./pages/dashboard/admin/sucursales-admin.component').then(
+            (m) => m.SucursalesAdminComponent,
+          ),
+      },
+      {
         path: 'activos',
         canActivate: [rolesGuard(['admin', 'jefe_operaciones'])],
         loadComponent: () =>

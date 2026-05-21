@@ -1,28 +1,45 @@
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+
+const SIGLA_REGEX = /^[A-Z]{2,3}$/;
 
 export class CreateSucursalDto {
   @IsString()
+  @IsNotEmpty()
   @MaxLength(150)
   nombre: string;
 
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toUpperCase() : value,
+  )
   @IsString()
-  @MaxLength(5)
+  @Matches(SIGLA_REGEX, {
+    message: 'La sigla debe tener 2 o 3 letras mayúsculas (sin números ni símbolos)',
+  })
   sigla: string;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(255)
-  direccion?: string;
+  direccion: string;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(100)
-  comuna?: string;
+  comuna: string;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(100)
-  ciudad?: string;
+  ciudad: string;
 
   @IsOptional()
   @IsBoolean()

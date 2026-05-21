@@ -39,8 +39,8 @@ __decorate([
     __metadata("design:type", String)
 ], Sucursal.prototype, "nombre", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 5, nullable: true }),
-    __metadata("design:type", Object)
+    (0, typeorm_1.Column)({ type: 'varchar', length: 5, unique: true }),
+    __metadata("design:type", String)
 ], Sucursal.prototype, "sigla", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),

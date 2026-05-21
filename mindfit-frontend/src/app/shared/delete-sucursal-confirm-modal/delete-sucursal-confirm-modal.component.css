@@ -1,0 +1,39 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.8);
+  padding: 1rem;
+}
+
+.modal-panel {
+  width: 100%;
+  max-width: 26rem;
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: var(--color-obsidian-grey, #1a1a1c);
+  padding: 1.25rem;
+}
+
+.btn-danger {
+  border-radius: 0.75rem;
+  background: rgb(239 68 68 / 0.15);
+  border: 1px solid rgb(239 68 68 / 0.35);
+  color: rgb(248 113 113);
+  padding: 0.6rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: rgb(239 68 68 / 0.25);
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

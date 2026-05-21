@@ -4,7 +4,7 @@ import { OrdenTrabajo } from './orden-trabajo.entity';
 export declare class Sucursal {
     id: number;
     nombre: string;
-    sigla: string | null;
+    sigla: string;
     direccion: string | null;
     comuna: string | null;
     ciudad: string | null;

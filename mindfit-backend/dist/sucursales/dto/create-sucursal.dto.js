@@ -10,7 +10,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateSucursalDto = void 0;
+const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
+const SIGLA_REGEX = /^[A-Z]{2,3}$/;
 class CreateSucursalDto {
     nombre;
     sigla;
@@ -22,29 +24,33 @@ class CreateSucursalDto {
 exports.CreateSucursalDto = CreateSucursalDto;
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MaxLength)(150),
     __metadata("design:type", String)
 ], CreateSucursalDto.prototype, "nombre", void 0);
 __decorate([
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim().toUpperCase() : value),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(5),
+    (0, class_validator_1.Matches)(SIGLA_REGEX, {
+        message: 'La sigla debe tener 2 o 3 letras mayúsculas (sin números ni símbolos)',
+    }),
     __metadata("design:type", String)
 ], CreateSucursalDto.prototype, "sigla", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MaxLength)(255),
     __metadata("design:type", String)
 ], CreateSucursalDto.prototype, "direccion", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], CreateSucursalDto.prototype, "comuna", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], CreateSucursalDto.prototype, "ciudad", void 0);

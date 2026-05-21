@@ -28,6 +28,7 @@ import {
   ScrollText,
   Plus,
   Warehouse,
+  Building2,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -62,6 +63,7 @@ export const appConfig: ApplicationConfig = {
         ScrollText,
         Plus,
         Warehouse,
+        Building2,
       }),
     ),
     provideRouter(routes),

@@ -43,12 +43,14 @@ let SucursalesController = class SucursalesController {
 exports.SucursalesController = SucursalesController;
 __decorate([
     (0, common_1.Get)(),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SucursalesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -56,6 +58,7 @@ __decorate([
 ], SucursalesController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Post)(),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_sucursal_dto_1.CreateSucursalDto]),
@@ -63,6 +66,7 @@ __decorate([
 ], SucursalesController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)(':id'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -71,6 +75,7 @@ __decorate([
 ], SucursalesController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -78,7 +83,6 @@ __decorate([
 ], SucursalesController.prototype, "remove", null);
 exports.SucursalesController = SucursalesController = __decorate([
     (0, common_1.Controller)('sucursales'),
-    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES),
     __metadata("design:paramtypes", [sucursales_service_1.SucursalesService])
 ], SucursalesController);
 //# sourceMappingURL=sucursales.controller.js.map
