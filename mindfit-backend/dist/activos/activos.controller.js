@@ -47,6 +47,9 @@ let ActivosController = class ActivosController {
     update(id, dto) {
         return this.activosService.update(id, dto);
     }
+    remove(id) {
+        return this.activosService.remove(id);
+    }
 };
 exports.ActivosController = ActivosController;
 __decorate([
@@ -106,6 +109,14 @@ __decorate([
     __metadata("design:paramtypes", [Number, update_activo_dto_1.UpdateActivoDto]),
     __metadata("design:returntype", void 0)
 ], ActivosController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], ActivosController.prototype, "remove", null);
 exports.ActivosController = ActivosController = __decorate([
     (0, common_1.Controller)('activos'),
     __metadata("design:paramtypes", [activos_service_1.ActivosService])

@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -65,6 +66,9 @@ export class Usuario {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt: Date | null;
 
   @OneToMany(() => OrdenTrabajo, (orden) => orden.creadoPor)
   ordenesCreadas: OrdenTrabajo[];

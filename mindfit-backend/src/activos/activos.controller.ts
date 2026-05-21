@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -81,5 +82,11 @@ export class ActivosController {
     @Body() dto: UpdateActivoDto,
   ) {
     return this.activosService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES)
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.activosService.remove(id);
   }
 }

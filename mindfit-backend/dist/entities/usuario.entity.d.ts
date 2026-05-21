@@ -19,6 +19,7 @@ export declare class Usuario {
     permisosUi: PermisosUi;
     createdAt: Date;
     updatedAt: Date;
+    deletedAt: Date | null;
     ordenesCreadas: OrdenTrabajo[];
     ordenesAsignadas: OrdenTrabajo[];
     evidenciasCargadas: EvidenciaOt[];

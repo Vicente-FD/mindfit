@@ -29,23 +29,26 @@ export class UsuariosService {
   }
 
   findAll() {
-    return this.repo().find({
-      relations: { sucursal: true },
-      order: { nombre: 'ASC' },
-      select: {
-        id: true,
-        email: true,
-        nombre: true,
-        rol: true,
-        sucursalId: true,
-        telefono: true,
-        estaActivo: true,
-        permisosUi: true,
-        estadoSesion: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    return this.repo()
+      .createQueryBuilder('u')
+      .leftJoinAndSelect('u.sucursal', 'sucursal')
+      .where('u.deleted_at IS NULL')
+      .orderBy('u.nombre', 'ASC')
+      .select([
+        'u.id',
+        'u.email',
+        'u.nombre',
+        'u.rol',
+        'u.sucursalId',
+        'u.telefono',
+        'u.estaActivo',
+        'u.permisosUi',
+        'u.estadoSesion',
+        'u.createdAt',
+        'u.updatedAt',
+        'sucursal',
+      ])
+      .getMany();
   }
 
   async findOne(id: number) {
@@ -153,12 +156,10 @@ export class UsuariosService {
   }
 
   async remove(id: number) {
-    const usuario = await this.repo().findOne({ where: { id } });
-    if (!usuario) {
-      throw new NotFoundException(`Usuario ${id} no encontrado`);
-    }
+    const usuario = await this.findOne(id);
     usuario.estaActivo = false;
     await this.repo().save(usuario);
-    return { deactivated: true };
+    await this.repo().softDelete(id);
+    return { deleted: true };
   }
 }

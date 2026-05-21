@@ -1,10 +1,16 @@
 {
-  "name": "mindfit-frontend",
-  "short_name": "mindfit-frontend",
+  "name": "Mindfit Ops",
+  "short_name": "Mindfit",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
   "icons": [
+    {
+      "src": "logo2.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "icons/icon-72x72.png",
       "sizes": "72x72",

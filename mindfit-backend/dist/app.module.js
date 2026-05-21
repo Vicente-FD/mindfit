@@ -10,6 +10,7 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const core_1 = require("@nestjs/core");
 const config_1 = require("@nestjs/config");
+const schedule_1 = require("@nestjs/schedule");
 const typeorm_1 = require("@nestjs/typeorm");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
@@ -22,6 +23,8 @@ const database_module_1 = require("./database/database.module");
 const seed_service_1 = require("./database/seed.service");
 const schema_fix_service_1 = require("./database/schema-fix.service");
 const entities_1 = require("./entities");
+const audit_trail_module_1 = require("./audit-trail/audit-trail.module");
+const planes_preventivos_module_1 = require("./planes-preventivos/planes-preventivos.module");
 const marcas_module_1 = require("./marcas/marcas.module");
 const sucursales_module_1 = require("./sucursales/sucursales.module");
 const usuarios_module_1 = require("./usuarios/usuarios.module");
@@ -38,6 +41,7 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 envFilePath: '.env',
             }),
+            schedule_1.ScheduleModule.forRoot(),
             typeorm_1.TypeOrmModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
@@ -59,6 +63,7 @@ exports.AppModule = AppModule = __decorate([
                         entities_1.EvidenciaOt,
                         entities_1.ComentarioOt,
                         entities_1.AuditTrail,
+                        entities_1.PlanPreventivo,
                     ],
                     synchronize: configService.get('NODE_ENV') !== 'production',
                     retryAttempts: 10,
@@ -82,6 +87,8 @@ exports.AppModule = AppModule = __decorate([
             marcas_module_1.MarcasModule,
             ordenes_trabajo_module_1.OrdenesTrabajoModule,
             analytics_module_1.AnalyticsModule,
+            planes_preventivos_module_1.PlanesPreventivosModule,
+            audit_trail_module_1.AuditTrailModule,
         ],
         controllers: [app_controller_1.AppController, debug_controller_1.DebugController],
         providers: [

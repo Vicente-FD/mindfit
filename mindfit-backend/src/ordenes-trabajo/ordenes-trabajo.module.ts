@@ -10,5 +10,6 @@ import { OrdenesTrabajoService } from './ordenes-trabajo.service';
   imports: [TypeOrmModule.forFeature([OrdenTrabajo, EvidenciaOt, ComentarioOt])],
   controllers: [OrdenesTrabajoController],
   providers: [OrdenesTrabajoService],
+  exports: [OrdenesTrabajoService],
 })
 export class OrdenesTrabajoModule {}

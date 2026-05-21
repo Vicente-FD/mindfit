@@ -22,6 +22,7 @@ exports.OrdenesTrabajoModule = OrdenesTrabajoModule = __decorate([
         imports: [typeorm_1.TypeOrmModule.forFeature([orden_trabajo_entity_1.OrdenTrabajo, evidencia_ot_entity_1.EvidenciaOt, comentario_ot_entity_1.ComentarioOt])],
         controllers: [ordenes_trabajo_controller_1.OrdenesTrabajoController],
         providers: [ordenes_trabajo_service_1.OrdenesTrabajoService],
+        exports: [ordenes_trabajo_service_1.OrdenesTrabajoService],
     })
 ], OrdenesTrabajoModule);
 //# sourceMappingURL=ordenes-trabajo.module.js.map

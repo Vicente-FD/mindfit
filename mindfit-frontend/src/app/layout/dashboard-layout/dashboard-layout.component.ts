@@ -70,6 +70,12 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
       roles: ['admin', 'jefe_operaciones'],
     },
     {
+      label: 'Bitácora del sistema',
+      route: '/dashboard/bitacora',
+      icon: 'scroll-text',
+      roles: ['admin'],
+    },
+    {
       label: 'Reportar Falla',
       route: '/dashboard/sucursal',
       icon: 'alert-triangle',

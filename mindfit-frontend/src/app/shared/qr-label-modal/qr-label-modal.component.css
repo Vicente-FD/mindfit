@@ -9,10 +9,25 @@
   padding: 1rem;
 }
 
-.qr-modal {
+.qr-modal-shell {
   position: relative;
   max-width: 22rem;
   width: 100%;
+}
+
+.qr-label-close {
+  position: absolute;
+  right: 0;
+  top: -0.25rem;
+  z-index: 2;
+  font-size: 1.5rem;
+  color: var(--color-slate-grey, #94a3b8);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.printable-qr-card {
   border-radius: 1rem;
   border: 1px solid rgb(255 255 255 / 0.1);
   background: var(--color-obsidian-grey, #1a1a1c);
@@ -20,18 +35,11 @@
   text-align: center;
 }
 
-.modal-close {
-  position: absolute;
-  right: 0.75rem;
-  top: 0.5rem;
-  font-size: 1.5rem;
-  color: var(--color-slate-grey, #94a3b8);
-}
-
 .qr-logo {
   height: 52px;
   margin: 0 auto;
   object-fit: contain;
+  display: block;
 }
 
 .qr-brand {
@@ -68,24 +76,9 @@
   color: var(--color-slate-grey, #94a3b8);
 }
 
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  #qr-print-sheet,
-  #qr-print-sheet * {
-    visibility: visible;
-  }
-  #qr-print-sheet {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100%;
-    background: white !important;
-    color: black !important;
-    border: none;
-  }
-  .no-print {
-    display: none !important;
-  }
+.qr-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }

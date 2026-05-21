@@ -4,6 +4,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 import { switchMap, of } from 'rxjs';
 import { UsuariosService } from '../../../core/services/usuarios.service';
 import { SucursalesService } from '../../../core/services/sucursales.service';
@@ -38,9 +39,18 @@ const PERMISO_LABELS: { key: keyof PermisosUi; label: string }[] = [
   { key: 'generarQrActivos', label: 'Generar QR de activos' },
 ];
 
+const PERMISOS_DEFAULTS: PermisosUi = {
+  verDashboardEjecutivo: false,
+  verGestionActivos: true,
+  verGestionUsuarios: false,
+  verAsignacionOt: true,
+  verReportesSucursal: true,
+  generarQrActivos: false,
+};
+
 @Component({
   selector: 'app-usuarios-admin',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LucideAngularModule],
   templateUrl: './usuarios-admin.component.html',
   styleUrl: './usuarios-admin.component.css',
 })
@@ -82,12 +92,12 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   });
 
   readonly permisosForm = this.fb.group({
-    verDashboardEjecutivo: [false],
-    verGestionActivos: [true],
-    verGestionUsuarios: [false],
-    verAsignacionOt: [true],
-    verReportesSucursal: [true],
-    generarQrActivos: [false],
+    verDashboardEjecutivo: [PERMISOS_DEFAULTS.verDashboardEjecutivo],
+    verGestionActivos: [PERMISOS_DEFAULTS.verGestionActivos],
+    verGestionUsuarios: [PERMISOS_DEFAULTS.verGestionUsuarios],
+    verAsignacionOt: [PERMISOS_DEFAULTS.verAsignacionOt],
+    verReportesSucursal: [PERMISOS_DEFAULTS.verReportesSucursal],
+    generarQrActivos: [PERMISOS_DEFAULTS.generarQrActivos],
   });
 
   readonly needsSucursal = computed(
@@ -143,7 +153,28 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   }
 
   toggleForm(): void {
-    this.showForm.update((v) => !v);
+    this.showForm.update((v) => {
+      const next = !v;
+      if (next) {
+        this.selected.set(null);
+        this.resetPermisosDefaults();
+      }
+      return next;
+    });
+  }
+
+  permisoActivo(key: keyof PermisosUi): boolean {
+    return !!this.permisosForm.get(key)?.value;
+  }
+
+  permisoChipClass(key: keyof PermisosUi): string {
+    return this.permisoActivo(key)
+      ? 'perm-chip perm-chip--active'
+      : 'perm-chip perm-chip--inactive';
+  }
+
+  private resetPermisosDefaults(): void {
+    this.permisosForm.patchValue(PERMISOS_DEFAULTS);
   }
 
   setRoleTab(tab: UserRole | 'todos'): void {
@@ -177,6 +208,8 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const permisosUi = this.permisosForm.getRawValue() as PermisosUi;
+
     this.usuariosService
       .create({
         email: v.email,
@@ -185,6 +218,7 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
         rol: v.rol,
         sucursalId: sucursalId ?? null,
         telefono: v.telefono || undefined,
+        permisosUi,
       })
       .subscribe({
         next: () => {
@@ -197,6 +231,7 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
             sucursalId: CASA_CENTRAL_VALUE,
             telefono: '',
           });
+          this.resetPermisosDefaults();
           this.showForm.set(false);
           this.load();
         },

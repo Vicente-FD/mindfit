@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = void 0;
+exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = void 0;
 var marca_entity_1 = require("./marca.entity");
 Object.defineProperty(exports, "Marca", { enumerable: true, get: function () { return marca_entity_1.Marca; } });
 var sucursal_entity_1 = require("./sucursal.entity");
@@ -17,4 +17,6 @@ var comentario_ot_entity_1 = require("./comentario-ot.entity");
 Object.defineProperty(exports, "ComentarioOt", { enumerable: true, get: function () { return comentario_ot_entity_1.ComentarioOt; } });
 var audit_trail_entity_1 = require("./audit-trail.entity");
 Object.defineProperty(exports, "AuditTrail", { enumerable: true, get: function () { return audit_trail_entity_1.AuditTrail; } });
+var plan_preventivo_entity_1 = require("./plan-preventivo.entity");
+Object.defineProperty(exports, "PlanPreventivo", { enumerable: true, get: function () { return plan_preventivo_entity_1.PlanPreventivo; } });
 //# sourceMappingURL=index.js.map

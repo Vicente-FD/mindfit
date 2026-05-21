@@ -56,6 +56,7 @@ let ActivosService = class ActivosService {
             const q = `%${filters.busqueda.trim().toLowerCase()}%`;
             qb.andWhere(`(LOWER(a.nombre) LIKE :q OR LOWER(a.codigo_inventario) LIKE :q OR LOWER(a.codigo_qr_token) LIKE :q)`, { q });
         }
+        qb.andWhere('a.deleted_at IS NULL');
         return qb.getMany();
     }
     async findOne(id) {
@@ -298,6 +299,14 @@ let ActivosService = class ActivosService {
         if (h > 0)
             return `${h}h`;
         return `${m}m`;
+    }
+    async remove(id) {
+        await this.findOne(id);
+        const result = await this.repo().softDelete(id);
+        if (!result.affected) {
+            throw new common_1.NotFoundException(`Activo ${id} no encontrado`);
+        }
+        return { deleted: true };
     }
 };
 exports.ActivosService = ActivosService;

@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SucursalesService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("typeorm");
+const activo_entity_1 = require("../entities/activo.entity");
 const sucursal_entity_1 = require("../entities/sucursal.entity");
 const transaction_context_service_1 = require("../common/database/transaction-context.service");
 let SucursalesService = class SucursalesService {
@@ -25,7 +26,11 @@ let SucursalesService = class SucursalesService {
         return this.transactionContext.getRepository(sucursal_entity_1.Sucursal, this.dataSource);
     }
     findAll() {
-        return this.repo().find({ order: { nombre: 'ASC' } });
+        return this.repo()
+            .createQueryBuilder('s')
+            .where('s.deleted_at IS NULL')
+            .orderBy('s.nombre', 'ASC')
+            .getMany();
     }
     async findOne(id) {
         const sucursal = await this.repo().findOne({ where: { id } });
@@ -50,8 +55,11 @@ let SucursalesService = class SucursalesService {
         return this.repo().save(sucursal);
     }
     async remove(id) {
-        const sucursal = await this.findOne(id);
-        await this.repo().remove(sucursal);
+        await this.findOne(id);
+        const activoRepo = this.transactionContext.getRepository(activo_entity_1.Activo, this.dataSource);
+        await activoRepo.softDelete({ sucursalId: id });
+        await this.repo().update(id, { estaActiva: false });
+        await this.repo().softDelete(id);
         return { deleted: true };
     }
 };

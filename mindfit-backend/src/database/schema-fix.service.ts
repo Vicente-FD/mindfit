@@ -48,6 +48,24 @@ export class SchemaFixService implements OnModuleInit {
       ALTER TABLE ordenes_trabajo
       ADD COLUMN IF NOT EXISTS fecha_aprobacion TIMESTAMPTZ;
     `);
+    await this.dataSource.query(`
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+      ALTER TABLE activos ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+      ALTER TABLE sucursales ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+    `);
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS planes_preventivos (
+        id SERIAL PRIMARY KEY,
+        titulo VARCHAR(200) NOT NULL,
+        descripcion TEXT,
+        activo_id INT NOT NULL REFERENCES activos(id) ON DELETE RESTRICT,
+        intervalo_dias INT NOT NULL,
+        proxima_fecha_ejecucion DATE NOT NULL,
+        activo BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
     this.logger.log('Esquema OT (clasificación + secuencia) verificado');
   }
 

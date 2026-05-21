@@ -13,6 +13,6 @@ export declare class UsuariosController {
         updated: boolean;
     }>;
     remove(id: number): Promise<{
-        deactivated: boolean;
+        deleted: boolean;
     }>;
 }

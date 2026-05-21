@@ -23,6 +23,7 @@ export declare class Activo {
     estadoOperacional: EstadoOperacionalActivo;
     createdAt: Date;
     updatedAt: Date;
+    deletedAt: Date | null;
     ordenesTrabajo: OrdenTrabajo[];
     generarUuid(): void;
 }

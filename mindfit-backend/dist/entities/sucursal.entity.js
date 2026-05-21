@@ -24,6 +24,7 @@ let Sucursal = class Sucursal {
     estaActiva;
     createdAt;
     updatedAt;
+    deletedAt;
     usuarios;
     activos;
     ordenesTrabajo;
@@ -65,6 +66,10 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ name: 'updated_at' }),
     __metadata("design:type", Date)
 ], Sucursal.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.DeleteDateColumn)({ name: 'deleted_at' }),
+    __metadata("design:type", Object)
+], Sucursal.prototype, "deletedAt", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => usuario_entity_1.Usuario, (usuario) => usuario.sucursal),
     __metadata("design:type", Array)

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { Activo } from '../entities/activo.entity';
 import { Sucursal } from '../entities/sucursal.entity';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import { CreateSucursalDto } from './dto/create-sucursal.dto';
@@ -17,7 +18,11 @@ export class SucursalesService {
   }
 
   findAll() {
-    return this.repo().find({ order: { nombre: 'ASC' } });
+    return this.repo()
+      .createQueryBuilder('s')
+      .where('s.deleted_at IS NULL')
+      .orderBy('s.nombre', 'ASC')
+      .getMany();
   }
 
   async findOne(id: number) {
@@ -46,8 +51,14 @@ export class SucursalesService {
   }
 
   async remove(id: number) {
-    const sucursal = await this.findOne(id);
-    await this.repo().remove(sucursal);
+    await this.findOne(id);
+    const activoRepo = this.transactionContext.getRepository(
+      Activo,
+      this.dataSource,
+    );
+    await activoRepo.softDelete({ sucursalId: id });
+    await this.repo().update(id, { estaActiva: false });
+    await this.repo().softDelete(id);
     return { deleted: true };
   }
 }

@@ -6,3 +6,4 @@ export { OrdenTrabajo } from './orden-trabajo.entity';
 export { EvidenciaOt } from './evidencia-ot.entity';
 export { ComentarioOt } from './comentario-ot.entity';
 export { AuditTrail } from './audit-trail.entity';
+export { PlanPreventivo } from './plan-preventivo.entity';

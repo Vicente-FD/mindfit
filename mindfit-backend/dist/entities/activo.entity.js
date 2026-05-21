@@ -37,6 +37,7 @@ let Activo = class Activo {
     estadoOperacional;
     createdAt;
     updatedAt;
+    deletedAt;
     ordenesTrabajo;
     generarUuid() {
         if (!this.uuidActivo) {
@@ -165,6 +166,10 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ name: 'updated_at' }),
     __metadata("design:type", Date)
 ], Activo.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.DeleteDateColumn)({ name: 'deleted_at' }),
+    __metadata("design:type", Object)
+], Activo.prototype, "deletedAt", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => orden_trabajo_entity_1.OrdenTrabajo, (orden) => orden.activo),
     __metadata("design:type", Array)

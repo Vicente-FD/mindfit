@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -19,9 +20,12 @@ import {
   EvidenciaOt,
   Marca,
   OrdenTrabajo,
+  PlanPreventivo,
   Sucursal,
   Usuario,
 } from './entities';
+import { AuditTrailModule } from './audit-trail/audit-trail.module';
+import { PlanesPreventivosModule } from './planes-preventivos/planes-preventivos.module';
 import { MarcasModule } from './marcas/marcas.module';
 import { SucursalesModule } from './sucursales/sucursales.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
@@ -35,6 +39,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -58,6 +63,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
           EvidenciaOt,
           ComentarioOt,
           AuditTrail,
+          PlanPreventivo,
         ],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         retryAttempts: 10,
@@ -81,6 +87,8 @@ import { AnalyticsModule } from './analytics/analytics.module';
     MarcasModule,
     OrdenesTrabajoModule,
     AnalyticsModule,
+    PlanesPreventivosModule,
+    AuditTrailModule,
   ],
   controllers: [AppController, DebugController],
   providers: [

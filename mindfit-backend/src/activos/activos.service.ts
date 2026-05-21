@@ -63,6 +63,8 @@ export class ActivosService {
       );
     }
 
+    qb.andWhere('a.deleted_at IS NULL');
+
     return qb.getMany();
   }
 
@@ -346,5 +348,14 @@ export class ActivosService {
     if (h > 0 && m > 0) return `${h}h ${m}m`;
     if (h > 0) return `${h}h`;
     return `${m}m`;
+  }
+
+  async remove(id: number) {
+    await this.findOne(id);
+    const result = await this.repo().softDelete(id);
+    if (!result.affected) {
+      throw new NotFoundException(`Activo ${id} no encontrado`);
+    }
+    return { deleted: true };
   }
 }

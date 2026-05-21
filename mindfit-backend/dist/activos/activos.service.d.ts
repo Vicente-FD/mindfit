@@ -25,4 +25,7 @@ export declare class ActivosService {
     private mapUsuario;
     private resolveComentarioCierre;
     private formatDuracion;
+    remove(id: number): Promise<{
+        deleted: boolean;
+    }>;
 }

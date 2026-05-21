@@ -1,0 +1,78 @@
+<div class="space-y-4">
+  <header>
+    <h2 class="text-lg font-semibold text-pure-white">Bitácora del sistema</h2>
+    <p class="mt-1 text-xs text-slate-grey">
+      Registro de cambios en órdenes de trabajo y activos (audit trail)
+    </p>
+  </header>
+
+  <div class="page-card flex flex-wrap items-center gap-3">
+    <label class="flex items-center gap-2 text-xs text-slate-grey">
+      <span>Filtrar por tipo</span>
+      <select
+        class="field-input w-auto min-w-[10rem] py-2 text-sm"
+        [ngModel]="filtroTabla()"
+        (ngModelChange)="onFiltroChange($event)"
+      >
+        <option value="">Todos</option>
+        <option value="ordenes_trabajo">Órdenes de trabajo</option>
+        <option value="activos">Activos</option>
+      </select>
+    </label>
+    <span class="text-xs text-slate-grey">{{ total() }} eventos</span>
+  </div>
+
+  <section class="page-card">
+    @if (loading()) {
+      <p class="text-sm text-slate-grey">Cargando bitácora...</p>
+    } @else if (items().length === 0) {
+      <div class="audit-empty">
+        <lucide-icon name="scroll-text" [size]="32" class="text-slate-grey" />
+        <p class="text-sm text-slate-grey">No hay registros de auditoría.</p>
+      </div>
+    } @else {
+      <ul class="audit-list">
+        @for (item of items(); track item.id) {
+          <li class="audit-item">
+            <div class="audit-item__head">
+              <span [class]="operacionClass(item.operation)">
+                {{ operacionLabel(item.operation) }}
+              </span>
+              <time class="audit-item__time">
+                {{ item.timeStamp | date: 'dd/MM/yyyy HH:mm' }}
+              </time>
+            </div>
+            <p class="audit-item__mensaje">{{ item.mensaje }}</p>
+            <p class="audit-item__meta">
+              {{ item.tableName }} · ID {{ item.rowPk }}
+            </p>
+          </li>
+        }
+      </ul>
+
+      @if (totalPages() > 1) {
+        <div class="audit-pagination">
+          <button
+            type="button"
+            class="btn-ghost text-sm"
+            [disabled]="page() <= 1"
+            (click)="prevPage()"
+          >
+            Anterior
+          </button>
+          <span class="text-xs text-slate-grey">
+            Página {{ page() }} de {{ totalPages() }}
+          </span>
+          <button
+            type="button"
+            class="btn-ghost text-sm"
+            [disabled]="page() >= totalPages()"
+            (click)="nextPage()"
+          >
+            Siguiente
+          </button>
+        </div>
+      }
+    }
+  </section>
+</div>

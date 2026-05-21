@@ -31,6 +31,7 @@ let Usuario = class Usuario {
     permisosUi;
     createdAt;
     updatedAt;
+    deletedAt;
     ordenesCreadas;
     ordenesAsignadas;
     evidenciasCargadas;
@@ -99,6 +100,10 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ name: 'updated_at' }),
     __metadata("design:type", Date)
 ], Usuario.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.DeleteDateColumn)({ name: 'deleted_at' }),
+    __metadata("design:type", Object)
+], Usuario.prototype, "deletedAt", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => orden_trabajo_entity_1.OrdenTrabajo, (orden) => orden.creadoPor),
     __metadata("design:type", Array)

@@ -12,4 +12,7 @@ export declare class ActivosController {
     findOne(id: number): Promise<import("../entities").Activo>;
     create(dto: CreateActivoDto): Promise<import("../entities").Activo>;
     update(id: number, dto: UpdateActivoDto): Promise<import("../entities").Activo>;
+    remove(id: number): Promise<{
+        deleted: boolean;
+    }>;
 }

@@ -35,6 +35,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'bitacora',
+        canActivate: [rolesGuard(['admin'])],
+        loadComponent: () =>
+          import('./pages/dashboard/admin/bitacora-admin.component').then(
+            (m) => m.BitacoraAdminComponent,
+          ),
+      },
+      {
         path: 'usuarios',
         canActivate: [rolesGuard(['admin', 'jefe_operaciones'])],
         loadComponent: () =>

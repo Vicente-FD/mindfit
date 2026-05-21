@@ -17,6 +17,6 @@ export declare class UsuariosService {
         updated: boolean;
     }>;
     remove(id: number): Promise<{
-        deactivated: boolean;
+        deleted: boolean;
     }>;
 }
