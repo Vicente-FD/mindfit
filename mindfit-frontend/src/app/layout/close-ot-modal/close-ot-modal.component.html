@@ -84,7 +84,7 @@
       </section>
 
       <div>
-        <label class="upload-box">
+        <label class="upload-box" (click)="$event.stopPropagation()">
           <span class="upload-icon">📷</span>
           <span class="upload-label">Foto Después *</span>
           <input
@@ -93,6 +93,7 @@
             capture="environment"
             class="hidden"
             (change)="onFileSelected($event)"
+            (click)="$event.stopPropagation()"
           />
         </label>
         @if (previewDespues()) {

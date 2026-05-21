@@ -1,4 +1,12 @@
-import { Component, effect, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  untracked,
+} from '@angular/core';
 import {
   FormArray,
   FormBuilder,
@@ -38,6 +46,8 @@ export class CloseOtModalComponent {
   readonly loadingCatalogo = signal(false);
 
   private fileDespues: File | null = null;
+  /** Evita reiniciar el formulario al cambiar la preview u otras señales. */
+  private initializedForOrdenId: number | null = null;
 
   readonly form = this.fb.nonNullable.group({
     comentario: ['', [Validators.required, Validators.minLength(3)]],
@@ -46,9 +56,14 @@ export class CloseOtModalComponent {
 
   constructor() {
     effect(() => {
-      this.orden();
-      this.resetFormState();
-      this.loadCatalogo();
+      const ordenId = this.orden().id;
+      if (ordenId === this.initializedForOrdenId) return;
+
+      untracked(() => {
+        this.initializedForOrdenId = ordenId;
+        this.resetFormState();
+        this.loadCatalogo();
+      });
     });
   }
 
@@ -134,7 +149,12 @@ export class CloseOtModalComponent {
       this.previewDespues.set(URL.createObjectURL(compressed));
       this.error.set(null);
     } catch {
+      this.fileDespues = null;
+      this.revokePreview(this.previewDespues());
+      this.previewDespues.set(null);
       this.error.set('No se pudo procesar la imagen seleccionada');
+    } finally {
+      input.value = '';
     }
   }
 
@@ -192,6 +212,7 @@ export class CloseOtModalComponent {
   }
 
   close(): void {
+    this.initializedForOrdenId = null;
     this.revokePreview(this.previewDespues());
     this.closed.emit();
   }
