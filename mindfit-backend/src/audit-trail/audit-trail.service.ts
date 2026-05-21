@@ -22,6 +22,7 @@ const ESTADO_OT_LABEL: Record<string, string> = {
   en_proceso: 'en proceso',
   finalizada: 'finalizada',
   aprobada: 'aprobada',
+  rechazada: 'rechazada',
 };
 
 const TABLA_LABEL: Record<string, string> = {

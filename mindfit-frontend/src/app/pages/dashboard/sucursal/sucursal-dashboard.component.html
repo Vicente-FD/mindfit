@@ -4,7 +4,7 @@
     <p class="text-xs text-slate-grey">Solo activos de su sede asignada</p>
   </header>
 
-  <form class="page-card space-y-3" [formGroup]="reportForm" (ngSubmit)="enviarReporte()">
+  <form class="page-card space-y-3" [formGroup]="reporteForm" (ngSubmit)="enviarReporte()">
     <div>
       <label class="field-label">Activo *</label>
       <select class="field-input" formControlName="activoId">
@@ -25,12 +25,54 @@
     <div>
       <label class="field-label">Descripción *</label>
       <textarea class="field-input" rows="4" formControlName="descripcion"></textarea>
+      @if (
+        reporteForm.controls.descripcion.invalid &&
+        reporteForm.controls.descripcion.touched
+      ) {
+        <p class="mt-1 text-xs text-orange-energy">Mínimo 10 caracteres.</p>
+      }
     </div>
-    <label class="upload-box block cursor-pointer rounded-xl border border-dashed border-white/15 p-4 text-center text-sm text-slate-grey">
-      <span>Adjuntar foto de la falla (comprimida)</span>
-      <input type="file" accept="image/*" class="hidden" (change)="onFoto($event)" />
-    </label>
-    <button type="submit" class="btn-primary w-full" [disabled]="saving() || reportForm.invalid">
+
+    <div>
+      <input
+        #fileInput
+        type="file"
+        class="hidden"
+        accept="image/*"
+        capture="environment"
+        (change)="onFileSelected($event)"
+      />
+      <button
+        type="button"
+        class="upload-box w-full"
+        (click)="fileInput.click()"
+        [disabled]="processingFoto()"
+      >
+        @if (processingFoto()) {
+          <span class="text-sm text-slate-grey">Comprimiendo imagen...</span>
+        } @else {
+          <span class="text-sm text-slate-grey">Adjuntar foto de la falla *</span>
+        }
+      </button>
+      @if (imagePreview()) {
+        <img
+          [src]="imagePreview()!"
+          alt="Vista previa de la falla"
+          class="mt-2 h-36 w-full rounded-lg border border-white/10 object-cover"
+        />
+      }
+      @if (
+        reporteForm.controls.foto.invalid && reporteForm.controls.foto.touched
+      ) {
+        <p class="mt-1 text-xs text-orange-energy">La foto es obligatoria.</p>
+      }
+    </div>
+
+    <button
+      type="submit"
+      class="btn-primary w-full"
+      [disabled]="saving() || reporteForm.invalid || processingFoto()"
+    >
       @if (saving()) { Enviando... } @else { Enviar ticket }
     </button>
   </form>
@@ -41,10 +83,15 @@
       <p class="text-sm text-slate-grey">Aún no hay reportes en su sucursal.</p>
     }
     @for (o of ordenes(); track o.id) {
-      <article class="ot-card mb-2">
+      <article class="ot-card mb-2" [class.ot-card--rechazada]="o.estado === 'rechazada'">
         <p class="text-sm font-medium text-pure-white">{{ o.titulo }}</p>
         <p class="text-xs text-slate-grey">{{ o.codigoOt }} · {{ estadoLabel(o.estado) }}</p>
-        @if (o.asignadoAId) {
+        @if (o.estado === 'rechazada' && o.motivoRechazo) {
+          <p class="mt-2 rounded-lg border border-red-500/20 bg-red-500/10 px-2 py-1.5 text-xs text-red-400">
+            Motivo: {{ o.motivoRechazo }}
+          </p>
+        }
+        @if (o.asignadoAId && o.estado !== 'rechazada') {
           <p class="mt-1 text-xs text-orange-energy">Técnico asignado (#{{ o.asignadoAId }})</p>
         }
       </article>

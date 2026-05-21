@@ -103,8 +103,11 @@ export class OrdenesTrabajoService {
         estadoPorAprobar: EstadoOrdenTrabajo.FINALIZADA,
       });
     } else if (filters?.estado === 'finalizadas') {
-      qb.andWhere('ot.estado = :estadoArchivo', {
-        estadoArchivo: EstadoOrdenTrabajo.APROBADA,
+      qb.andWhere('ot.estado IN (:...estadoArchivo)', {
+        estadoArchivo: [
+          EstadoOrdenTrabajo.APROBADA,
+          EstadoOrdenTrabajo.RECHAZADA,
+        ],
       });
     }
 
@@ -240,7 +243,8 @@ export class OrdenesTrabajoService {
   private assertOrdenEditable(estado: EstadoOrdenTrabajo): void {
     if (
       estado === EstadoOrdenTrabajo.FINALIZADA ||
-      estado === EstadoOrdenTrabajo.APROBADA
+      estado === EstadoOrdenTrabajo.APROBADA ||
+      estado === EstadoOrdenTrabajo.RECHAZADA
     ) {
       throw new BadRequestException(
         'No se puede modificar una orden finalizada o aprobada',
@@ -626,16 +630,31 @@ export class OrdenesTrabajoService {
 
   async rechazar(id: number, motivo: string) {
     const orden = await this.findOne(id);
-    if (orden.estado !== EstadoOrdenTrabajo.FINALIZADA) {
+    const motivoRechazo = motivo.trim();
+    if (motivoRechazo.length < 3) {
       throw new BadRequestException(
-        'Solo se pueden rechazar órdenes pendientes de aprobación (finalizada)',
+        'El motivo de rechazo debe tener al menos 3 caracteres',
       );
     }
 
-    orden.estado = EstadoOrdenTrabajo.EN_PROCESO;
-    orden.fechaFinReal = null;
-    orden.motivoRechazo = motivo.trim();
-    await this.ordenRepo().save(orden);
-    return this.findOne(id);
+    if (orden.estado === EstadoOrdenTrabajo.FINALIZADA) {
+      orden.estado = EstadoOrdenTrabajo.EN_PROCESO;
+      orden.fechaFinReal = null;
+      orden.motivoRechazo = motivoRechazo;
+      await this.ordenRepo().save(orden);
+      return this.findOne(id);
+    }
+
+    if (orden.estado === EstadoOrdenTrabajo.PENDIENTE) {
+      orden.estado = EstadoOrdenTrabajo.RECHAZADA;
+      orden.motivoRechazo = motivoRechazo;
+      orden.asignadoAId = null;
+      await this.ordenRepo().save(orden);
+      return this.findOne(id);
+    }
+
+    throw new BadRequestException(
+      'Solo se pueden rechazar tickets en estado pendiente o cierres en estado finalizada',
+    );
   }
 }

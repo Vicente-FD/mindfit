@@ -352,7 +352,8 @@ export class OrdenesTrabajoController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: RechazarOrdenDto,
   ) {
-    return this.ordenesService.rechazar(id, dto.motivo);
+    const motivo = dto.motivo ?? dto.motivo_rechazo ?? '';
+    return this.ordenesService.rechazar(id, motivo);
   }
 
   @Patch(':id/revertir-aprobacion')

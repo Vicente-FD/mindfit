@@ -164,6 +164,16 @@ async function run() {
       }
     }
 
+    await client.query(`
+      ALTER TABLE ordenes_trabajo DROP CONSTRAINT IF EXISTS ordenes_trabajo_estado_check;
+    `);
+    await client.query(`
+      ALTER TABLE ordenes_trabajo ADD CONSTRAINT ordenes_trabajo_estado_check
+      CHECK (estado IN (
+        'pendiente', 'asignada', 'en_proceso', 'finalizada', 'aprobada', 'rechazada'
+      ));
+    `).catch(() => {});
+
     console.log('[fix-db] Reparación completada');
   } finally {
     await client.end();

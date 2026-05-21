@@ -37,7 +37,8 @@ export declare enum EstadoOrdenTrabajo {
     ASIGNADA = "asignada",
     EN_PROCESO = "en_proceso",
     FINALIZADA = "finalizada",
-    APROBADA = "aprobada"
+    APROBADA = "aprobada",
+    RECHAZADA = "rechazada"
 }
 export declare enum ClasificacionOrden {
     MAQUINA = "maquina",

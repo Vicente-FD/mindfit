@@ -168,7 +168,8 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
         return this.ordenesService.aprobar(id);
     }
     rechazar(id, dto) {
-        return this.ordenesService.rechazar(id, dto.motivo);
+        const motivo = dto.motivo ?? dto.motivo_rechazo ?? '';
+        return this.ordenesService.rechazar(id, motivo);
     }
     revertirAprobacion(id) {
         return this.ordenesService.revertirAprobacion(id);

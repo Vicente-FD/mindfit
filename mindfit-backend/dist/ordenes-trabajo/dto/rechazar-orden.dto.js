@@ -13,12 +13,21 @@ exports.RechazarOrdenDto = void 0;
 const class_validator_1 = require("class-validator");
 class RechazarOrdenDto {
     motivo;
+    motivo_rechazo;
 }
 exports.RechazarOrdenDto = RechazarOrdenDto;
 __decorate([
+    (0, class_validator_1.ValidateIf)((o) => !o.motivo_rechazo),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MinLength)(3),
     __metadata("design:type", String)
 ], RechazarOrdenDto.prototype, "motivo", void 0);
+__decorate([
+    (0, class_validator_1.ValidateIf)((o) => !o.motivo),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MinLength)(3),
+    __metadata("design:type", String)
+], RechazarOrdenDto.prototype, "motivo_rechazo", void 0);
 //# sourceMappingURL=rechazar-orden.dto.js.map

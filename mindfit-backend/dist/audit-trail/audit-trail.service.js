@@ -24,6 +24,7 @@ const ESTADO_OT_LABEL = {
     en_proceso: 'en proceso',
     finalizada: 'finalizada',
     aprobada: 'aprobada',
+    rechazada: 'rechazada',
 };
 const TABLA_LABEL = {
     ordenes_trabajo: 'Orden de trabajo',

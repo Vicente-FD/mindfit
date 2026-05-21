@@ -44,6 +44,7 @@ export enum EstadoOrdenTrabajo {
   EN_PROCESO = 'en_proceso',
   FINALIZADA = 'finalizada',
   APROBADA = 'aprobada',
+  RECHAZADA = 'rechazada',
 }
 
 export enum ClasificacionOrden {

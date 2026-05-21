@@ -1,3 +1,4 @@
 export declare class RechazarOrdenDto {
-    motivo: string;
+    motivo?: string;
+    motivo_rechazo?: string;
 }

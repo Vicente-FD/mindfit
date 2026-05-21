@@ -4,7 +4,8 @@ export type WorkOrderStatus =
   | 'asignada'
   | 'en_proceso'
   | 'finalizada'
-  | 'aprobada';
+  | 'aprobada'
+  | 'rechazada';
 export type MaintenanceType = 'correctivo' | 'preventivo';
 export type ClasificacionOt = 'maquina' | 'infraestructura';
 

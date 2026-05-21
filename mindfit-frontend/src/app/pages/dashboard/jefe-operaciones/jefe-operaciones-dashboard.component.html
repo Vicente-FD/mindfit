@@ -228,6 +228,13 @@
           }
         </div>
 
+        @if (isHistorico() && o.estado === 'rechazada' && o.motivoRechazo) {
+          <p class="ot-card-compact__comentario ot-rechazo-motivo">
+            <span class="comentario-label">Motivo de rechazo:</span>
+            {{ o.motivoRechazo }}
+          </p>
+        }
+
         @if (isPorAprobar() && ultimoComentarioTecnico(o); as comentario) {
           <p class="ot-card-compact__comentario">
             <span class="comentario-label">Observaciones del técnico:</span>
@@ -311,6 +318,11 @@
             >
               Asignar
             </button>
+            @if (puedeRechazarTicket(o)) {
+              <button type="button" class="btn-reject-ticket" (click)="openReject(o)">
+                Rechazar
+              </button>
+            }
           } @else if (tecnicoNombre(o); as nombre) {
             <span class="tecnico-badge">👤 Asignado a: {{ nombre }}</span>
             @if (elapsedLabel(o); as elapsed) {
@@ -346,6 +358,7 @@
 
 @if (rejectTarget(); as orden) {
   <app-reject-ot-modal
+    [mode]="rejectModalMode()"
     [orden]="orden"
     [rejecting]="rejecting()"
     (closed)="closeReject()"

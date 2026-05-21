@@ -85,8 +85,11 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
             });
         }
         else if (filters?.estado === 'finalizadas') {
-            qb.andWhere('ot.estado = :estadoArchivo', {
-                estadoArchivo: enums_1.EstadoOrdenTrabajo.APROBADA,
+            qb.andWhere('ot.estado IN (:...estadoArchivo)', {
+                estadoArchivo: [
+                    enums_1.EstadoOrdenTrabajo.APROBADA,
+                    enums_1.EstadoOrdenTrabajo.RECHAZADA,
+                ],
             });
         }
         if (filters?.fechaInicio) {
@@ -189,7 +192,8 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
     }
     assertOrdenEditable(estado) {
         if (estado === enums_1.EstadoOrdenTrabajo.FINALIZADA ||
-            estado === enums_1.EstadoOrdenTrabajo.APROBADA) {
+            estado === enums_1.EstadoOrdenTrabajo.APROBADA ||
+            estado === enums_1.EstadoOrdenTrabajo.RECHAZADA) {
             throw new common_1.BadRequestException('No se puede modificar una orden finalizada o aprobada');
         }
     }
@@ -447,14 +451,25 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
     }
     async rechazar(id, motivo) {
         const orden = await this.findOne(id);
-        if (orden.estado !== enums_1.EstadoOrdenTrabajo.FINALIZADA) {
-            throw new common_1.BadRequestException('Solo se pueden rechazar órdenes pendientes de aprobación (finalizada)');
+        const motivoRechazo = motivo.trim();
+        if (motivoRechazo.length < 3) {
+            throw new common_1.BadRequestException('El motivo de rechazo debe tener al menos 3 caracteres');
         }
-        orden.estado = enums_1.EstadoOrdenTrabajo.EN_PROCESO;
-        orden.fechaFinReal = null;
-        orden.motivoRechazo = motivo.trim();
-        await this.ordenRepo().save(orden);
-        return this.findOne(id);
+        if (orden.estado === enums_1.EstadoOrdenTrabajo.FINALIZADA) {
+            orden.estado = enums_1.EstadoOrdenTrabajo.EN_PROCESO;
+            orden.fechaFinReal = null;
+            orden.motivoRechazo = motivoRechazo;
+            await this.ordenRepo().save(orden);
+            return this.findOne(id);
+        }
+        if (orden.estado === enums_1.EstadoOrdenTrabajo.PENDIENTE) {
+            orden.estado = enums_1.EstadoOrdenTrabajo.RECHAZADA;
+            orden.motivoRechazo = motivoRechazo;
+            orden.asignadoAId = null;
+            await this.ordenRepo().save(orden);
+            return this.findOne(id);
+        }
+        throw new common_1.BadRequestException('Solo se pueden rechazar tickets en estado pendiente o cierres en estado finalizada');
     }
 };
 exports.OrdenesTrabajoService = OrdenesTrabajoService;

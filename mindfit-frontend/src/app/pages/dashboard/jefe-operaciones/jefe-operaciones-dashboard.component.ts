@@ -37,7 +37,10 @@ import { LucideAngularModule } from 'lucide-angular';
 import { DeleteOtConfirmModalComponent } from '../../../shared/delete-ot-confirm-modal/delete-ot-confirm-modal.component';
 import { EditOtModalComponent } from '../../../shared/edit-ot-modal/edit-ot-modal.component';
 import { OtReportModalComponent } from '../../../shared/ot-report-modal/ot-report-modal.component';
-import { RejectOtModalComponent } from '../../../shared/reject-ot-modal/reject-ot-modal.component';
+import {
+  RejectOtModalComponent,
+  RejectOtModalMode,
+} from '../../../shared/reject-ot-modal/reject-ot-modal.component';
 
 @Component({
   selector: 'app-jefe-operaciones-dashboard',
@@ -83,6 +86,7 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   readonly deleteTarget = signal<WorkOrder | null>(null);
   readonly editTarget = signal<WorkOrder | null>(null);
   readonly rejectTarget = signal<WorkOrder | null>(null);
+  readonly rejectModalMode = signal<RejectOtModalMode>('cierre');
   readonly approvingId = signal<number | null>(null);
   readonly rejecting = signal(false);
   readonly revertingId = signal<number | null>(null);
@@ -231,7 +235,11 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   }
 
   canModificarOrden(orden: WorkOrder): boolean {
-    return orden.estado !== 'finalizada' && orden.estado !== 'aprobada';
+    return (
+      orden.estado !== 'finalizada' &&
+      orden.estado !== 'aprobada' &&
+      orden.estado !== 'rechazada'
+    );
   }
 
   evidenciaAntes(orden: WorkOrder): string | null {
@@ -309,6 +317,9 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   }
 
   openReject(orden: WorkOrder): void {
+    this.rejectModalMode.set(
+      orden.estado === 'pendiente' ? 'ticket' : 'cierre',
+    );
     this.rejectTarget.set(orden);
   }
 
@@ -319,15 +330,23 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   confirmReject(motivo: string): void {
     const orden = this.rejectTarget();
     if (!orden) return;
+    const esTicket = orden.estado === 'pendiente';
     this.rejecting.set(true);
     this.workOrders.rechazar(orden.id, motivo).subscribe({
       next: () => {
         this.rejecting.set(false);
         this.rejectTarget.set(null);
-        this.toast.success(
-          `${orden.codigoOt} rechazada — devuelta al técnico en órdenes activas`,
-        );
-        this.activeTab.set('activas');
+        if (esTicket) {
+          this.toast.success(
+            `${orden.codigoOt} rechazada — movida al archivo histórico`,
+          );
+          this.activeTab.set('historico');
+        } else {
+          this.toast.success(
+            `${orden.codigoOt} rechazada — devuelta al técnico en órdenes activas`,
+          );
+          this.activeTab.set('activas');
+        }
         this.reload();
       },
       error: (err) => {
@@ -443,6 +462,10 @@ export class JefeOperacionesDashboardComponent implements OnInit {
     return orden.estado === 'pendiente' || orden.estado === 'asignada';
   }
 
+  puedeRechazarTicket(orden: WorkOrder): boolean {
+    return this.isActivas() && orden.estado === 'pendiente';
+  }
+
   muestraEjecutado(orden: WorkOrder): boolean {
     return (
       !!orden.fechaFinReal &&
@@ -482,6 +505,7 @@ export class JefeOperacionesDashboardComponent implements OnInit {
       en_proceso: 'En proceso',
       finalizada: 'Finalizada',
       aprobada: 'Aprobada',
+      rechazada: 'Rechazada',
     };
     return map[estado] ?? estado;
   }

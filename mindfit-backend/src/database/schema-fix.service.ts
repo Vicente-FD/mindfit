@@ -58,6 +58,15 @@ export class SchemaFixService implements OnModuleInit {
       ADD COLUMN IF NOT EXISTS costo_materiales NUMERIC(14, 2) NOT NULL DEFAULT 0;
     `);
     await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo DROP CONSTRAINT IF EXISTS ordenes_trabajo_estado_check;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo ADD CONSTRAINT ordenes_trabajo_estado_check
+      CHECK (estado IN (
+        'pendiente', 'asignada', 'en_proceso', 'finalizada', 'aprobada', 'rechazada'
+      ));
+    `).catch(() => {});
+    await this.dataSource.query(`
       CREATE TABLE IF NOT EXISTS repuestos (
         id SERIAL PRIMARY KEY,
         sku VARCHAR(50) NOT NULL UNIQUE,

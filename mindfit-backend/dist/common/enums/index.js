@@ -48,6 +48,7 @@ var EstadoOrdenTrabajo;
     EstadoOrdenTrabajo["EN_PROCESO"] = "en_proceso";
     EstadoOrdenTrabajo["FINALIZADA"] = "finalizada";
     EstadoOrdenTrabajo["APROBADA"] = "aprobada";
+    EstadoOrdenTrabajo["RECHAZADA"] = "rechazada";
 })(EstadoOrdenTrabajo || (exports.EstadoOrdenTrabajo = EstadoOrdenTrabajo = {}));
 var ClasificacionOrden;
 (function (ClasificacionOrden) {

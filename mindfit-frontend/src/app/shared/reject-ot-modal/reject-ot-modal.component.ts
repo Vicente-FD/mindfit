@@ -1,7 +1,9 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { WorkOrder } from '../../core/models/work-order.model';
+
+export type RejectOtModalMode = 'ticket' | 'cierre';
 
 @Component({
   selector: 'app-reject-ot-modal',
@@ -14,8 +16,15 @@ export class RejectOtModalComponent {
 
   readonly orden = input.required<WorkOrder>();
   readonly rejecting = input(false);
+  readonly mode = input<RejectOtModalMode>('cierre');
   readonly closed = output<void>();
   readonly confirmed = output<string>();
+
+  readonly titulo = computed(() =>
+    this.mode() === 'ticket'
+      ? 'Rechazar solicitud de trabajo'
+      : 'Rechazar cierre de OT',
+  );
 
   readonly form = this.fb.nonNullable.group({
     motivo: ['', [Validators.required, Validators.minLength(3)]],
