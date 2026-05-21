@@ -12,6 +12,7 @@ var OrdenesTrabajoService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrdenesTrabajoService = void 0;
 const common_1 = require("@nestjs/common");
+const promises_1 = require("fs/promises");
 const typeorm_1 = require("typeorm");
 const enums_1 = require("../common/enums");
 const usuario_entity_1 = require("../entities/usuario.entity");
@@ -23,6 +24,7 @@ const comentario_ot_entity_1 = require("../entities/comentario-ot.entity");
 const ot_codigo_sequence_1 = require("./ot-codigo.sequence");
 const agent_debug_log_1 = require("../common/agent-debug-log");
 const inventario_service_1 = require("../inventario/inventario.service");
+const evidencias_storage_1 = require("./storage/evidencias.storage");
 let OrdenesTrabajoService = class OrdenesTrabajoService {
     static { OrdenesTrabajoService_1 = this; }
     dataSource;
@@ -207,10 +209,23 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         return this.findAll({ sucursalId });
     }
     async reportarFalla(dto, creadoPorId, sucursalId, fotoUrl) {
+        const tipo = dto.tipoReporte ?? 'maquina';
+        const esMaquina = tipo === 'maquina';
+        if (esMaquina && (dto.activoId == null || Number.isNaN(Number(dto.activoId)))) {
+            throw new common_1.BadRequestException('Debe seleccionar un activo para reportes de máquina');
+        }
+        const tituloPorTipo = {
+            maquina: dto.titulo ?? `Reporte de falla - Activo #${dto.activoId}`,
+            infraestructura: dto.titulo ?? 'Incidente de infraestructura / instalaciones',
+            peticion: dto.titulo ?? 'Petición de elementos o servicios',
+        };
         const orden = await this.create({
-            activoId: dto.activoId,
+            clasificacion: esMaquina
+                ? enums_1.ClasificacionOrden.MAQUINA
+                : enums_1.ClasificacionOrden.INFRAESTRUCTURA,
+            activoId: esMaquina ? Number(dto.activoId) : undefined,
             sucursalId,
-            titulo: dto.titulo ?? `Reporte de falla - Activo #${dto.activoId}`,
+            titulo: tituloPorTipo[tipo],
             descripcion: dto.descripcion,
             prioridad: dto.prioridad,
             tipoMantenimiento: enums_1.TipoMantenimiento.CORRECTIVO,
@@ -222,6 +237,30 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
             });
         }
         return this.findOne(orden.id);
+    }
+    async eliminarEvidenciasDespues(manager, ordenId) {
+        const repo = manager.getRepository(evidencia_ot_entity_1.EvidenciaOt);
+        const evidencias = await repo.find({
+            where: {
+                ordenTrabajoId: ordenId,
+                tipoEvidencia: enums_1.TipoEvidencia.DESPUES,
+            },
+        });
+        for (const evidencia of evidencias) {
+            const diskPath = (0, evidencias_storage_1.resolveEvidenciaDiskPath)(evidencia.urlImagen);
+            if (diskPath) {
+                try {
+                    await (0, promises_1.unlink)(diskPath);
+                }
+                catch (err) {
+                    const code = err.code;
+                    if (code !== 'ENOENT') {
+                        throw err;
+                    }
+                }
+            }
+            await repo.delete(evidencia.id);
+        }
     }
     async create(dto, creadoPorId) {
         const clasificacion = dto.clasificacion ?? enums_1.ClasificacionOrden.MAQUINA;
@@ -402,6 +441,7 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
                 estado: enums_1.EstadoOrdenTrabajo.FINALIZADA,
                 fechaFinReal: new Date(),
                 costoMateriales: String(costoMateriales),
+                motivoRechazo: null,
             });
             await queryRunner.commitTransaction();
         }
@@ -537,6 +577,7 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         }
         const manager = this.manager();
         if (orden.estado === enums_1.EstadoOrdenTrabajo.FINALIZADA) {
+            await this.eliminarEvidenciasDespues(manager, id);
             orden.estado = enums_1.EstadoOrdenTrabajo.EN_PROCESO;
             orden.fechaFinReal = null;
             orden.motivoRechazo = motivoRechazo;

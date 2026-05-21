@@ -37,6 +37,11 @@
         </div>
         <h3 class="mt-2 text-base font-semibold text-pure-white">{{ activoLabel(orden) }}</h3>
         <p class="mt-1 text-xs text-slate-grey">{{ activoDetalle(orden) }}</p>
+        @if (orden.estado === 'en_proceso' && orden.motivoRechazo) {
+          <p class="rechazo-badge mt-2">
+            Trabajo rechazado: {{ orden.motivoRechazo }}
+          </p>
+        }
         @if (elapsedLabel(orden); as elapsed) {
           <div class="timer-chip mt-3">
             <span class="timer-dot"></span>

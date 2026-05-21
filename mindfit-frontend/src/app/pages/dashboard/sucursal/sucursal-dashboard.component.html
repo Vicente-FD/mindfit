@@ -1,34 +1,59 @@
 <div class="sucursal-page mx-auto max-w-lg space-y-4 pb-4">
   <header class="rounded-2xl border border-white/5 bg-obsidian-grey p-4">
     <h1 class="text-lg font-semibold text-pure-white">Reporte de fallas</h1>
-    <p class="text-xs text-slate-grey">Solo activos de su sede asignada</p>
+    <p class="text-xs text-slate-grey">Equipos, infraestructura o peticiones de su sede</p>
   </header>
 
   <form class="page-card space-y-3" [formGroup]="reporteForm" (ngSubmit)="enviarReporte()">
     <div>
-      <label class="field-label">Activo *</label>
-      <div class="flex items-center gap-2">
-        @if (activoSeleccionado(); as sel) {
-          <span
-            class="health-dot-wrap"
-            [attr.title]="healthLabel(sel.estadoOperacional)"
+      <label class="field-label">Tipo de reporte *</label>
+      <div class="tipo-reporte-pills" role="group" aria-label="Tipo de reporte">
+        @for (t of tiposReporte; track t.value) {
+          <button
+            type="button"
+            class="tipo-pill"
+            [class.tipo-pill--active]="reporteForm.controls.tipoReporte.value === t.value"
+            (click)="setTipoReporte(t.value)"
           >
-            <span [class]="healthDotClass(sel.estadoOperacional)"></span>
-          </span>
+            {{ t.label }}
+          </button>
         }
-        <select class="field-input min-w-0 flex-1" formControlName="activoId">
-          <option value="">Seleccione equipo</option>
-          @for (a of activos(); track a.id) {
-            <option [value]="a.id">
-              {{ a.nombre }} — {{ healthLabel(a.estadoOperacional) }}
-            </option>
-          }
-        </select>
       </div>
-      @if (preselectedActivoNombre(); as nombre) {
-        <p class="mt-1 text-xs text-status-green">Seleccionado por QR: {{ nombre }}</p>
-      }
     </div>
+
+    @if (esReporteMaquina) {
+      <div>
+        <label class="field-label">Activo *</label>
+        <div class="flex items-center gap-2">
+          @if (activoSeleccionado(); as sel) {
+            <span
+              class="health-dot-wrap"
+              [attr.title]="healthLabel(sel.estadoOperacional)"
+            >
+              <span [class]="healthDotClass(sel.estadoOperacional)"></span>
+            </span>
+          }
+          <select class="field-input min-w-0 flex-1" formControlName="activoId">
+            <option value="">Seleccione equipo</option>
+            @for (a of activos(); track a.id) {
+              <option [value]="a.id">
+                {{ a.nombre }} — {{ healthLabel(a.estadoOperacional) }}
+              </option>
+            }
+          </select>
+        </div>
+        @if (preselectedActivoNombre(); as nombre) {
+          <p class="mt-1 text-xs text-status-green">Seleccionado por QR: {{ nombre }}</p>
+        }
+        @if (
+          reporteForm.controls.activoId.invalid &&
+          reporteForm.controls.activoId.touched
+        ) {
+          <p class="mt-1 text-xs text-orange-energy">Seleccione el equipo afectado.</p>
+        }
+      </div>
+    }
+
     <div>
       <label class="field-label">Prioridad *</label>
       <select class="field-input" formControlName="prioridad">
@@ -37,6 +62,7 @@
         }
       </select>
     </div>
+
     <div>
       <label class="field-label">Descripción *</label>
       <textarea class="field-input" rows="4" formControlName="descripcion"></textarea>
@@ -66,7 +92,14 @@
         @if (processingFoto()) {
           <span class="text-sm text-slate-grey">Comprimiendo imagen...</span>
         } @else {
-          <span class="text-sm text-slate-grey">Adjuntar foto de la falla *</span>
+          <span class="text-sm text-slate-grey">
+            Adjuntar foto de la falla
+            @if (fotoEsObligatoria) {
+              <span class="text-orange-energy"> (Obligatorio)</span>
+            } @else {
+              <span class="text-slate-grey/80"> (Opcional)</span>
+            }
+          </span>
         }
       </button>
       @if (imagePreview()) {
@@ -77,9 +110,11 @@
         />
       }
       @if (
-        reporteForm.controls.foto.invalid && reporteForm.controls.foto.touched
+        fotoEsObligatoria &&
+        reporteForm.controls.foto.invalid &&
+        reporteForm.controls.foto.touched
       ) {
-        <p class="mt-1 text-xs text-orange-energy">La foto es obligatoria.</p>
+        <p class="mt-1 text-xs text-orange-energy">La foto es obligatoria para fallas en máquina.</p>
       }
     </div>
 
@@ -113,14 +148,16 @@
     }
   </section>
 
-  <button
-    type="button"
-    class="qr-fab-sucursal"
-    (click)="openQrScanner()"
-    aria-label="Escanear QR del activo"
-  >
-    <lucide-icon name="camera" [size]="26" />
-  </button>
+  @if (esReporteMaquina) {
+    <button
+      type="button"
+      class="qr-fab-sucursal"
+      (click)="openQrScanner()"
+      aria-label="Escanear QR del activo"
+    >
+      <lucide-icon name="camera" [size]="26" />
+    </button>
+  }
 </div>
 
 @if (showScanner()) {

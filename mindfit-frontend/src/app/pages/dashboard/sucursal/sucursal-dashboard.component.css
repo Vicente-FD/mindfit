@@ -35,6 +35,37 @@
   position: relative;
 }
 
+.tipo-reporte-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tipo-pill {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(0 0 0 / 0.25);
+  padding: 0.45rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--color-slate-grey, #94a3b8);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.tipo-pill:hover {
+  border-color: rgb(255 102 0 / 0.35);
+  color: var(--color-pure-white, #fff);
+}
+
+.tipo-pill--active {
+  border-color: var(--color-orange-energy, #ff6600);
+  background: rgb(255 102 0 / 0.12);
+  color: var(--color-orange-energy, #ff6600);
+}
+
 .health-dot-wrap {
   flex-shrink: 0;
 }

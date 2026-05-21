@@ -10,6 +10,7 @@ import {
   WorkOrder,
   WorkOrderPriority,
 } from '../models/work-order.model';
+import { TipoReporteSucursal } from '../models/tipo-reporte.model';
 
 export interface UpdateWorkOrderPayload {
   titulo?: string;
@@ -31,7 +32,8 @@ export interface CreateWorkOrderPayload {
 }
 
 export interface ReportarFallaPayload {
-  activoId: number;
+  tipoReporte: TipoReporteSucursal;
+  activoId?: number | null;
   descripcion: string;
   prioridad: WorkOrderPriority;
   titulo?: string;
@@ -113,10 +115,13 @@ export class WorkOrdersService {
 
   reportarFalla(payload: ReportarFallaPayload): Observable<WorkOrder> {
     const formData = new FormData();
-    formData.append('activoId', String(payload.activoId));
+    formData.append('tipoReporte', payload.tipoReporte);
     formData.append('descripcion', payload.descripcion);
     formData.append('prioridad', payload.prioridad);
     if (payload.titulo) formData.append('titulo', payload.titulo);
+    if (payload.tipoReporte === 'maquina' && payload.activoId != null) {
+      formData.append('activoId', String(payload.activoId));
+    }
     if (payload.fotoFalla) {
       formData.append('foto_falla', payload.fotoFalla, payload.fotoFalla.name);
     }

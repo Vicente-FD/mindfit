@@ -14,6 +14,10 @@ import { ImageCompressorService } from '../../../core/services/image-compressor.
 import { ToastService } from '../../../core/services/toast.service';
 import { WorkOrder } from '../../../core/models/work-order.model';
 import { PRIORIDADES_OT } from '../../../core/models/analytics.model';
+import {
+  TIPOS_REPORTE_SUCURSAL,
+  TipoReporteSucursal,
+} from '../../../core/models/tipo-reporte.model';
 import { QrScannerModalComponent } from '../../../layout/qr-scanner-modal/qr-scanner-modal.component';
 
 function requiredImageFile(control: AbstractControl): ValidationErrors | null {
@@ -37,6 +41,7 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
 
   readonly user = this.auth.user;
   readonly prioridades = PRIORIDADES_OT;
+  readonly tiposReporte = TIPOS_REPORTE_SUCURSAL;
   readonly activos = signal<Activo[]>([]);
   readonly ordenes = signal<WorkOrder[]>([]);
   readonly saving = signal(false);
@@ -46,6 +51,7 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
   readonly preselectedActivoNombre = signal<string | null>(null);
 
   readonly reporteForm = this.fb.nonNullable.group({
+    tipoReporte: ['maquina' as TipoReporteSucursal, Validators.required],
     activoId: ['', Validators.required],
     prioridad: ['media' as const, Validators.required],
     descripcion: ['', [Validators.required, Validators.minLength(10)]],
@@ -60,6 +66,45 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
     }
     this.loadActivos();
     this.loadOrdenes();
+    this.applyValidatorsForTipo(this.reporteForm.controls.tipoReporte.value);
+    this.reporteForm.controls.tipoReporte.valueChanges.subscribe((tipo) => {
+      this.applyValidatorsForTipo(tipo);
+      if (tipo !== 'maquina') {
+        this.reporteForm.patchValue({ activoId: '' });
+        this.preselectedActivoNombre.set(null);
+      }
+    });
+  }
+
+  get esReporteMaquina(): boolean {
+    return this.reporteForm.controls.tipoReporte.value === 'maquina';
+  }
+
+  get fotoEsObligatoria(): boolean {
+    return this.esReporteMaquina;
+  }
+
+  private applyValidatorsForTipo(tipo: TipoReporteSucursal): void {
+    const activoCtrl = this.reporteForm.controls.activoId;
+    const fotoCtrl = this.reporteForm.controls.foto;
+
+    if (tipo === 'maquina') {
+      activoCtrl.setValidators([Validators.required]);
+      fotoCtrl.setValidators([Validators.required, requiredImageFile]);
+    } else {
+      activoCtrl.setValidators(null);
+      activoCtrl.setValue('');
+      fotoCtrl.setValidators(null);
+      fotoCtrl.setValue(null);
+      this.revokePreview();
+    }
+
+    activoCtrl.updateValueAndValidity();
+    fotoCtrl.updateValueAndValidity();
+  }
+
+  setTipoReporte(tipo: TipoReporteSucursal): void {
+    this.reporteForm.controls.tipoReporte.setValue(tipo);
   }
 
   loadActivos(): void {
@@ -75,6 +120,7 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
   }
 
   openQrScanner(): void {
+    if (!this.esReporteMaquina) return;
     this.showScanner.set(true);
   }
 
@@ -138,9 +184,12 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
       this.reporteForm.markAllAsTouched();
       return;
     }
+
     const v = this.reporteForm.getRawValue();
-    const foto = v.foto;
-    if (!(foto instanceof File)) {
+    const tipo = v.tipoReporte;
+    const foto = v.foto instanceof File ? v.foto : undefined;
+
+    if (tipo === 'maquina' && !foto) {
       this.toast.error('Debe adjuntar una foto de la falla');
       return;
     }
@@ -148,7 +197,8 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
     this.saving.set(true);
     this.workOrders
       .reportarFalla({
-        activoId: Number(v.activoId),
+        tipoReporte: tipo,
+        activoId: tipo === 'maquina' ? Number(v.activoId) : null,
         descripcion: v.descripcion,
         prioridad: v.prioridad,
         fotoFalla: foto,
@@ -157,7 +207,7 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
         next: () => {
           this.saving.set(false);
           this.resetForm();
-          this.toast.success('Ticket de falla enviado');
+          this.toast.success('Ticket enviado correctamente');
           this.loadActivos();
           this.loadOrdenes();
         },
@@ -173,11 +223,13 @@ export class SucursalDashboardComponent implements OnInit, OnDestroy {
     this.revokePreview();
     this.preselectedActivoNombre.set(null);
     this.reporteForm.reset({
+      tipoReporte: 'maquina',
       activoId: '',
       prioridad: 'media',
       descripcion: '',
       foto: null,
     });
+    this.applyValidatorsForTipo('maquina');
   }
 
   private revokePreview(): void {

@@ -14,6 +14,7 @@ import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
 import { CerrarOrdenDto } from './dto/cerrar-orden.dto';
 import { InventarioService } from '../inventario/inventario.service';
 import { RepuestoConsumoItemDto } from '../inventario/dto/repuesto-consumo.dto';
+import { TipoReporteSucursal } from './dto/tipo-reporte-sucursal';
 export declare class OrdenesTrabajoService {
     private readonly dataSource;
     private readonly transactionContext;
@@ -46,11 +47,13 @@ export declare class OrdenesTrabajoService {
     findOne(id: number): Promise<OrdenTrabajo>;
     findBySucursal(sucursalId: number): Promise<OrdenTrabajo[]>;
     reportarFalla(dto: {
-        activoId: number;
+        tipoReporte: TipoReporteSucursal;
+        activoId?: number | null;
         descripcion: string;
         prioridad: PrioridadOrden;
         titulo?: string;
     }, creadoPorId: number, sucursalId: number, fotoUrl?: string): Promise<OrdenTrabajo>;
+    private eliminarEvidenciasDespues;
     create(dto: CreateOrdenTrabajoDto, creadoPorId: number): Promise<OrdenTrabajo>;
     private assertOrdenEditable;
     update(id: number, dto: UpdateOrdenTrabajoDto): Promise<OrdenTrabajo>;

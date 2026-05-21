@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { unlink } from 'fs/promises';
 import { DataSource, EntityManager } from 'typeorm';
 import {
   ClasificacionOrden,
@@ -29,6 +30,8 @@ import { nextOtCodigo } from './ot-codigo.sequence';
 import { agentDebugLog } from '../common/agent-debug-log';
 import { InventarioService } from '../inventario/inventario.service';
 import { RepuestoConsumoItemDto } from '../inventario/dto/repuesto-consumo.dto';
+import { resolveEvidenciaDiskPath } from './storage/evidencias.storage';
+import { TipoReporteSucursal } from './dto/tipo-reporte-sucursal';
 
 @Injectable()
 export class OrdenesTrabajoService {
@@ -297,7 +300,8 @@ export class OrdenesTrabajoService {
 
   async reportarFalla(
     dto: {
-      activoId: number;
+      tipoReporte: TipoReporteSucursal;
+      activoId?: number | null;
       descripcion: string;
       prioridad: PrioridadOrden;
       titulo?: string;
@@ -306,11 +310,30 @@ export class OrdenesTrabajoService {
     sucursalId: number,
     fotoUrl?: string,
   ) {
+    const tipo = dto.tipoReporte ?? 'maquina';
+    const esMaquina = tipo === 'maquina';
+
+    if (esMaquina && (dto.activoId == null || Number.isNaN(Number(dto.activoId)))) {
+      throw new BadRequestException(
+        'Debe seleccionar un activo para reportes de máquina',
+      );
+    }
+
+    const tituloPorTipo: Record<TipoReporteSucursal, string> = {
+      maquina: dto.titulo ?? `Reporte de falla - Activo #${dto.activoId}`,
+      infraestructura:
+        dto.titulo ?? 'Incidente de infraestructura / instalaciones',
+      peticion: dto.titulo ?? 'Petición de elementos o servicios',
+    };
+
     const orden = await this.create(
       {
-        activoId: dto.activoId,
+        clasificacion: esMaquina
+          ? ClasificacionOrden.MAQUINA
+          : ClasificacionOrden.INFRAESTRUCTURA,
+        activoId: esMaquina ? Number(dto.activoId) : undefined,
         sucursalId,
-        titulo: dto.titulo ?? `Reporte de falla - Activo #${dto.activoId}`,
+        titulo: tituloPorTipo[tipo],
         descripcion: dto.descripcion,
         prioridad: dto.prioridad,
         tipoMantenimiento: TipoMantenimiento.CORRECTIVO,
@@ -326,6 +349,37 @@ export class OrdenesTrabajoService {
     }
 
     return this.findOne(orden.id);
+  }
+
+  /**
+   * Elimina evidencias "despues" (registro + archivo físico). Conserva "antes".
+   */
+  private async eliminarEvidenciasDespues(
+    manager: EntityManager,
+    ordenId: number,
+  ): Promise<void> {
+    const repo = manager.getRepository(EvidenciaOt);
+    const evidencias = await repo.find({
+      where: {
+        ordenTrabajoId: ordenId,
+        tipoEvidencia: TipoEvidencia.DESPUES,
+      },
+    });
+
+    for (const evidencia of evidencias) {
+      const diskPath = resolveEvidenciaDiskPath(evidencia.urlImagen);
+      if (diskPath) {
+        try {
+          await unlink(diskPath);
+        } catch (err) {
+          const code = (err as NodeJS.ErrnoException).code;
+          if (code !== 'ENOENT') {
+            throw err;
+          }
+        }
+      }
+      await repo.delete(evidencia.id);
+    }
   }
 
   async create(dto: CreateOrdenTrabajoDto, creadoPorId: number) {
@@ -576,6 +630,7 @@ export class OrdenesTrabajoService {
         estado: EstadoOrdenTrabajo.FINALIZADA,
         fechaFinReal: new Date(),
         costoMateriales: String(costoMateriales),
+        motivoRechazo: null,
       });
 
       await queryRunner.commitTransaction();
@@ -787,6 +842,7 @@ export class OrdenesTrabajoService {
     const manager = this.manager();
 
     if (orden.estado === EstadoOrdenTrabajo.FINALIZADA) {
+      await this.eliminarEvidenciasDespues(manager, id);
       orden.estado = EstadoOrdenTrabajo.EN_PROCESO;
       orden.fechaFinReal = null;
       orden.motivoRechazo = motivoRechazo;

@@ -116,7 +116,23 @@ export class OrdenesTrabajoController {
     if (!user.sucursalId) {
       throw new BadRequestException('Usuario sin sucursal asignada');
     }
+
+    const tipoReporte = dto.tipoReporte ?? 'maquina';
     const foto = files.foto_falla?.[0];
+
+    if (tipoReporte === 'maquina') {
+      if (dto.activoId == null || Number.isNaN(Number(dto.activoId))) {
+        throw new BadRequestException(
+          'Debe indicar el activo para reportes de máquina',
+        );
+      }
+      if (!foto) {
+        throw new BadRequestException(
+          'La foto de la falla es obligatoria para equipos',
+        );
+      }
+    }
+
     const port = this.configService.get<number>('PORT', 3000);
     const fotoUrl = foto
       ? buildPublicFileUrl(foto.filename, port)
@@ -124,7 +140,9 @@ export class OrdenesTrabajoController {
 
     return this.ordenesService.reportarFalla(
       {
-        activoId: Number(dto.activoId),
+        tipoReporte,
+        activoId:
+          tipoReporte === 'maquina' ? Number(dto.activoId) : null,
         descripcion: dto.descripcion,
         prioridad: dto.prioridad,
         titulo: dto.titulo,

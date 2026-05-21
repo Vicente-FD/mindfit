@@ -47,9 +47,19 @@ export class CloseOtModalComponent {
   constructor() {
     effect(() => {
       this.orden();
-      this.repuestosArray.clear();
+      this.resetFormState();
       this.loadCatalogo();
     });
+  }
+
+  /** Limpia foto después y comentarios al abrir (p. ej. tras rechazo de cierre). */
+  private resetFormState(): void {
+    this.revokePreview(this.previewDespues());
+    this.fileDespues = null;
+    this.previewDespues.set(null);
+    this.error.set(null);
+    this.form.reset({ comentario: '' });
+    this.repuestosArray.clear();
   }
 
   get repuestosArray(): FormArray {
