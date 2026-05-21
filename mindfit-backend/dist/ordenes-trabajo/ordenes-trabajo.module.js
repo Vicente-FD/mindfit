@@ -12,6 +12,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const orden_trabajo_entity_1 = require("../entities/orden-trabajo.entity");
 const evidencia_ot_entity_1 = require("../entities/evidencia-ot.entity");
 const comentario_ot_entity_1 = require("../entities/comentario-ot.entity");
+const inventario_module_1 = require("../inventario/inventario.module");
 const ordenes_trabajo_controller_1 = require("./ordenes-trabajo.controller");
 const ordenes_trabajo_service_1 = require("./ordenes-trabajo.service");
 let OrdenesTrabajoModule = class OrdenesTrabajoModule {
@@ -19,7 +20,10 @@ let OrdenesTrabajoModule = class OrdenesTrabajoModule {
 exports.OrdenesTrabajoModule = OrdenesTrabajoModule;
 exports.OrdenesTrabajoModule = OrdenesTrabajoModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([orden_trabajo_entity_1.OrdenTrabajo, evidencia_ot_entity_1.EvidenciaOt, comentario_ot_entity_1.ComentarioOt])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([orden_trabajo_entity_1.OrdenTrabajo, evidencia_ot_entity_1.EvidenciaOt, comentario_ot_entity_1.ComentarioOt]),
+            inventario_module_1.InventarioModule,
+        ],
         controllers: [ordenes_trabajo_controller_1.OrdenesTrabajoController],
         providers: [ordenes_trabajo_service_1.OrdenesTrabajoService],
         exports: [ordenes_trabajo_service_1.OrdenesTrabajoService],

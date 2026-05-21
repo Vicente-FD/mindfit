@@ -7,3 +7,6 @@ export { EvidenciaOt } from './evidencia-ot.entity';
 export { ComentarioOt } from './comentario-ot.entity';
 export { AuditTrail } from './audit-trail.entity';
 export { PlanPreventivo } from './plan-preventivo.entity';
+export { Repuesto } from './repuesto.entity';
+export { BodegaStock } from './bodega-stock.entity';
+export { OrdenTrabajoRepuesto } from './orden-trabajo-repuesto.entity';

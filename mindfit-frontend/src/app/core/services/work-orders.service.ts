@@ -151,6 +151,9 @@ export class WorkOrdersService {
       payload.fotoDespues,
       payload.fotoDespues.name,
     );
+    if (payload.repuestos?.length) {
+      formData.append('repuestos', JSON.stringify(payload.repuestos));
+    }
 
     return this.http.post<WorkOrder>(`${this.baseUrl}/${id}/cerrar`, formData);
   }

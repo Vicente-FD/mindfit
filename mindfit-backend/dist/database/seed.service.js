@@ -58,6 +58,8 @@ const usuario_entity_1 = require("../entities/usuario.entity");
 const activo_entity_1 = require("../entities/activo.entity");
 const orden_trabajo_entity_1 = require("../entities/orden-trabajo.entity");
 const marca_entity_1 = require("../entities/marca.entity");
+const repuesto_entity_1 = require("../entities/repuesto.entity");
+const bodega_stock_entity_1 = require("../entities/bodega-stock.entity");
 const DEMO_PASSWORD = 'Admin123!';
 let SeedService = SeedService_1 = class SeedService {
     sucursalRepo;
@@ -65,13 +67,17 @@ let SeedService = SeedService_1 = class SeedService {
     activoRepo;
     ordenRepo;
     marcaRepo;
+    repuestoRepo;
+    bodegaStockRepo;
     logger = new common_1.Logger(SeedService_1.name);
-    constructor(sucursalRepo, usuarioRepo, activoRepo, ordenRepo, marcaRepo) {
+    constructor(sucursalRepo, usuarioRepo, activoRepo, ordenRepo, marcaRepo, repuestoRepo, bodegaStockRepo) {
         this.sucursalRepo = sucursalRepo;
         this.usuarioRepo = usuarioRepo;
         this.activoRepo = activoRepo;
         this.ordenRepo = ordenRepo;
         this.marcaRepo = marcaRepo;
+        this.repuestoRepo = repuestoRepo;
+        this.bodegaStockRepo = bodegaStockRepo;
     }
     async onModuleInit() {
         const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
@@ -119,6 +125,12 @@ let SeedService = SeedService_1 = class SeedService {
                 email: 'gerente@mindfit.cl',
                 nombre: 'Ejecutivo Gerencia BI',
                 rol: enums_1.RolUsuario.GERENTE_BI,
+                sucursalKey: null,
+            },
+            {
+                email: 'bodeguero@mindfit.cl',
+                nombre: 'Bodeguero Central',
+                rol: enums_1.RolUsuario.BODEGUERO,
                 sucursalKey: null,
             },
         ];
@@ -271,8 +283,57 @@ let SeedService = SeedService_1 = class SeedService {
                 }));
             }
         }
+        await this.seedInventario();
         this.logger.log('Seed Mindfit Ops listo (marcas, siglas, usuarios demo)');
         this.logger.log(`  Contraseña demo: ${DEMO_PASSWORD}`);
+    }
+    async seedInventario() {
+        const catalogo = [
+            {
+                sku: 'MF-BELT-001',
+                nombre: 'Correa transmisión cinta',
+                costo: 45000,
+                stock: 12,
+                min: 5,
+            },
+            {
+                sku: 'MF-LUBE-002',
+                nombre: 'Lubricante cadena 500ml',
+                costo: 8900,
+                stock: 30,
+                min: 10,
+            },
+            {
+                sku: 'MF-ELEC-003',
+                nombre: 'Fusible industrial 25A',
+                costo: 3200,
+                stock: 8,
+                min: 5,
+            },
+        ];
+        for (const item of catalogo) {
+            let repuesto = await this.repuestoRepo.findOne({
+                where: { sku: item.sku },
+            });
+            if (!repuesto) {
+                repuesto = await this.repuestoRepo.save(this.repuestoRepo.create({
+                    sku: item.sku,
+                    nombre: item.nombre,
+                    descripcion: `Insumo demo ${item.sku}`,
+                    costoUnitario: String(item.costo),
+                }));
+            }
+            const exists = await this.bodegaStockRepo.findOne({
+                where: { repuestoId: repuesto.id },
+            });
+            if (!exists) {
+                await this.bodegaStockRepo.save(this.bodegaStockRepo.create({
+                    repuestoId: repuesto.id,
+                    cantidadActual: item.stock,
+                    cantidadMinimaAlerta: item.min,
+                }));
+            }
+        }
     }
     async seedMarcas() {
         const marcas = [
@@ -319,7 +380,11 @@ exports.SeedService = SeedService = SeedService_1 = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(activo_entity_1.Activo)),
     __param(3, (0, typeorm_1.InjectRepository)(orden_trabajo_entity_1.OrdenTrabajo)),
     __param(4, (0, typeorm_1.InjectRepository)(marca_entity_1.Marca)),
+    __param(5, (0, typeorm_1.InjectRepository)(repuesto_entity_1.Repuesto)),
+    __param(6, (0, typeorm_1.InjectRepository)(bodega_stock_entity_1.BodegaStock)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

@@ -23,6 +23,7 @@ const database_module_1 = require("./database/database.module");
 const seed_service_1 = require("./database/seed.service");
 const schema_fix_service_1 = require("./database/schema-fix.service");
 const entities_1 = require("./entities");
+const inventario_module_1 = require("./inventario/inventario.module");
 const audit_trail_module_1 = require("./audit-trail/audit-trail.module");
 const planes_preventivos_module_1 = require("./planes-preventivos/planes-preventivos.module");
 const marcas_module_1 = require("./marcas/marcas.module");
@@ -31,6 +32,7 @@ const usuarios_module_1 = require("./usuarios/usuarios.module");
 const activos_module_1 = require("./activos/activos.module");
 const ordenes_trabajo_module_1 = require("./ordenes-trabajo/ordenes-trabajo.module");
 const analytics_module_1 = require("./analytics/analytics.module");
+const bodega_global_migrate_1 = require("./database/bodega-global-migrate");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -45,31 +47,45 @@ exports.AppModule = AppModule = __decorate([
             typeorm_1.TypeOrmModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
-                useFactory: (configService) => ({
-                    type: 'postgres',
-                    host: configService.get('DB_HOST', '127.0.0.1'),
-                    port: configService.get('DB_PORT', 5432),
-                    username: configService.get('DB_USER') ??
-                        configService.get('DB_USERNAME', 'postgres'),
-                    password: configService.get('DB_PASSWORD', ''),
-                    database: configService.get('DB_NAME') ??
-                        configService.get('DB_DATABASE', 'mindfit_ops'),
-                    entities: [
-                        entities_1.Sucursal,
-                        entities_1.Usuario,
-                        entities_1.Marca,
-                        entities_1.Activo,
-                        entities_1.OrdenTrabajo,
-                        entities_1.EvidenciaOt,
-                        entities_1.ComentarioOt,
-                        entities_1.AuditTrail,
-                        entities_1.PlanPreventivo,
-                    ],
-                    synchronize: configService.get('NODE_ENV') !== 'production',
-                    retryAttempts: 10,
-                    retryDelay: 3000,
-                    keepConnectionAlive: true,
-                }),
+                useFactory: async (configService) => {
+                    await (0, bodega_global_migrate_1.runBodegaGlobalPreMigrate)({
+                        host: configService.get('DB_HOST', '127.0.0.1'),
+                        port: configService.get('DB_PORT', 5432),
+                        user: configService.get('DB_USER') ??
+                            configService.get('DB_USERNAME', 'postgres'),
+                        password: configService.get('DB_PASSWORD', ''),
+                        database: configService.get('DB_NAME') ??
+                            configService.get('DB_DATABASE', 'mindfit_ops'),
+                    });
+                    return {
+                        type: 'postgres',
+                        host: configService.get('DB_HOST', '127.0.0.1'),
+                        port: configService.get('DB_PORT', 5432),
+                        username: configService.get('DB_USER') ??
+                            configService.get('DB_USERNAME', 'postgres'),
+                        password: configService.get('DB_PASSWORD', ''),
+                        database: configService.get('DB_NAME') ??
+                            configService.get('DB_DATABASE', 'mindfit_ops'),
+                        entities: [
+                            entities_1.Sucursal,
+                            entities_1.Usuario,
+                            entities_1.Marca,
+                            entities_1.Activo,
+                            entities_1.OrdenTrabajo,
+                            entities_1.EvidenciaOt,
+                            entities_1.ComentarioOt,
+                            entities_1.AuditTrail,
+                            entities_1.PlanPreventivo,
+                            entities_1.Repuesto,
+                            entities_1.BodegaStock,
+                            entities_1.OrdenTrabajoRepuesto,
+                        ],
+                        synchronize: configService.get('NODE_ENV') !== 'production',
+                        retryAttempts: 10,
+                        retryDelay: 3000,
+                        keepConnectionAlive: true,
+                    };
+                },
             }),
             typeorm_1.TypeOrmModule.forFeature([
                 entities_1.Sucursal,
@@ -77,6 +93,8 @@ exports.AppModule = AppModule = __decorate([
                 entities_1.Marca,
                 entities_1.Activo,
                 entities_1.OrdenTrabajo,
+                entities_1.Repuesto,
+                entities_1.BodegaStock,
             ]),
             common_module_1.CommonModule,
             database_module_1.DatabaseModule,
@@ -89,6 +107,7 @@ exports.AppModule = AppModule = __decorate([
             analytics_module_1.AnalyticsModule,
             planes_preventivos_module_1.PlanesPreventivosModule,
             audit_trail_module_1.AuditTrailModule,
+            inventario_module_1.InventarioModule,
         ],
         controllers: [app_controller_1.AppController, debug_controller_1.DebugController],
         providers: [

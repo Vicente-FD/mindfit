@@ -3,7 +3,8 @@ export type UserRole =
   | 'jefe_operaciones'
   | 'tecnico'
   | 'jefe_sucursal'
-  | 'gerente_bi';
+  | 'gerente_bi'
+  | 'bodeguero';
 
 export type EstadoSesion = 'conectado' | 'desconectado' | 'reposo';
 
@@ -28,4 +29,5 @@ export const ROLE_DASHBOARD_ROUTES: Record<UserRole, string> = {
   tecnico: '/dashboard/tecnico',
   jefe_sucursal: '/dashboard/sucursal',
   gerente_bi: '/dashboard/gerente',
+  bodeguero: '/dashboard/bodeguero',
 };

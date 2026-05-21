@@ -50,4 +50,11 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
     verGestionUsuarios: false,
     generarQrActivos: false,
   },
+  bodeguero: {
+    verGestionActivos: false,
+    verGestionUsuarios: false,
+    verAsignacionOt: false,
+    verReportesSucursal: false,
+    generarQrActivos: false,
+  },
 };

@@ -8,6 +8,7 @@ var RolUsuario;
     RolUsuario["TECNICO"] = "tecnico";
     RolUsuario["JEFE_SUCURSAL"] = "jefe_sucursal";
     RolUsuario["GERENTE_BI"] = "gerente_bi";
+    RolUsuario["BODEGUERO"] = "bodeguero";
 })(RolUsuario || (exports.RolUsuario = RolUsuario = {}));
 var EstadoSesionUsuario;
 (function (EstadoSesionUsuario) {

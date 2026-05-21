@@ -17,6 +17,8 @@ import { Usuario } from '../entities/usuario.entity';
 import { Activo } from '../entities/activo.entity';
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
 import { Marca } from '../entities/marca.entity';
+import { Repuesto } from '../entities/repuesto.entity';
+import { BodegaStock } from '../entities/bodega-stock.entity';
 
 const DEMO_PASSWORD = 'Admin123!';
 
@@ -42,6 +44,10 @@ export class SeedService implements OnModuleInit {
     private readonly ordenRepo: Repository<OrdenTrabajo>,
     @InjectRepository(Marca)
     private readonly marcaRepo: Repository<Marca>,
+    @InjectRepository(Repuesto)
+    private readonly repuestoRepo: Repository<Repuesto>,
+    @InjectRepository(BodegaStock)
+    private readonly bodegaStockRepo: Repository<BodegaStock>,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -112,6 +118,12 @@ export class SeedService implements OnModuleInit {
         email: 'gerente@mindfit.cl',
         nombre: 'Ejecutivo Gerencia BI',
         rol: RolUsuario.GERENTE_BI,
+        sucursalKey: null,
+      },
+      {
+        email: 'bodeguero@mindfit.cl',
+        nombre: 'Bodeguero Central',
+        rol: RolUsuario.BODEGUERO,
         sucursalKey: null,
       },
     ];
@@ -278,8 +290,65 @@ export class SeedService implements OnModuleInit {
       }
     }
 
+    await this.seedInventario();
+
     this.logger.log('Seed Mindfit Ops listo (marcas, siglas, usuarios demo)');
     this.logger.log(`  Contraseña demo: ${DEMO_PASSWORD}`);
+  }
+
+  private async seedInventario(): Promise<void> {
+    const catalogo = [
+      {
+        sku: 'MF-BELT-001',
+        nombre: 'Correa transmisión cinta',
+        costo: 45000,
+        stock: 12,
+        min: 5,
+      },
+      {
+        sku: 'MF-LUBE-002',
+        nombre: 'Lubricante cadena 500ml',
+        costo: 8900,
+        stock: 30,
+        min: 10,
+      },
+      {
+        sku: 'MF-ELEC-003',
+        nombre: 'Fusible industrial 25A',
+        costo: 3200,
+        stock: 8,
+        min: 5,
+      },
+    ];
+
+    for (const item of catalogo) {
+      let repuesto = await this.repuestoRepo.findOne({
+        where: { sku: item.sku },
+      });
+      if (!repuesto) {
+        repuesto = await this.repuestoRepo.save(
+          this.repuestoRepo.create({
+            sku: item.sku,
+            nombre: item.nombre,
+            descripcion: `Insumo demo ${item.sku}`,
+            costoUnitario: String(item.costo),
+          }),
+        );
+      }
+
+      const exists = await this.bodegaStockRepo.findOne({
+        where: { repuestoId: repuesto.id },
+      });
+      if (!exists) {
+        await this.bodegaStockRepo.save(
+          this.bodegaStockRepo.create({
+            repuestoId: repuesto.id,
+            cantidadActual: item.stock,
+            cantidadMinimaAlerta: item.min,
+          }),
+        );
+      }
+    }
   }
 
   private async seedMarcas(): Promise<void> {

@@ -67,6 +67,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'bodeguero',
+        canActivate: [rolesGuard(['bodeguero', 'jefe_operaciones'])],
+        loadComponent: () =>
+          import('./pages/dashboard/bodeguero/bodeguero-dashboard.component').then(
+            (m) => m.BodegueroDashboardComponent,
+          ),
+      },
+      {
         path: 'tecnico',
         canActivate: [rolesGuard(['tecnico'])],
         loadComponent: () =>

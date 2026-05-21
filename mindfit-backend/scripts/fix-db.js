@@ -112,6 +112,58 @@ async function run() {
       console.log('[fix-db] Activos: codigo_qr_token y codigo_inventario OK');
     }
 
+    const bodegaExists = await client.query(`
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'bodega_stock'
+    `);
+    if ((bodegaExists.rowCount ?? 0) > 0) {
+      const hasSucursal = await client.query(`
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'bodega_stock' AND column_name = 'sucursal_id'
+      `);
+      const dup = await client.query(`
+        SELECT 1 FROM bodega_stock GROUP BY repuesto_id HAVING COUNT(*) > 1 LIMIT 1
+      `);
+      if ((hasSucursal.rowCount ?? 0) > 0 || (dup.rowCount ?? 0) > 0) {
+        console.log('[fix-db] Migrando bodega_stock a inventario global...');
+        await client.query(`DROP TABLE IF EXISTS tmp_bodega_global`);
+        await client.query(`
+          CREATE TEMP TABLE tmp_bodega_global AS
+          SELECT repuesto_id,
+            SUM(cantidad_actual)::int AS cantidad_actual,
+            MIN(cantidad_minima_alerta)::int AS cantidad_minima_alerta
+          FROM bodega_stock GROUP BY repuesto_id
+        `);
+        await client.query(`DELETE FROM bodega_stock`);
+        await client.query(`ALTER TABLE bodega_stock DROP CONSTRAINT IF EXISTS uq_sucursal_repuesto`).catch(() => {});
+        await client.query(`ALTER TABLE bodega_stock DROP CONSTRAINT IF EXISTS bodega_stock_sucursal_id_fkey`).catch(() => {});
+        const idx = await client.query(`
+          SELECT indexname FROM pg_indexes
+          WHERE tablename = 'bodega_stock' AND indexdef ILIKE '%UNIQUE%'
+            AND indexdef ILIKE '%repuesto_id%' AND indexname <> 'uq_bodega_repuesto'
+        `);
+        for (const row of idx.rows) {
+          await client.query(`DROP INDEX IF EXISTS "${row.indexname}"`);
+        }
+        await client.query(`DROP INDEX IF EXISTS idx_bodega_sucursal`);
+        if ((hasSucursal.rowCount ?? 0) > 0) {
+          await client.query(`ALTER TABLE bodega_stock DROP COLUMN IF EXISTS sucursal_id`);
+        }
+        await client.query(`
+          DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_bodega_repuesto') THEN
+              ALTER TABLE bodega_stock ADD CONSTRAINT uq_bodega_repuesto UNIQUE (repuesto_id);
+            END IF;
+          END $$;
+        `).catch(() => {});
+        await client.query(`
+          INSERT INTO bodega_stock (repuesto_id, cantidad_actual, cantidad_minima_alerta)
+          SELECT repuesto_id, cantidad_actual, cantidad_minima_alerta FROM tmp_bodega_global
+        `);
+        console.log('[fix-db] Bodega central consolidada');
+      }
+    }
+
     console.log('[fix-db] Reparación completada');
   } finally {
     await client.end();

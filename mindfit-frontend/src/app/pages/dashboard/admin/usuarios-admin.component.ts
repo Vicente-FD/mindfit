@@ -19,6 +19,7 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: 'tecnico', label: 'Técnico' },
   { value: 'jefe_sucursal', label: 'Jefe Sucursal' },
   { value: 'gerente_bi', label: 'Gerente / BI' },
+  { value: 'bodeguero', label: 'Bodeguero' },
 ];
 
 const ROLE_TABS: { value: UserRole | 'todos'; label: string }[] = [
@@ -28,6 +29,7 @@ const ROLE_TABS: { value: UserRole | 'todos'; label: string }[] = [
   { value: 'tecnico', label: 'Técnicos' },
   { value: 'jefe_sucursal', label: 'Jefes Sucursal' },
   { value: 'gerente_bi', label: 'Ejecutivos' },
+  { value: 'bodeguero', label: 'Bodegueros' },
 ];
 
 const PERMISO_LABELS: { key: keyof PermisosUi; label: string }[] = [

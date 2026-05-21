@@ -20,6 +20,7 @@ import { Sucursal } from './sucursal.entity';
 import { Usuario } from './usuario.entity';
 import { EvidenciaOt } from './evidencia-ot.entity';
 import { ComentarioOt } from './comentario-ot.entity';
+import { OrdenTrabajoRepuesto } from './orden-trabajo-repuesto.entity';
 
 @Entity('ordenes_trabajo')
 export class OrdenTrabajo {
@@ -111,6 +112,15 @@ export class OrdenTrabajo {
   @Column({ name: 'fecha_aprobacion', type: 'timestamptz', nullable: true })
   fechaAprobacion: Date | null;
 
+  @Column({
+    name: 'costo_materiales',
+    type: 'decimal',
+    precision: 14,
+    scale: 2,
+    default: 0,
+  })
+  costoMateriales: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -125,4 +135,7 @@ export class OrdenTrabajo {
 
   @OneToMany(() => ComentarioOt, (comentario) => comentario.ordenTrabajo)
   comentarios: ComentarioOt[];
+
+  @OneToMany(() => OrdenTrabajoRepuesto, (consumo) => consumo.ordenTrabajo)
+  consumoRepuestos: OrdenTrabajoRepuesto[];
 }

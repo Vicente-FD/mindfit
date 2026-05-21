@@ -1,0 +1,139 @@
+<div class="bodega-page space-y-5">
+  <header>
+    <h1 class="text-xl font-semibold text-pure-white">Bodega central</h1>
+    <p class="text-sm text-slate-grey">
+      Inventario único compartido por todas las sucursales de Mindfit
+    </p>
+  </header>
+
+  <div class="kpi-grid">
+    <article class="kpi-card">
+      <p class="kpi-label">Total SKU en catálogo</p>
+      <p class="kpi-value">{{ kpis()?.totalSku ?? '—' }}</p>
+    </article>
+    <article class="kpi-card">
+      <p class="kpi-label">Valorización inventario</p>
+      <p class="kpi-value">
+        @if (kpis(); as k) {
+          {{ k.valorizacionInventario | currency:'CLP':'symbol-narrow':'1.0-0' }}
+        } @else { — }
+      </p>
+    </article>
+    <article class="kpi-card kpi-card--alert">
+      <p class="kpi-label">Alertas de reorden</p>
+      <p class="kpi-value flex items-center gap-2">
+        <span>{{ kpis()?.alertasReorden ?? 0 }}</span>
+        @if ((kpis()?.alertasReorden ?? 0) > 0) {
+          <span class="badge-alert">Bajo mínimo</span>
+        }
+      </p>
+    </article>
+  </div>
+
+  <div class="filters-bar page-card">
+    <div class="filter-field filter-field--grow">
+      <label class="field-label">Buscar SKU o repuesto</label>
+      <input
+        type="search"
+        class="field-input"
+        placeholder="SKU o nombre..."
+        (input)="onBusquedaInput($event)"
+      />
+    </div>
+  </div>
+
+  @if (alertasDetalle().length > 0) {
+    <div class="alert-panel">
+      <lucide-icon name="alert-triangle" [size]="16" class="text-orange-energy" />
+      <div class="flex flex-wrap gap-2">
+        @for (a of alertasDetalle().slice(0, 8); track a.id) {
+          <span class="badge-alert">{{ a.repuesto.sku }}</span>
+        }
+        @if (alertasDetalle().length > 8) {
+          <span class="text-xs text-slate-grey">+{{ alertasDetalle().length - 8 }} más</span>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="page-card overflow-hidden">
+    @if (loading()) {
+      <p class="p-4 text-sm text-slate-grey">Cargando stock...</p>
+    } @else if (stockFiltrado().length === 0) {
+      <p class="p-4 text-sm text-slate-grey">Sin registros en bodega para los filtros actuales.</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="stock-table">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Repuesto</th>
+              <th>Stock actual</th>
+              <th>Mín. alerta</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of stockFiltrado(); track row.id) {
+              <tr [class.row-alert]="bajoMinimo(row)">
+                <td class="font-mono text-xs">{{ row.repuesto.sku }}</td>
+                <td>{{ row.repuesto.nombre }}</td>
+                <td>
+                  <span [class.text-orange-energy]="bajoMinimo(row)">
+                    {{ row.cantidadActual }}
+                  </span>
+                </td>
+                <td class="text-slate-grey">{{ row.cantidadMinimaAlerta }}</td>
+                <td class="actions-cell">
+                  <button type="button" class="btn-table" (click)="openAjustar(row)">
+                    Editar stock
+                  </button>
+                  <button type="button" class="btn-table btn-table--accent" (click)="openIngreso(row)">
+                    Ingreso
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (showModal() && selectedRow(); as row) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-pure-white">
+            {{ modalMode() === 'ajustar' ? 'Ajustar stock' : 'Registrar ingreso' }}
+          </h2>
+          <p class="text-xs text-slate-grey">
+            {{ row.repuesto.sku }} · {{ row.repuesto.nombre }}
+          </p>
+          <p class="text-xs text-slate-grey mt-1">Stock actual: {{ row.cantidadActual }} u.</p>
+        </div>
+        <button type="button" class="btn-ghost" (click)="closeModal()">
+          <lucide-icon name="x" [size]="18" />
+        </button>
+      </div>
+      <form [formGroup]="stockForm" (ngSubmit)="submitStock()" class="space-y-4">
+        <div>
+          <label class="field-label">
+            {{ modalMode() === 'ajustar' ? 'Nueva cantidad en bodega' : 'Unidades a ingresar' }}
+          </label>
+          <input
+            type="number"
+            min="0"
+            class="field-input"
+            formControlName="cantidad"
+          />
+        </div>
+        <button type="submit" class="btn-primary w-full" [disabled]="saving() || stockForm.invalid">
+          @if (saving()) { Guardando... } @else { Confirmar }
+        </button>
+      </form>
+    </div>
+  </div>
+}

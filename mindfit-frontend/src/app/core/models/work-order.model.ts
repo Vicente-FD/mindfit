@@ -73,6 +73,7 @@ export interface WorkOrder {
   fechaFinReal: string | null;
   motivoRechazo: string | null;
   fechaAprobacion: string | null;
+  costoMateriales?: string | number | null;
   createdAt: string;
   updatedAt: string;
   activo?: WorkOrderActivo | null;
@@ -99,7 +100,13 @@ export interface UpdateWorkOrderStatusPayload {
   estado: 'en_proceso';
 }
 
+export interface RepuestoConsumoPayload {
+  repuestoId: number;
+  cantidad: number;
+}
+
 export interface CloseWorkOrderPayload {
   comentario: string;
   fotoDespues: File;
+  repuestos?: RepuestoConsumoPayload[];
 }

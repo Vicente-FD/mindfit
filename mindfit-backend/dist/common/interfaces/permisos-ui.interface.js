@@ -43,5 +43,12 @@ exports.PERMISOS_BY_ROL = {
         verGestionUsuarios: false,
         generarQrActivos: false,
     },
+    bodeguero: {
+        verGestionActivos: false,
+        verGestionUsuarios: false,
+        verAsignacionOt: false,
+        verReportesSucursal: false,
+        generarQrActivos: false,
+    },
 };
 //# sourceMappingURL=permisos-ui.interface.js.map

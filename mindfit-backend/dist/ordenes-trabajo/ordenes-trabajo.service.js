@@ -22,13 +22,16 @@ const evidencia_ot_entity_1 = require("../entities/evidencia-ot.entity");
 const comentario_ot_entity_1 = require("../entities/comentario-ot.entity");
 const ot_codigo_sequence_1 = require("./ot-codigo.sequence");
 const agent_debug_log_1 = require("../common/agent-debug-log");
+const inventario_service_1 = require("../inventario/inventario.service");
 let OrdenesTrabajoService = class OrdenesTrabajoService {
     static { OrdenesTrabajoService_1 = this; }
     dataSource;
     transactionContext;
-    constructor(dataSource, transactionContext) {
+    inventarioService;
+    constructor(dataSource, transactionContext, inventarioService) {
         this.dataSource = dataSource;
         this.transactionContext = transactionContext;
+        this.inventarioService = inventarioService;
     }
     ordenRepo() {
         return this.transactionContext.getRepository(orden_trabajo_entity_1.OrdenTrabajo, this.dataSource);
@@ -291,24 +294,48 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         }
         throw new common_1.BadRequestException(`Transición de estado no permitida para el técnico: ${estado}`);
     }
-    async cerrarConArchivos(id, tecnicoId, comentario, urlDespues) {
-        const orden = await this.findOne(id);
-        if (orden.asignadoAId != null &&
-            !this.esTecnicoAsignado(orden.asignadoAId, tecnicoId)) {
+    async cerrarConArchivos(id, tecnicoId, comentario, urlDespues, repuestos = []) {
+        const ordenPrev = await this.findOne(id);
+        if (ordenPrev.asignadoAId != null &&
+            !this.esTecnicoAsignado(ordenPrev.asignadoAId, tecnicoId)) {
             throw new common_1.BadRequestException('Solo el técnico asignado puede cerrar esta orden');
         }
-        if (orden.estado !== enums_1.EstadoOrdenTrabajo.EN_PROCESO) {
+        if (ordenPrev.estado !== enums_1.EstadoOrdenTrabajo.EN_PROCESO) {
             throw new common_1.BadRequestException('Solo se pueden cerrar órdenes en estado en_proceso');
         }
-        await this.agregarComentario(id, tecnicoId, { comentario });
-        await this.agregarEvidencia(id, tecnicoId, {
-            tipoEvidencia: enums_1.TipoEvidencia.DESPUES,
-            urlImagen: urlDespues,
-        });
-        await this.ordenRepo().update(id, {
-            estado: enums_1.EstadoOrdenTrabajo.FINALIZADA,
-            fechaFinReal: new Date(),
-        });
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            const manager = queryRunner.manager;
+            const costoMateriales = await this.inventarioService.procesarConsumoEnTransaccion(manager, id, repuestos);
+            const comentarioEnt = manager.getRepository(comentario_ot_entity_1.ComentarioOt).create({
+                ordenTrabajoId: id,
+                autorId: tecnicoId,
+                comentario,
+            });
+            await manager.getRepository(comentario_ot_entity_1.ComentarioOt).save(comentarioEnt);
+            const evidencia = manager.getRepository(evidencia_ot_entity_1.EvidenciaOt).create({
+                ordenTrabajoId: id,
+                cargadoPorId: tecnicoId,
+                tipoEvidencia: enums_1.TipoEvidencia.DESPUES,
+                urlImagen: urlDespues,
+            });
+            await manager.getRepository(evidencia_ot_entity_1.EvidenciaOt).save(evidencia);
+            await manager.getRepository(orden_trabajo_entity_1.OrdenTrabajo).update(id, {
+                estado: enums_1.EstadoOrdenTrabajo.FINALIZADA,
+                fechaFinReal: new Date(),
+                costoMateriales: String(costoMateriales),
+            });
+            await queryRunner.commitTransaction();
+        }
+        catch (err) {
+            await queryRunner.rollbackTransaction();
+            throw err;
+        }
+        finally {
+            await queryRunner.release();
+        }
         return this.findOne(id);
     }
     esTecnicoAsignado(asignadoAId, tecnicoId) {
@@ -434,6 +461,7 @@ exports.OrdenesTrabajoService = OrdenesTrabajoService;
 exports.OrdenesTrabajoService = OrdenesTrabajoService = OrdenesTrabajoService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [typeorm_1.DataSource,
-        transaction_context_service_1.TransactionContextService])
+        transaction_context_service_1.TransactionContextService,
+        inventario_service_1.InventarioService])
 ], OrdenesTrabajoService);
 //# sourceMappingURL=ordenes-trabajo.service.js.map

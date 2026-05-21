@@ -4,6 +4,7 @@ export enum RolUsuario {
   TECNICO = 'tecnico',
   JEFE_SUCURSAL = 'jefe_sucursal',
   GERENTE_BI = 'gerente_bi',
+  BODEGUERO = 'bodeguero',
 }
 
 export enum EstadoSesionUsuario {

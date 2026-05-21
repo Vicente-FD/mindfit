@@ -1,9 +1,16 @@
-import { Component, inject, input, output, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
+import {
+  FormArray,
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { ImageCompressorService } from '../../core/services/image-compressor.service';
+import { InventarioService } from '../../core/services/inventario.service';
 import { WorkOrdersService } from '../../core/services/work-orders.service';
 import { ToastService } from '../../core/services/toast.service';
+import { RepuestoDisponible } from '../../core/models/inventario.model';
 import { WorkOrder } from '../../core/models/work-order.model';
 
 @Component({
@@ -15,6 +22,7 @@ import { WorkOrder } from '../../core/models/work-order.model';
 export class CloseOtModalComponent {
   private readonly fb = inject(FormBuilder);
   private readonly workOrders = inject(WorkOrdersService);
+  private readonly inventario = inject(InventarioService);
   private readonly compressor = inject(ImageCompressorService);
   private readonly toast = inject(ToastService);
 
@@ -26,12 +34,83 @@ export class CloseOtModalComponent {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly previewDespues = signal<string | null>(null);
+  readonly catalogo = signal<RepuestoDisponible[]>([]);
+  readonly loadingCatalogo = signal(false);
 
   private fileDespues: File | null = null;
 
   readonly form = this.fb.nonNullable.group({
     comentario: ['', [Validators.required, Validators.minLength(3)]],
+    repuestos: this.fb.array([]),
   });
+
+  constructor() {
+    effect(() => {
+      this.orden();
+      this.repuestosArray.clear();
+      this.loadCatalogo();
+    });
+  }
+
+  get repuestosArray(): FormArray {
+    return this.form.controls.repuestos;
+  }
+
+  private createRepuestoRow() {
+    return this.fb.group({
+      repuestoId: ['', Validators.required],
+      cantidad: [1, [Validators.required, Validators.min(1)]],
+    });
+  }
+
+  private loadCatalogo(): void {
+    this.loadingCatalogo.set(true);
+    this.inventario.repuestosDisponibles().subscribe({
+      next: (items) => {
+        this.catalogo.set(items);
+        this.loadingCatalogo.set(false);
+      },
+      error: () => {
+        this.catalogo.set([]);
+        this.loadingCatalogo.set(false);
+      },
+    });
+  }
+
+  addRepuestoRow(): void {
+    this.repuestosArray.push(this.createRepuestoRow());
+  }
+
+  removeRepuestoRow(index: number): void {
+    this.repuestosArray.removeAt(index);
+  }
+
+  stockDisponible(repuestoId: string | number): number {
+    const id = Number(repuestoId);
+    if (!id) return 0;
+    return this.catalogo().find((r) => r.repuestoId === id)?.cantidadActual ?? 0;
+  }
+
+  rowExceedsStock(index: number): boolean {
+    const row = this.repuestosArray.at(index);
+    const repuestoId = Number(row.get('repuestoId')?.value);
+    const cantidad = Number(row.get('cantidad')?.value);
+    if (!repuestoId || !cantidad) return false;
+    return cantidad > this.stockDisponible(repuestoId);
+  }
+
+  repuestosInvalidos(): boolean {
+    return this.repuestosArray.controls.some((_, i) => this.rowExceedsStock(i));
+  }
+
+  canSubmit(): boolean {
+    return (
+      !this.loading() &&
+      this.form.valid &&
+      !!this.previewDespues() &&
+      !this.repuestosInvalidos()
+    );
+  }
 
   async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
@@ -50,7 +129,7 @@ export class CloseOtModalComponent {
   }
 
   submit(): void {
-    if (this.form.invalid) {
+    if (!this.canSubmit()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -59,6 +138,13 @@ export class CloseOtModalComponent {
       return;
     }
 
+    const repuestos = this.repuestosArray.controls
+      .map((row) => ({
+        repuestoId: Number(row.get('repuestoId')?.value),
+        cantidad: Number(row.get('cantidad')?.value),
+      }))
+      .filter((r) => r.repuestoId > 0 && r.cantidad > 0);
+
     this.loading.set(true);
     this.error.set(null);
 
@@ -66,11 +152,14 @@ export class CloseOtModalComponent {
       .cerrarOrden(this.orden().id, {
         comentario: this.form.controls.comentario.value,
         fotoDespues: this.fileDespues,
+        repuestos,
       })
       .subscribe({
         next: () => {
           this.loading.set(false);
-          this.toast.success('Orden cerrada correctamente. Evidencias enviadas.');
+          this.toast.success(
+            'Orden cerrada. Evidencias y consumo de materiales registrados.',
+          );
           this.submitted.emit();
           this.close();
         },

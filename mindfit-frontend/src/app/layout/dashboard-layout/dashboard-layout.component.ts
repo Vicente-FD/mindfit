@@ -58,6 +58,12 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
       roles: ['jefe_operaciones'],
     },
     {
+      label: 'Control de inventario',
+      route: '/dashboard/bodeguero',
+      icon: 'warehouse',
+      roles: ['bodeguero', 'jefe_operaciones'],
+    },
+    {
       label: 'Gestión de Activos',
       route: '/dashboard/activos',
       icon: 'package',

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = void 0;
+exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = void 0;
 var marca_entity_1 = require("./marca.entity");
 Object.defineProperty(exports, "Marca", { enumerable: true, get: function () { return marca_entity_1.Marca; } });
 var sucursal_entity_1 = require("./sucursal.entity");
@@ -19,4 +19,10 @@ var audit_trail_entity_1 = require("./audit-trail.entity");
 Object.defineProperty(exports, "AuditTrail", { enumerable: true, get: function () { return audit_trail_entity_1.AuditTrail; } });
 var plan_preventivo_entity_1 = require("./plan-preventivo.entity");
 Object.defineProperty(exports, "PlanPreventivo", { enumerable: true, get: function () { return plan_preventivo_entity_1.PlanPreventivo; } });
+var repuesto_entity_1 = require("./repuesto.entity");
+Object.defineProperty(exports, "Repuesto", { enumerable: true, get: function () { return repuesto_entity_1.Repuesto; } });
+var bodega_stock_entity_1 = require("./bodega-stock.entity");
+Object.defineProperty(exports, "BodegaStock", { enumerable: true, get: function () { return bodega_stock_entity_1.BodegaStock; } });
+var orden_trabajo_repuesto_entity_1 = require("./orden-trabajo-repuesto.entity");
+Object.defineProperty(exports, "OrdenTrabajoRepuesto", { enumerable: true, get: function () { return orden_trabajo_repuesto_entity_1.OrdenTrabajoRepuesto; } });
 //# sourceMappingURL=index.js.map

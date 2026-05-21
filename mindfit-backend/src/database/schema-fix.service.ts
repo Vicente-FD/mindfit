@@ -54,6 +54,46 @@ export class SchemaFixService implements OnModuleInit {
       ALTER TABLE sucursales ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
     `);
     await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS costo_materiales NUMERIC(14, 2) NOT NULL DEFAULT 0;
+    `);
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS repuestos (
+        id SERIAL PRIMARY KEY,
+        sku VARCHAR(50) NOT NULL UNIQUE,
+        nombre VARCHAR(150) NOT NULL,
+        descripcion TEXT,
+        costo_unitario NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS bodega_stock (
+        id SERIAL PRIMARY KEY,
+        repuesto_id INT NOT NULL REFERENCES repuestos(id) ON DELETE RESTRICT,
+        cantidad_actual INT NOT NULL DEFAULT 0 CHECK (cantidad_actual >= 0),
+        cantidad_minima_alerta INT NOT NULL DEFAULT 5 CHECK (cantidad_minima_alerta >= 0),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CONSTRAINT uq_bodega_repuesto UNIQUE (repuesto_id)
+      );
+    `);
+    await this.migrateBodegaToGlobal();
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS orden_trabajo_repuestos (
+        id SERIAL PRIMARY KEY,
+        orden_trabajo_id INT NOT NULL REFERENCES ordenes_trabajo(id) ON DELETE CASCADE,
+        repuesto_id INT NOT NULL REFERENCES repuestos(id) ON DELETE RESTRICT,
+        cantidad_usada INT NOT NULL CHECK (cantidad_usada > 0),
+        costo_unitario_aplicado NUMERIC(12, 2) NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_ot_repuestos_ot ON orden_trabajo_repuestos (orden_trabajo_id);
+    `);
+    await this.dataSource.query(`
       CREATE TABLE IF NOT EXISTS planes_preventivos (
         id SERIAL PRIMARY KEY,
         titulo VARCHAR(200) NOT NULL,
@@ -67,6 +107,86 @@ export class SchemaFixService implements OnModuleInit {
       );
     `);
     this.logger.log('Esquema OT (clasificación + secuencia) verificado');
+  }
+
+  /**
+   * Consolida filas por sucursal en un único stock global por repuesto.
+   */
+  private async migrateBodegaToGlobal(): Promise<void> {
+    const tableExists = await this.dataSource.query(`
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'bodega_stock'
+    `);
+    if (!tableExists.length) return;
+
+    const hasSucursal = await this.columnExists('bodega_stock', 'sucursal_id');
+    const dupRows = await this.dataSource.query(`
+      SELECT 1 FROM bodega_stock GROUP BY repuesto_id HAVING COUNT(*) > 1 LIMIT 1
+    `);
+    if (!hasSucursal && !dupRows.length) return;
+
+    this.logger.log('Migrando bodega_stock a inventario global...');
+
+    await this.dataSource.query(`DROP TABLE IF EXISTS tmp_bodega_global`);
+    await this.dataSource.query(`
+      CREATE TEMP TABLE tmp_bodega_global AS
+      SELECT
+        repuesto_id,
+        SUM(cantidad_actual)::int AS cantidad_actual,
+        MIN(cantidad_minima_alerta)::int AS cantidad_minima_alerta
+      FROM bodega_stock
+      GROUP BY repuesto_id;
+    `);
+
+    await this.dataSource.query(`DELETE FROM bodega_stock`);
+
+    await this.dataSource.query(`
+      ALTER TABLE bodega_stock DROP CONSTRAINT IF EXISTS uq_sucursal_repuesto;
+      ALTER TABLE bodega_stock DROP CONSTRAINT IF EXISTS bodega_stock_sucursal_id_fkey;
+    `).catch(() => {});
+
+    const orphanIdx = await this.dataSource.query(`
+      SELECT indexname FROM pg_indexes
+      WHERE tablename = 'bodega_stock'
+        AND indexdef ILIKE '%UNIQUE%'
+        AND indexdef ILIKE '%repuesto_id%'
+        AND indexname NOT IN ('uq_bodega_repuesto')
+    `);
+    for (const row of orphanIdx) {
+      await this.dataSource
+        .query(`DROP INDEX IF EXISTS "${row.indexname}"`)
+        .catch(() => {});
+    }
+
+    await this.dataSource.query(`
+      DROP INDEX IF EXISTS idx_bodega_sucursal;
+    `);
+
+    if (hasSucursal) {
+      await this.dataSource.query(`
+        ALTER TABLE bodega_stock DROP COLUMN IF EXISTS sucursal_id;
+      `);
+    }
+
+    await this.dataSource.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'uq_bodega_repuesto'
+        ) THEN
+          ALTER TABLE bodega_stock
+          ADD CONSTRAINT uq_bodega_repuesto UNIQUE (repuesto_id);
+        END IF;
+      END $$;
+    `).catch(() => {});
+
+    await this.dataSource.query(`
+      INSERT INTO bodega_stock (repuesto_id, cantidad_actual, cantidad_minima_alerta)
+      SELECT repuesto_id, cantidad_actual, cantidad_minima_alerta
+      FROM tmp_bodega_global;
+    `);
+
+    this.logger.log('Bodega central global lista');
   }
 
   private async backfillCodigosInventario(): Promise<void> {

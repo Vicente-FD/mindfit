@@ -12,6 +12,7 @@ import {
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolUsuario } from '../common/enums';
+import { InventarioService } from '../inventario/inventario.service';
 import { ActivosService } from './activos.service';
 import { CreateActivoDto } from './dto/create-activo.dto';
 import { FilterActivosDto } from './dto/filter-activos.dto';
@@ -19,7 +20,10 @@ import { UpdateActivoDto } from './dto/update-activo.dto';
 
 @Controller('activos')
 export class ActivosController {
-  constructor(private readonly activosService: ActivosService) {}
+  constructor(
+    private readonly activosService: ActivosService,
+    private readonly inventarioService: InventarioService,
+  ) {}
 
   @Public()
   @Get('publico/:uuidActivo/ficha')
@@ -31,6 +35,13 @@ export class ActivosController {
   @Get('publico/:uuidActivo')
   findByUuid(@Param('uuidActivo') uuidActivo: string) {
     return this.activosService.findByUuid(uuidActivo);
+  }
+
+  /** @deprecated Usar GET /api/bodega/repuestos-disponibles (bodega global). */
+  @Get('sucursal/:sucursalId/repuestos-disponibles')
+  @Roles(RolUsuario.TECNICO, RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES)
+  repuestosDisponiblesLegacy() {
+    return this.inventarioService.listRepuestosDisponibles();
   }
 
   @Get()

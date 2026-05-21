@@ -26,6 +26,8 @@ import {
   XCircle,
   RotateCcw,
   ScrollText,
+  Plus,
+  Warehouse,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -58,6 +60,8 @@ export const appConfig: ApplicationConfig = {
         XCircle,
         RotateCcw,
         ScrollText,
+        Plus,
+        Warehouse,
       }),
     ),
     provideRouter(routes),

@@ -127,16 +127,39 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
     agregarEvidencia(id, dto, user) {
         return this.ordenesService.agregarEvidencia(id, user.id, dto);
     }
-    cerrar(id, fotoDespues, comentario, user) {
+    cerrar(id, fotoDespues, comentario, repuestosJson, user) {
         if (!comentario?.trim()) {
             throw new common_1.BadRequestException('El comentario es obligatorio');
         }
         if (!fotoDespues) {
             throw new common_1.BadRequestException('Debe adjuntar foto_despues');
         }
+        const repuestos = this.parseRepuestosJson(repuestosJson);
         const port = this.configService.get('PORT', 3000);
         const urlDespues = (0, evidencias_storage_1.buildPublicFileUrl)(fotoDespues.filename, port);
-        return this.ordenesService.cerrarConArchivos(id, user.id, comentario.trim(), urlDespues);
+        return this.ordenesService.cerrarConArchivos(id, user.id, comentario.trim(), urlDespues, repuestos);
+    }
+    parseRepuestosJson(raw) {
+        if (!raw?.trim())
+            return [];
+        try {
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed))
+                return [];
+            return parsed
+                .filter((x) => x != null &&
+                typeof x === 'object' &&
+                Number.isFinite(Number(x.repuestoId)) &&
+                Number.isFinite(Number(x.cantidad)) &&
+                Number(x.cantidad) > 0)
+                .map((x) => ({
+                repuestoId: Number(x.repuestoId),
+                cantidad: Number(x.cantidad),
+            }));
+        }
+        catch {
+            throw new common_1.BadRequestException('Formato inválido en repuestos');
+        }
     }
     cerrarJson(id, dto, user) {
         return this.ordenesService.cerrar(id, user.id, dto);
@@ -299,9 +322,10 @@ __decorate([
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.UploadedFile)()),
     __param(2, (0, common_1.Body)('comentario')),
-    __param(3, (0, current_user_decorator_1.CurrentUser)()),
+    __param(3, (0, common_1.Body)('repuestos')),
+    __param(4, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object, String, jwt_payload_interface_1.JwtPayload]),
+    __metadata("design:paramtypes", [Number, Object, String, Object, jwt_payload_interface_1.JwtPayload]),
     __metadata("design:returntype", void 0)
 ], OrdenesTrabajoController.prototype, "cerrar", null);
 __decorate([

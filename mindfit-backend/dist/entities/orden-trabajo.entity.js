@@ -17,6 +17,7 @@ const sucursal_entity_1 = require("./sucursal.entity");
 const usuario_entity_1 = require("./usuario.entity");
 const evidencia_ot_entity_1 = require("./evidencia-ot.entity");
 const comentario_ot_entity_1 = require("./comentario-ot.entity");
+const orden_trabajo_repuesto_entity_1 = require("./orden-trabajo-repuesto.entity");
 let OrdenTrabajo = class OrdenTrabajo {
     id;
     codigoOt;
@@ -40,11 +41,13 @@ let OrdenTrabajo = class OrdenTrabajo {
     fechaFinReal;
     motivoRechazo;
     fechaAprobacion;
+    costoMateriales;
     createdAt;
     updatedAt;
     deletedAt;
     evidencias;
     comentarios;
+    consumoRepuestos;
 };
 exports.OrdenTrabajo = OrdenTrabajo;
 __decorate([
@@ -158,6 +161,16 @@ __decorate([
     __metadata("design:type", Object)
 ], OrdenTrabajo.prototype, "fechaAprobacion", void 0);
 __decorate([
+    (0, typeorm_1.Column)({
+        name: 'costo_materiales',
+        type: 'decimal',
+        precision: 14,
+        scale: 2,
+        default: 0,
+    }),
+    __metadata("design:type", String)
+], OrdenTrabajo.prototype, "costoMateriales", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)
 ], OrdenTrabajo.prototype, "createdAt", void 0);
@@ -177,6 +190,10 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => comentario_ot_entity_1.ComentarioOt, (comentario) => comentario.ordenTrabajo),
     __metadata("design:type", Array)
 ], OrdenTrabajo.prototype, "comentarios", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => orden_trabajo_repuesto_entity_1.OrdenTrabajoRepuesto, (consumo) => consumo.ordenTrabajo),
+    __metadata("design:type", Array)
+], OrdenTrabajo.prototype, "consumoRepuestos", void 0);
 exports.OrdenTrabajo = OrdenTrabajo = __decorate([
     (0, typeorm_1.Entity)('ordenes_trabajo')
 ], OrdenTrabajo);

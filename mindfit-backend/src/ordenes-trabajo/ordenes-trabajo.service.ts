@@ -26,12 +26,15 @@ import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
 import { CerrarOrdenDto } from './dto/cerrar-orden.dto';
 import { nextOtCodigo } from './ot-codigo.sequence';
 import { agentDebugLog } from '../common/agent-debug-log';
+import { InventarioService } from '../inventario/inventario.service';
+import { RepuestoConsumoItemDto } from '../inventario/dto/repuesto-consumo.dto';
 
 @Injectable()
 export class OrdenesTrabajoService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly transactionContext: TransactionContextService,
+    private readonly inventarioService: InventarioService,
   ) {}
 
   private ordenRepo() {
@@ -382,34 +385,68 @@ export class OrdenesTrabajoService {
     tecnicoId: number,
     comentario: string,
     urlDespues: string,
+    repuestos: RepuestoConsumoItemDto[] = [],
   ) {
-    const orden = await this.findOne(id);
+    const ordenPrev = await this.findOne(id);
 
     if (
-      orden.asignadoAId != null &&
-      !this.esTecnicoAsignado(orden.asignadoAId, tecnicoId)
+      ordenPrev.asignadoAId != null &&
+      !this.esTecnicoAsignado(ordenPrev.asignadoAId, tecnicoId)
     ) {
       throw new BadRequestException(
         'Solo el técnico asignado puede cerrar esta orden',
       );
     }
 
-    if (orden.estado !== EstadoOrdenTrabajo.EN_PROCESO) {
+    if (ordenPrev.estado !== EstadoOrdenTrabajo.EN_PROCESO) {
       throw new BadRequestException(
         'Solo se pueden cerrar órdenes en estado en_proceso',
       );
     }
 
-    await this.agregarComentario(id, tecnicoId, { comentario });
-    await this.agregarEvidencia(id, tecnicoId, {
-      tipoEvidencia: TipoEvidencia.DESPUES,
-      urlImagen: urlDespues,
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    await this.ordenRepo().update(id, {
-      estado: EstadoOrdenTrabajo.FINALIZADA,
-      fechaFinReal: new Date(),
-    });
+    try {
+      const manager = queryRunner.manager;
+
+      const costoMateriales =
+        await this.inventarioService.procesarConsumoEnTransaccion(
+          manager,
+          id,
+          repuestos,
+        );
+
+      const comentarioEnt = manager.getRepository(ComentarioOt).create({
+        ordenTrabajoId: id,
+        autorId: tecnicoId,
+        comentario,
+      });
+      await manager.getRepository(ComentarioOt).save(comentarioEnt);
+
+      const evidencia = manager.getRepository(EvidenciaOt).create({
+        ordenTrabajoId: id,
+        cargadoPorId: tecnicoId,
+        tipoEvidencia: TipoEvidencia.DESPUES,
+        urlImagen: urlDespues,
+      });
+      await manager.getRepository(EvidenciaOt).save(evidencia);
+
+      await manager.getRepository(OrdenTrabajo).update(id, {
+        estado: EstadoOrdenTrabajo.FINALIZADA,
+        fechaFinReal: new Date(),
+        costoMateriales: String(costoMateriales),
+      });
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
     return this.findOne(id);
   }
 

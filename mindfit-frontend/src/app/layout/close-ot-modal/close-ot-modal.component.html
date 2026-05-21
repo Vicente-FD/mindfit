@@ -1,5 +1,5 @@
 <div class="fixed inset-0 z-[60] flex items-end justify-center bg-deep-black/85 p-4 backdrop-blur-sm sm:items-center">
-  <div class="w-full max-w-lg animate-modal rounded-2xl border border-white/10 bg-obsidian-grey p-5 shadow-2xl" (click)="$event.stopPropagation()">
+  <div class="w-full max-w-lg animate-modal rounded-2xl border border-white/10 bg-obsidian-grey p-5 shadow-2xl max-h-[92vh] overflow-y-auto" (click)="$event.stopPropagation()">
     <div class="mb-4 flex items-start justify-between gap-3">
       <div>
         <h2 class="text-lg font-semibold text-pure-white">Solicitar cierre</h2>
@@ -16,18 +16,72 @@
 
     <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
       <div>
-        <label class="field-label" for="comentario">Observaciones técnicas / repuestos *</label>
+        <label class="field-label" for="comentario">Comentarios de la reparación *</label>
         <textarea
           id="comentario"
           formControlName="comentario"
-          rows="4"
+          rows="3"
           class="field-input resize-none"
-          placeholder="Repuestos usados, observaciones técnicas..."
+          placeholder="Detalle técnico de la intervención..."
         ></textarea>
         @if (form.controls.comentario.invalid && form.controls.comentario.touched) {
-          <p class="mt-1 text-xs text-orange-energy">Mínimo 3 caracteres en las observaciones.</p>
+          <p class="mt-1 text-xs text-orange-energy">Mínimo 3 caracteres.</p>
         }
       </div>
+
+      <section class="repuestos-section">
+        <div class="flex items-center justify-between gap-2">
+          <h3 class="text-sm font-medium text-pure-white">Insumos y repuestos utilizados</h3>
+          <button
+            type="button"
+            class="btn-add-repuesto"
+            (click)="addRepuestoRow()"
+            [disabled]="loadingCatalogo() || catalogo().length === 0"
+          >
+            <lucide-icon name="plus" [size]="14" />
+            Añadir repuesto
+          </button>
+        </div>
+        @if (loadingCatalogo()) {
+          <p class="mt-2 text-xs text-slate-grey">Cargando stock de bodega...</p>
+        } @else if (catalogo().length === 0) {
+          <p class="mt-2 text-xs text-slate-grey">No hay insumos con stock en bodega central.</p>
+        }
+        <div class="mt-3 space-y-2" formArrayName="repuestos">
+          @for (row of repuestosArray.controls; track $index; let i = $index) {
+            <div class="repuesto-row" [formGroupName]="i">
+              <select class="field-input repuesto-select" formControlName="repuestoId">
+                <option value="">Seleccione repuesto</option>
+                @for (r of catalogo(); track r.repuestoId) {
+                  <option [value]="r.repuestoId">
+                    {{ r.sku }} — {{ r.nombre }} (stock {{ r.cantidadActual }})
+                  </option>
+                }
+              </select>
+              <input
+                type="number"
+                min="1"
+                class="field-input repuesto-qty"
+                formControlName="cantidad"
+                [attr.max]="stockDisponible(row.get('repuestoId')?.value)"
+              />
+              <button
+                type="button"
+                class="btn-remove-row"
+                (click)="removeRepuestoRow(i)"
+                aria-label="Quitar fila"
+              >
+                <lucide-icon name="trash-2" [size]="16" />
+              </button>
+              @if (rowExceedsStock(i)) {
+                <p class="repuesto-row-error col-span-full">
+                  Cantidad supera el stock disponible ({{ stockDisponible(row.get('repuestoId')?.value) }} u.)
+                </p>
+              }
+            </div>
+          }
+        </div>
+      </section>
 
       <div>
         <label class="upload-box">
@@ -56,17 +110,13 @@
         </p>
       }
 
-      @if (!loading() && (form.invalid || !previewDespues())) {
+      @if (!loading() && !canSubmit()) {
         <p class="text-xs text-slate-grey">
-          Completa las observaciones (mín. 3 caracteres) y adjunta la foto «Después» para confirmar.
+          Completa observaciones, foto «Después» y valida cantidades de repuestos para confirmar.
         </p>
       }
 
-      <button
-        type="submit"
-        class="btn-close w-full"
-        [disabled]="loading() || form.invalid || !previewDespues()"
-      >
+      <button type="submit" class="btn-close w-full" [disabled]="!canSubmit()">
         @if (loading()) { Enviando evidencias... } @else { Confirmar cierre de OT }
       </button>
     </form>

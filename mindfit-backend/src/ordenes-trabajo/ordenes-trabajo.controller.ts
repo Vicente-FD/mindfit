@@ -281,6 +281,7 @@ export class OrdenesTrabajoController {
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile() fotoDespues: Express.Multer.File | undefined,
     @Body('comentario') comentario: string,
+    @Body('repuestos') repuestosJson: string | undefined,
     @CurrentUser() user: JwtPayload,
   ) {
     if (!comentario?.trim()) {
@@ -290,6 +291,8 @@ export class OrdenesTrabajoController {
       throw new BadRequestException('Debe adjuntar foto_despues');
     }
 
+    const repuestos = this.parseRepuestosJson(repuestosJson);
+
     const port = this.configService.get<number>('PORT', 3000);
     const urlDespues = buildPublicFileUrl(fotoDespues.filename, port);
 
@@ -298,7 +301,33 @@ export class OrdenesTrabajoController {
       user.id,
       comentario.trim(),
       urlDespues,
+      repuestos,
     );
+  }
+
+  private parseRepuestosJson(
+    raw: string | undefined,
+  ): { repuestoId: number; cantidad: number }[] {
+    if (!raw?.trim()) return [];
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter(
+          (x): x is { repuestoId: number; cantidad: number } =>
+            x != null &&
+            typeof x === 'object' &&
+            Number.isFinite(Number((x as { repuestoId: unknown }).repuestoId)) &&
+            Number.isFinite(Number((x as { cantidad: unknown }).cantidad)) &&
+            Number((x as { cantidad: number }).cantidad) > 0,
+        )
+        .map((x) => ({
+          repuestoId: Number(x.repuestoId),
+          cantidad: Number(x.cantidad),
+        }));
+    } catch {
+      throw new BadRequestException('Formato inválido en repuestos');
+    }
   }
 
   @Post(':id/cerrar-json')

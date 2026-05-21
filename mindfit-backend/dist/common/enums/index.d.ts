@@ -3,7 +3,8 @@ export declare enum RolUsuario {
     JEFE_OPERACIONES = "jefe_operaciones",
     TECNICO = "tecnico",
     JEFE_SUCURSAL = "jefe_sucursal",
-    GERENTE_BI = "gerente_bi"
+    GERENTE_BI = "gerente_bi",
+    BODEGUERO = "bodeguero"
 }
 export declare enum EstadoSesionUsuario {
     CONECTADO = "conectado",
