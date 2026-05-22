@@ -33,6 +33,8 @@ import {
   Settings,
   Activity,
   Eye,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -72,6 +74,8 @@ export const appConfig: ApplicationConfig = {
         Settings,
         Activity,
         Eye,
+        ChevronDown,
+        ChevronUp,
       }),
     ),
     provideRouter(routes),

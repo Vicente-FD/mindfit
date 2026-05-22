@@ -48,7 +48,10 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
         const needsComentarios = query.estado === 'finalizadas' ||
             query.estado === 'por_aprobar' ||
             !!(query.fecha_inicio || query.fecha_fin);
-        const needsEvidencias = query.estado === 'finalizadas' || query.estado === 'por_aprobar';
+        const needsEvidencias = query.estado === 'activas' ||
+            query.estado === 'finalizadas' ||
+            query.estado === 'por_aprobar' ||
+            !!(query.fecha_inicio || query.fecha_fin);
         return this.ordenesService.findAll({
             tecnicoId: parsedTecnico,
             sucursalId: query.sucursalId,

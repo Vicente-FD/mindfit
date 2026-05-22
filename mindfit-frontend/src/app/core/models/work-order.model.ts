@@ -80,6 +80,7 @@ export interface WorkOrder {
   updatedAt: string;
   activo?: WorkOrderActivo | null;
   sucursal?: WorkOrderSucursal;
+  creadoPor?: WorkOrderUsuario | null;
   asignadoA?: WorkOrderUsuario | null;
   tecnicoAsignado?: WorkOrderUsuario | null;
   comentarios?: WorkOrderComentario[];

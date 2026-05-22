@@ -563,6 +563,83 @@
   color: var(--color-slate-grey, #94a3b8);
   border: 1px dashed rgb(255 255 255 / 0.15);
   border-radius: 0.35rem;
+  text-align: center;
+  padding: 0.35rem;
+}
+
+.ot-reporte-falla__btn-open {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(255 102 0 / 0.35);
+  background: rgb(255 102 0 / 0.08);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-pure-white, #fff);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ot-reporte-falla__btn-open:hover {
+  background: rgb(255 102 0 / 0.14);
+  border-color: rgb(255 102 0 / 0.55);
+}
+
+.ot-reporte-falla__meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 480px) {
+  .ot-reporte-falla__meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ot-reporte-falla__label {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-slate-grey, #94a3b8);
+  margin-bottom: 0.2rem;
+}
+
+.ot-reporte-falla__value {
+  font-size: 0.8rem;
+  color: var(--color-pure-white, #fff);
+}
+
+.ot-reporte-falla__descripcion {
+  margin-bottom: 0.75rem;
+}
+
+.ot-reporte-falla__descripcion p {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--color-pure-white, #fff);
+  white-space: pre-wrap;
+}
+
+.ot-evidencia__btn--reporte img {
+  height: auto;
+  max-height: 280px;
+  object-fit: contain;
+}
+
+.ot-reporte-falla__hint {
+  margin-top: 0.35rem;
+  font-size: 0.65rem;
+  color: var(--color-slate-grey, #94a3b8);
 }
 
 .btn-revert {

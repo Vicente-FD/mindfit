@@ -73,7 +73,10 @@ export class OrdenesTrabajoController {
       !!(query.fecha_inicio || query.fecha_fin);
 
     const needsEvidencias =
-      query.estado === 'finalizadas' || query.estado === 'por_aprobar';
+      query.estado === 'activas' ||
+      query.estado === 'finalizadas' ||
+      query.estado === 'por_aprobar' ||
+      !!(query.fecha_inicio || query.fecha_fin);
 
     return this.ordenesService.findAll({
       tecnicoId: parsedTecnico,

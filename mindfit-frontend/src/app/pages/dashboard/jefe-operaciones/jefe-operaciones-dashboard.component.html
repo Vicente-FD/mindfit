@@ -162,6 +162,17 @@
           }
         </div>
 
+        @if (puedeVerReporteFalla(o)) {
+          <button
+            type="button"
+            class="ot-reporte-falla__btn-open"
+            (click)="openReporteFallaModal(o)"
+          >
+            <lucide-icon name="eye" [size]="16" class="text-orange-energy" />
+            Ver reporte de falla
+          </button>
+        }
+
         @if (isHistorico() && o.estado === 'rechazada' && o.motivoRechazo) {
           <p class="ot-card-compact__comentario ot-rechazo-motivo">
             <span class="comentario-label">Motivo de rechazo:</span>
@@ -307,6 +318,104 @@
     (closed)="closeReportModal()"
     (generate)="onGenerateReport($event)"
   />
+}
+
+@if (reporteFallaTarget(); as o) {
+  <div
+    class="fixed inset-0 z-80 flex items-center justify-center bg-black/88 p-4"
+    (click)="closeReporteFallaModal()"
+  >
+    <div
+      class="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-white/10 bg-obsidian-grey"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reporte-falla-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="flex items-start justify-between gap-4 border-b border-white/5 px-5 pt-5 pb-3">
+        <div class="min-w-0">
+          <p class="text-xs font-semibold text-orange-energy">{{ o.codigoOt }}</p>
+          <h2 id="reporte-falla-title" class="mt-1 text-lg font-semibold text-pure-white">
+            Reporte de falla
+          </h2>
+          <p class="mt-1 truncate text-sm text-slate-grey">{{ o.titulo }}</p>
+        </div>
+        <button
+          type="button"
+          class="btn-ghost shrink-0 rounded-lg p-1"
+          aria-label="Cerrar"
+          (click)="closeReporteFallaModal()"
+        >
+          <lucide-icon name="x" [size]="20" />
+        </button>
+      </header>
+
+      <div class="flex-1 overflow-y-auto px-5 py-4">
+        <div class="ot-reporte-falla__meta-grid">
+          <div>
+            <span class="ot-reporte-falla__label">Reportado por</span>
+            <p class="ot-reporte-falla__value">{{ reportadoPorLabel(o) }}</p>
+          </div>
+          <div>
+            <span class="ot-reporte-falla__label">Tipo</span>
+            <p class="ot-reporte-falla__value">{{ clasificacionReporteLabel(o) }}</p>
+          </div>
+          <div>
+            <span class="ot-reporte-falla__label">Sede</span>
+            <p class="ot-reporte-falla__value">
+              {{ o.sucursal?.nombre ?? 'Sucursal #' + o.sucursalId }}
+            </p>
+          </div>
+          <div>
+            <span class="ot-reporte-falla__label">Prioridad</span>
+            <p class="ot-reporte-falla__value">{{ prioridadLabel(o.prioridad) }}</p>
+          </div>
+        </div>
+
+        @if (o.activo && !esInfraestructura(o)) {
+          <p class="mb-3 text-sm text-pure-white">
+            <span class="ot-reporte-falla__label">Activo</span>
+            {{ o.activo.codigoInventario || o.activo.codigoQrToken }} — {{ o.activo.nombre }}
+          </p>
+        }
+
+        @if (o.descripcion?.trim()) {
+          <div class="ot-reporte-falla__descripcion">
+            <span class="ot-reporte-falla__label">Detalle del reporte</span>
+            <p>{{ o.descripcion }}</p>
+          </div>
+        } @else {
+          <p class="text-sm text-slate-grey italic">Sin descripción escrita en el reporte.</p>
+        }
+
+        <figure class="ot-reporte-falla__foto">
+          <figcaption class="ot-reporte-falla__label flex items-center gap-1.5">
+            <lucide-icon name="camera" [size]="14" />
+            Evidencia adjunta al reporte
+          </figcaption>
+          @if (evidenciaAntes(o); as urlFoto) {
+            <button type="button" class="ot-evidencia__btn ot-evidencia__btn--reporte" (click)="openPreview(urlFoto)">
+              <img [src]="urlFoto" alt="Foto de la falla reportada" />
+            </button>
+            <p class="ot-reporte-falla__hint">Clic en la imagen para ampliar a pantalla completa</p>
+          } @else {
+            <div class="ot-evidencia__placeholder min-h-[7.5rem] py-4">
+              Sin foto adjunta (reporte de infraestructura o petición)
+            </div>
+          }
+        </figure>
+      </div>
+
+      <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 bg-black/25 px-5 py-4">
+        <p class="text-xs text-slate-grey">
+          Revise el reporte y cierre para asignar técnico o rechazar desde la tarjeta.
+        </p>
+        <button type="button" class="btn-primary shrink-0 px-5 py-2" (click)="closeReporteFallaModal()">
+          Cerrar
+        </button>
+      </footer>
+    </div>
+  </div>
 }
 
 @if (previewUrl(); as url) {

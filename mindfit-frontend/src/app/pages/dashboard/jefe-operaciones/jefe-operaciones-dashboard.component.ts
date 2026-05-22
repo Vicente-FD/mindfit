@@ -88,6 +88,7 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   readonly rejecting = signal(false);
   readonly revertingId = signal<number | null>(null);
   readonly previewUrl = signal<string | null>(null);
+  readonly reporteFallaTarget = signal<WorkOrder | null>(null);
   readonly now = signal(Date.now());
 
   readonly isHistorico = computed(() => this.activeTab() === 'historico');
@@ -238,6 +239,41 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   evidenciaDespues(orden: WorkOrder): string | null {
     const e = orden.evidencias?.find((x) => x.tipoEvidencia === 'despues');
     return e ? resolveMediaUrl(e.urlImagen) : null;
+  }
+
+  puedeVerReporteFalla(orden: WorkOrder): boolean {
+    return (
+      this.isActivas() &&
+      (orden.estado === 'pendiente' || orden.estado === 'asignada')
+    );
+  }
+
+  openReporteFallaModal(orden: WorkOrder): void {
+    this.reporteFallaTarget.set(orden);
+  }
+
+  closeReporteFallaModal(): void {
+    this.reporteFallaTarget.set(null);
+  }
+
+  reportadoPorLabel(orden: WorkOrder): string {
+    const u = orden.creadoPor;
+    if (!u?.nombre) return 'Reporte de sucursal';
+    const rol =
+      u.rol === 'jefe_sucursal'
+        ? 'Jefe de sucursal'
+        : u.rol === 'admin'
+          ? 'Administrador'
+          : u.rol === 'jefe_operaciones'
+            ? 'Operaciones'
+            : 'Usuario';
+    return `${u.nombre} (${rol})`;
+  }
+
+  clasificacionReporteLabel(orden: WorkOrder): string {
+    if (orden.clasificacion === 'infraestructura') return 'Infraestructura';
+    if (orden.clasificacion === 'peticion') return 'Petición';
+    return 'Máquina / equipo';
   }
 
   openPreview(url: string): void {
