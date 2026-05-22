@@ -5,9 +5,8 @@ import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { EstadoSesionUsuario } from '../common/enums';
 import {
-  PERMISOS_BY_ROL,
-  PERMISOS_UI_DEFAULT,
   PermisosUi,
+  resolvePermisosUi,
 } from '../common/interfaces/permisos-ui.interface';
 import { Usuario } from '../entities/usuario.entity';
 import { LoginDto } from './dto/login.dto';
@@ -115,10 +114,7 @@ export class AuthService {
   }
 
   private resolvePermisos(usuario: Usuario): PermisosUi {
-    return {
-      ...(PERMISOS_BY_ROL[usuario.rol] ?? PERMISOS_UI_DEFAULT),
-      ...(usuario.permisosUi ?? {}),
-    };
+    return resolvePermisosUi(usuario.rol, usuario.permisosUi);
   }
 
   private toAuthUser(usuario: Usuario): AuthResponseDto['user'] {

@@ -53,6 +53,7 @@ export class SucursalesAdminComponent implements OnInit {
     comuna: ['', Validators.required],
     ciudad: ['', Validators.required],
     estaActiva: [true],
+    cantidadPisos: [1, [Validators.required, Validators.min(1), Validators.max(20)]],
   });
 
   readonly panelVisible = computed(
@@ -87,6 +88,7 @@ export class SucursalesAdminComponent implements OnInit {
       comuna: '',
       ciudad: '',
       estaActiva: true,
+      cantidadPisos: 1,
     });
   }
 
@@ -100,6 +102,7 @@ export class SucursalesAdminComponent implements OnInit {
       comuna: s.comuna ?? '',
       ciudad: s.ciudad ?? '',
       estaActiva: s.estaActiva ?? true,
+      cantidadPisos: s.cantidadPisos ?? 1,
     });
   }
 
@@ -159,6 +162,7 @@ export class SucursalesAdminComponent implements OnInit {
       comuna: v.comuna.trim(),
       ciudad: v.ciudad.trim(),
       estaActiva: v.estaActiva,
+      cantidadPisos: Number(v.cantidadPisos),
     };
 
     this.saving.set(true);

@@ -5,4 +5,5 @@ export declare class CreateSucursalDto {
     comuna: string;
     ciudad: string;
     estaActiva?: boolean;
+    cantidadPisos?: number;
 }

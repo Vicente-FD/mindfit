@@ -7,6 +7,9 @@ export declare class MarcasService {
     constructor(marcaRepo: Repository<Marca>);
     findAll(): Promise<Marca[]>;
     findOne(id: number): Promise<Marca>;
-    create(dto: CreateMarcaDto): Promise<Marca>;
-    update(id: number, dto: UpdateMarcaDto): Promise<Marca>;
+    create(dto: CreateMarcaDto, logoUrl?: string): Promise<Marca>;
+    update(id: number, dto: UpdateMarcaDto, logoUrl?: string): Promise<Marca>;
+    remove(id: number): Promise<{
+        deleted: boolean;
+    }>;
 }

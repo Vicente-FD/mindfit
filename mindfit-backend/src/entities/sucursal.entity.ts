@@ -34,6 +34,9 @@ export class Sucursal {
   @Column({ name: 'esta_activa', type: 'boolean', default: true })
   estaActiva: boolean;
 
+  @Column({ name: 'cantidad_pisos', type: 'int', default: 1 })
+  cantidadPisos: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

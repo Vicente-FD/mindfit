@@ -43,7 +43,8 @@ export declare enum EstadoOrdenTrabajo {
 }
 export declare enum ClasificacionOrden {
     MAQUINA = "maquina",
-    INFRAESTRUCTURA = "infraestructura"
+    INFRAESTRUCTURA = "infraestructura",
+    PETICION = "peticion"
 }
 export declare enum TipoEvidencia {
     ANTES = "antes",

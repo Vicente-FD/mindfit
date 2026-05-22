@@ -58,6 +58,7 @@ const usuario_entity_1 = require("../entities/usuario.entity");
 const activo_entity_1 = require("../entities/activo.entity");
 const orden_trabajo_entity_1 = require("../entities/orden-trabajo.entity");
 const marca_entity_1 = require("../entities/marca.entity");
+const categoria_entity_1 = require("../entities/categoria.entity");
 const repuesto_entity_1 = require("../entities/repuesto.entity");
 const bodega_stock_entity_1 = require("../entities/bodega-stock.entity");
 const DEMO_PASSWORD = 'Admin123!';
@@ -67,15 +68,17 @@ let SeedService = SeedService_1 = class SeedService {
     activoRepo;
     ordenRepo;
     marcaRepo;
+    categoriaRepo;
     repuestoRepo;
     bodegaStockRepo;
     logger = new common_1.Logger(SeedService_1.name);
-    constructor(sucursalRepo, usuarioRepo, activoRepo, ordenRepo, marcaRepo, repuestoRepo, bodegaStockRepo) {
+    constructor(sucursalRepo, usuarioRepo, activoRepo, ordenRepo, marcaRepo, categoriaRepo, repuestoRepo, bodegaStockRepo) {
         this.sucursalRepo = sucursalRepo;
         this.usuarioRepo = usuarioRepo;
         this.activoRepo = activoRepo;
         this.ordenRepo = ordenRepo;
         this.marcaRepo = marcaRepo;
+        this.categoriaRepo = categoriaRepo;
         this.repuestoRepo = repuestoRepo;
         this.bodegaStockRepo = bodegaStockRepo;
     }
@@ -84,7 +87,7 @@ let SeedService = SeedService_1 = class SeedService {
         const ordenCount = await this.ordenRepo.count();
         await this.seedMarcas();
         const florida = await this.upsertSucursal('Sede La Florida', 'LF', 'Av. Vicuña Mackenna 6100', 'La Florida', 'Santiago');
-        const condes = await this.upsertSucursal('Sede Las Condes', 'LC', 'Av. Apoquindo 4500', 'Las Condes', 'Santiago');
+        const condes = await this.upsertSucursal('Sede Las Condes', 'LC', 'Av. Apoquindo 4500', 'Las Condes', 'Santiago', 3);
         await this.upsertSucursal('Sede Viña del Mar', 'VM', 'Av. Libertad 1340', 'Viña del Mar', 'Valparaíso');
         const sucursalMap = {
             florida: florida.id,
@@ -164,15 +167,21 @@ let SeedService = SeedService_1 = class SeedService {
         const life = await this.marcaRepo.findOne({ where: { sigla: 'LF' } });
         const carrier = await this.marcaRepo.findOne({ where: { sigla: 'CR' } });
         const pedrollo = await this.marcaRepo.findOne({ where: { sigla: 'PD' } });
+        const catCardio = await this.categoriaRepo.findOne({ where: { sigla: 'CR' } });
+        const catFuerza = await this.categoriaRepo.findOne({ where: { sigla: 'FZ' } });
+        const catClima = await this.categoriaRepo.findOne({ where: { sigla: 'CL' } });
+        const catBomba = await this.categoriaRepo.findOne({ where: { sigla: 'BA' } });
         const activosData = [
             {
                 nombre: 'Cinta Correr Pro X500',
                 marcaId: matrix?.id,
                 marca: 'Matrix',
                 modelo: 'X500',
-                codigo: 'LF-MX-25-01-01',
+                codigo: 'LF-MX-25-CR-01',
                 categoria: enums_1.CategoriaActivo.CARDIO,
+                categoriaId: catCardio?.id,
                 sucursalId: florida.id,
+                pisoAsignado: null,
                 costo: '4500000',
                 fechaCompra: '2025-01-15',
             },
@@ -181,9 +190,11 @@ let SeedService = SeedService_1 = class SeedService {
                 marcaId: life?.id,
                 marca: 'Life Fitness',
                 modelo: 'Axiom',
-                codigo: 'LF-LF-25-02-01',
+                codigo: 'LF-LF-25-FZ-01',
                 categoria: enums_1.CategoriaActivo.FUERZA,
+                categoriaId: catFuerza?.id,
                 sucursalId: florida.id,
+                pisoAsignado: null,
                 costo: '3200000',
                 fechaCompra: '2025-03-10',
             },
@@ -192,9 +203,11 @@ let SeedService = SeedService_1 = class SeedService {
                 marcaId: carrier?.id,
                 marca: 'Carrier',
                 modelo: '42QHC018',
-                codigo: 'LC-CR-24-03-01',
+                codigo: 'LC-CR-24-CL-01',
                 categoria: enums_1.CategoriaActivo.CLIMATIZACION,
+                categoriaId: catClima?.id,
                 sucursalId: condes.id,
+                pisoAsignado: 2,
                 costo: '2800000',
                 fechaCompra: '2024-06-01',
             },
@@ -203,9 +216,11 @@ let SeedService = SeedService_1 = class SeedService {
                 marcaId: pedrollo?.id,
                 marca: 'Pedrollo',
                 modelo: 'PKm 60',
-                codigo: 'LC-PD-24-05-01',
+                codigo: 'LC-PD-24-BA-01',
                 categoria: enums_1.CategoriaActivo.BOMBA_AGUA,
+                categoriaId: catBomba?.id,
                 sucursalId: condes.id,
+                pisoAsignado: 1,
                 costo: '890000',
                 fechaCompra: '2024-08-20',
             },
@@ -224,6 +239,8 @@ let SeedService = SeedService_1 = class SeedService {
                     codigoInventario: a.codigo,
                     codigoQrToken: a.codigo,
                     categoria: a.categoria,
+                    categoriaId: a.categoriaId ?? null,
+                    pisoAsignado: a.pisoAsignado ?? null,
                     sucursalId: a.sucursalId,
                     fechaCompra: a.fechaCompra,
                     costoAdquisicion: a.costo,
@@ -353,7 +370,7 @@ let SeedService = SeedService_1 = class SeedService {
             }
         }
     }
-    async upsertSucursal(nombre, sigla, direccion, comuna, ciudad) {
+    async upsertSucursal(nombre, sigla, direccion, comuna, ciudad, cantidadPisos = 1) {
         let sucursal = await this.sucursalRepo.findOne({ where: { nombre } });
         if (!sucursal) {
             sucursal = await this.sucursalRepo.save(this.sucursalRepo.create({
@@ -363,10 +380,14 @@ let SeedService = SeedService_1 = class SeedService {
                 comuna,
                 ciudad,
                 estaActiva: true,
+                cantidadPisos,
             }));
         }
-        else if (!sucursal.sigla) {
-            sucursal.sigla = sigla;
+        else {
+            if (!sucursal.sigla)
+                sucursal.sigla = sigla;
+            if (cantidadPisos > 1)
+                sucursal.cantidadPisos = cantidadPisos;
             sucursal = await this.sucursalRepo.save(sucursal);
         }
         return sucursal;
@@ -380,9 +401,11 @@ exports.SeedService = SeedService = SeedService_1 = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(activo_entity_1.Activo)),
     __param(3, (0, typeorm_1.InjectRepository)(orden_trabajo_entity_1.OrdenTrabajo)),
     __param(4, (0, typeorm_1.InjectRepository)(marca_entity_1.Marca)),
-    __param(5, (0, typeorm_1.InjectRepository)(repuesto_entity_1.Repuesto)),
-    __param(6, (0, typeorm_1.InjectRepository)(bodega_stock_entity_1.BodegaStock)),
+    __param(5, (0, typeorm_1.InjectRepository)(categoria_entity_1.Categoria)),
+    __param(6, (0, typeorm_1.InjectRepository)(repuesto_entity_1.Repuesto)),
+    __param(7, (0, typeorm_1.InjectRepository)(bodega_stock_entity_1.BodegaStock)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

@@ -23,35 +23,52 @@ let MarcasService = class MarcasService {
         this.marcaRepo = marcaRepo;
     }
     findAll() {
-        return this.marcaRepo.find({ order: { nombre: 'ASC' } });
+        return this.marcaRepo.find({
+            where: { deletedAt: (0, typeorm_2.IsNull)() },
+            order: { nombre: 'ASC' },
+        });
     }
     async findOne(id) {
-        const marca = await this.marcaRepo.findOne({ where: { id } });
+        const marca = await this.marcaRepo.findOne({
+            where: { id, deletedAt: (0, typeorm_2.IsNull)() },
+        });
         if (!marca) {
             throw new common_1.NotFoundException(`Marca ${id} no encontrada`);
         }
         return marca;
     }
-    async create(dto) {
+    async create(dto, logoUrl) {
+        const sigla = dto.sigla.trim().toUpperCase();
         const exists = await this.marcaRepo.findOne({
-            where: [{ nombre: dto.nombre }, { sigla: dto.sigla.toUpperCase() }],
+            where: [
+                { nombre: dto.nombre.trim(), deletedAt: (0, typeorm_2.IsNull)() },
+                { sigla, deletedAt: (0, typeorm_2.IsNull)() },
+            ],
         });
         if (exists) {
             throw new common_1.ConflictException('Nombre o sigla de marca ya registrados');
         }
         const marca = this.marcaRepo.create({
-            nombre: dto.nombre,
-            sigla: dto.sigla.toUpperCase(),
+            nombre: dto.nombre.trim(),
+            sigla,
+            logoUrl: logoUrl ?? null,
         });
         return this.marcaRepo.save(marca);
     }
-    async update(id, dto) {
+    async update(id, dto, logoUrl) {
         const marca = await this.findOne(id);
         if (dto.nombre)
-            marca.nombre = dto.nombre;
+            marca.nombre = dto.nombre.trim();
         if (dto.sigla)
-            marca.sigla = dto.sigla.toUpperCase();
+            marca.sigla = dto.sigla.trim().toUpperCase();
+        if (logoUrl !== undefined)
+            marca.logoUrl = logoUrl;
         return this.marcaRepo.save(marca);
+    }
+    async remove(id) {
+        await this.findOne(id);
+        await this.marcaRepo.softDelete(id);
+        return { deleted: true };
     }
 };
 exports.MarcasService = MarcasService;

@@ -4,128 +4,15 @@
     <p class="text-xs text-slate-grey">Equipos, infraestructura o peticiones de su sede</p>
   </header>
 
-  <form class="page-card space-y-3" [formGroup]="reporteForm" (ngSubmit)="enviarReporte()">
-    <div>
-      <label class="field-label">Tipo de reporte *</label>
-      <div class="tipo-reporte-pills" role="group" aria-label="Tipo de reporte">
-        @for (t of tiposReporte; track t.value) {
-          <button
-            type="button"
-            class="tipo-pill"
-            [class.tipo-pill--active]="reporteForm.controls.tipoReporte.value === t.value"
-            (click)="setTipoReporte(t.value)"
-          >
-            {{ t.label }}
-          </button>
-        }
-      </div>
-    </div>
-
-    @if (esReporteMaquina) {
-      <div>
-        <label class="field-label">Activo *</label>
-        <div class="flex items-center gap-2">
-          @if (activoSeleccionado(); as sel) {
-            <span
-              class="health-dot-wrap"
-              [attr.title]="healthLabel(sel.estadoOperacional)"
-            >
-              <span [class]="healthDotClass(sel.estadoOperacional)"></span>
-            </span>
-          }
-          <select class="field-input min-w-0 flex-1" formControlName="activoId">
-            <option value="">Seleccione equipo</option>
-            @for (a of activos(); track a.id) {
-              <option [value]="a.id">
-                {{ a.nombre }} — {{ healthLabel(a.estadoOperacional) }}
-              </option>
-            }
-          </select>
-        </div>
-        @if (preselectedActivoNombre(); as nombre) {
-          <p class="mt-1 text-xs text-status-green">Seleccionado por QR: {{ nombre }}</p>
-        }
-        @if (
-          reporteForm.controls.activoId.invalid &&
-          reporteForm.controls.activoId.touched
-        ) {
-          <p class="mt-1 text-xs text-orange-energy">Seleccione el equipo afectado.</p>
-        }
-      </div>
-    }
-
-    <div>
-      <label class="field-label">Prioridad *</label>
-      <select class="field-input" formControlName="prioridad">
-        @for (p of prioridades; track p.value) {
-          <option [value]="p.value">{{ p.label }}</option>
-        }
-      </select>
-    </div>
-
-    <div>
-      <label class="field-label">Descripción *</label>
-      <textarea class="field-input" rows="4" formControlName="descripcion"></textarea>
-      @if (
-        reporteForm.controls.descripcion.invalid &&
-        reporteForm.controls.descripcion.touched
-      ) {
-        <p class="mt-1 text-xs text-orange-energy">Mínimo 10 caracteres.</p>
-      }
-    </div>
-
-    <div>
-      <input
-        #fileInput
-        type="file"
-        class="hidden"
-        accept="image/*"
-        capture="environment"
-        (change)="onFileSelected($event)"
-      />
-      <button
-        type="button"
-        class="upload-box w-full"
-        (click)="fileInput.click()"
-        [disabled]="processingFoto()"
-      >
-        @if (processingFoto()) {
-          <span class="text-sm text-slate-grey">Comprimiendo imagen...</span>
-        } @else {
-          <span class="text-sm text-slate-grey">
-            Adjuntar foto de la falla
-            @if (fotoEsObligatoria) {
-              <span class="text-orange-energy"> (Obligatorio)</span>
-            } @else {
-              <span class="text-slate-grey/80"> (Opcional)</span>
-            }
-          </span>
-        }
-      </button>
-      @if (imagePreview()) {
-        <img
-          [src]="imagePreview()!"
-          alt="Vista previa de la falla"
-          class="mt-2 h-36 w-full rounded-lg border border-white/10 object-cover"
-        />
-      }
-      @if (
-        fotoEsObligatoria &&
-        reporteForm.controls.foto.invalid &&
-        reporteForm.controls.foto.touched
-      ) {
-        <p class="mt-1 text-xs text-orange-energy">La foto es obligatoria para fallas en máquina.</p>
-      }
-    </div>
-
-    <button
-      type="submit"
-      class="btn-primary w-full"
-      [disabled]="saving() || reporteForm.invalid || processingFoto()"
-    >
-      @if (saving()) { Enviando... } @else { Enviar ticket }
-    </button>
-  </form>
+  <section class="page-card">
+    <app-hybrid-report-form
+      variant="sucursal"
+      [fixedSucursalId]="user()?.sucursalId ?? null"
+      [saving]="saving()"
+      submitLabel="Enviar ticket"
+      (submitted)="onReportSubmit($event)"
+    />
+  </section>
 
   <section class="page-card">
     <h2 class="mb-3 text-sm font-semibold text-pure-white">Historial de la sede</h2>
@@ -147,23 +34,4 @@
       </article>
     }
   </section>
-
-  @if (esReporteMaquina) {
-    <button
-      type="button"
-      class="qr-fab-sucursal"
-      (click)="openQrScanner()"
-      aria-label="Escanear QR del activo"
-    >
-      <lucide-icon name="camera" [size]="26" />
-    </button>
-  }
 </div>
-
-@if (showScanner()) {
-  <app-qr-scanner-modal
-    mode="emit"
-    (scanned)="onQrScanned($event)"
-    (closed)="closeQrScanner()"
-  />
-}

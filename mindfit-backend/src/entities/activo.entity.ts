@@ -17,6 +17,7 @@ import {
 } from '../common/enums';
 import { Sucursal } from './sucursal.entity';
 import { Marca } from './marca.entity';
+import { Categoria } from './categoria.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
 
 @Entity('activos')
@@ -78,8 +79,21 @@ export class Activo {
   })
   numeroSerie: string | null;
 
-  @Column({ type: 'enum', enum: CategoriaActivo })
-  categoria: CategoriaActivo;
+  @Column({ type: 'enum', enum: CategoriaActivo, nullable: true })
+  categoria: CategoriaActivo | null;
+
+  @Column({ name: 'categoria_id', type: 'int', nullable: true })
+  categoriaId: number | null;
+
+  @ManyToOne(() => Categoria, (cat) => cat.activos, {
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'categoria_id' })
+  categoriaRelacion: Categoria | null;
+
+  @Column({ name: 'piso_asignado', type: 'int', nullable: true })
+  pisoAsignado: number | null;
 
   @Column({ name: 'sucursal_id', type: 'int' })
   sucursalId: number;

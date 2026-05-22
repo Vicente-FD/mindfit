@@ -7,21 +7,16 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { interval, startWith } from 'rxjs';
 import { WorkOrdersService } from '../../../core/services/work-orders.service';
 import { SucursalesService } from '../../../core/services/sucursales.service';
-import { ActivosService } from '../../../core/services/activos.service';
+import { ActivosService, Activo } from '../../../core/services/activos.service';
 import { UsuariosService } from '../../../core/services/usuarios.service';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { OtPdfReportService } from '../../../core/services/ot-pdf-report.service';
 import { ToastService } from '../../../core/services/toast.service';
 import {
-  ClasificacionOt,
   OrdenesTab,
   REVERTIR_APROBACION_MS,
   WorkOrder,
@@ -30,8 +25,10 @@ import {
 import { resolveMediaUrl } from '../../../core/utils/media-url';
 import { Usuario } from '../../../core/models/usuario.model';
 import { Sucursal } from '../../../core/models/sucursal.model';
-import { Activo } from '../../../core/services/activos.service';
-import { PRIORIDADES_OT } from '../../../core/models/analytics.model';
+import {
+  HybridReportFormComponent,
+  HybridReportSubmitPayload,
+} from '../../../shared/hybrid-report-form/hybrid-report-form.component';
 import { formatDateTimeChile } from '../../../core/utils/date-format';
 import { LucideAngularModule } from 'lucide-angular';
 import { DeleteOtConfirmModalComponent } from '../../../shared/delete-ot-confirm-modal/delete-ot-confirm-modal.component';
@@ -51,12 +48,12 @@ import {
     EditOtModalComponent,
     OtReportModalComponent,
     RejectOtModalComponent,
+    HybridReportFormComponent,
   ],
   templateUrl: './jefe-operaciones-dashboard.component.html',
   styleUrl: './jefe-operaciones-dashboard.component.css',
 })
 export class JefeOperacionesDashboardComponent implements OnInit {
-  private readonly fb = inject(FormBuilder);
   private readonly workOrders = inject(WorkOrdersService);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly activosService = inject(ActivosService);
@@ -66,7 +63,6 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly prioridades = PRIORIDADES_OT;
   readonly ordenes = signal<WorkOrder[]>([]);
   readonly sucursales = signal<Sucursal[]>([]);
   readonly activos = signal<Activo[]>([]);
@@ -79,9 +75,8 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   readonly showCreateForm = signal(false);
   readonly showReportModal = signal(false);
   readonly generatingPdf = signal(false);
-  readonly clasificacionTipo = signal<ClasificacionOt>('maquina');
-  readonly sucursalFormId = signal('');
   readonly saving = signal(false);
+  readonly savingReporte = signal(false);
   readonly deleting = signal(false);
   readonly deleteTarget = signal<WorkOrder | null>(null);
   readonly editTarget = signal<WorkOrder | null>(null);
@@ -97,22 +92,6 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   readonly isPorAprobar = computed(() => this.activeTab() === 'por_aprobar');
   readonly isActivas = computed(() => this.activeTab() === 'activas');
 
-  readonly activosFiltrados = computed(() => {
-    const sid = this.sucursalFormId();
-    if (!sid) return [];
-    const id = Number(sid);
-    return this.activos().filter((a) => a.sucursalId === id);
-  });
-
-  readonly otForm = this.fb.nonNullable.group({
-    titulo: ['', Validators.required],
-    descripcion: [''],
-    sucursalId: ['', Validators.required],
-    activoId: ['', Validators.required],
-    prioridad: ['media' as const],
-    asignadoAId: [''],
-  });
-
   ngOnInit(): void {
     interval(1000)
       .pipe(startWith(0), takeUntilDestroyed(this.destroyRef))
@@ -124,6 +103,7 @@ export class JefeOperacionesDashboardComponent implements OnInit {
       next: (u) =>
         this.tecnicos.set(u.filter((x) => x.rol === 'tecnico' && x.estaActivo)),
     });
+    this.activosService.list().subscribe({ next: (a) => this.activos.set(a) });
     this.analytics.getKpis().subscribe({
       next: (k) =>
         this.kpis.set({
@@ -132,12 +112,33 @@ export class JefeOperacionesDashboardComponent implements OnInit {
         }),
     });
 
-    this.otForm
-      .get('sucursalId')
-      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((v) => {
-        this.sucursalFormId.set(v);
-        this.otForm.patchValue({ activoId: '' }, { emitEvent: false });
+  }
+
+  onReporteHibrido(payload: HybridReportSubmitPayload): void {
+    this.savingReporte.set(true);
+    this.workOrders
+      .reportarFalla({
+        tipoReporte: payload.tipoReporte,
+        activoId: payload.activoId,
+        descripcion: payload.descripcion,
+        prioridad: payload.prioridad,
+        fotoFalla: payload.fotoFalla,
+        sucursalId: payload.sucursalId,
+        titulo: payload.titulo,
+        asignadoAId: payload.asignadoAId,
+      })
+      .subscribe({
+        next: () => {
+          this.savingReporte.set(false);
+          this.showCreateForm.set(false);
+          this.toast.success('Reporte registrado correctamente');
+          this.reload();
+        },
+        error: (err) => {
+          this.savingReporte.set(false);
+          const msg = err?.error?.message ?? 'Error al registrar reporte';
+          this.toast.error(Array.isArray(msg) ? msg.join(', ') : String(msg));
+        },
       });
   }
 
@@ -198,18 +199,6 @@ export class JefeOperacionesDashboardComponent implements OnInit {
       });
   }
 
-  setClasificacion(tipo: ClasificacionOt): void {
-    this.clasificacionTipo.set(tipo);
-    const activoCtrl = this.otForm.controls.activoId;
-    if (tipo === 'infraestructura') {
-      activoCtrl.clearValidators();
-      activoCtrl.setValue('');
-    } else {
-      activoCtrl.setValidators(Validators.required);
-    }
-    activoCtrl.updateValueAndValidity();
-  }
-
   private estadoFiltroTab(): 'activas' | 'por_aprobar' | 'finalizadas' {
     const tab = this.activeTab();
     if (tab === 'historico') return 'finalizadas';
@@ -229,9 +218,6 @@ export class JefeOperacionesDashboardComponent implements OnInit {
         this.toast.error('Error al cargar órdenes de trabajo');
       },
     });
-    if (this.isActivas()) {
-      this.activosService.list().subscribe({ next: (a) => this.activos.set(a) });
-    }
   }
 
   canModificarOrden(orden: WorkOrder): boolean {
@@ -365,78 +351,6 @@ export class JefeOperacionesDashboardComponent implements OnInit {
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
     return sorted[0]?.comentario ?? null;
-  }
-
-  crearOt(): void {
-    if (this.otForm.invalid) {
-      this.otForm.markAllAsTouched();
-      return;
-    }
-    const v = this.otForm.getRawValue();
-    const clasificacion = this.clasificacionTipo();
-    this.saving.set(true);
-
-    this.workOrders
-      .create({
-        titulo: v.titulo,
-        descripcion: v.descripcion || undefined,
-        sucursalId: Number(v.sucursalId),
-        clasificacion,
-        activoId:
-          clasificacion === 'maquina' && v.activoId
-            ? Number(v.activoId)
-            : undefined,
-        prioridad: v.prioridad,
-        tipoMantenimiento: 'correctivo',
-      })
-      .subscribe({
-        next: (orden) => {
-          const tecnicoId = v.asignadoAId ? Number(v.asignadoAId) : null;
-          const finish = () => {
-            this.saving.set(false);
-            this.showCreateForm.set(false);
-            this.resetForm();
-            this.activeTab.set('activas');
-            this.reload();
-          };
-
-          if (tecnicoId) {
-            this.workOrders.asignar(orden.id, tecnicoId).subscribe({
-              next: () => {
-                this.toast.success('OT creada y asignada');
-                finish();
-              },
-              error: () => {
-                this.saving.set(false);
-                this.toast.error('OT creada, pero falló la asignación del técnico');
-                this.reload();
-              },
-            });
-          } else {
-            this.toast.success('OT creada');
-            finish();
-          }
-        },
-        error: (err) => {
-          this.saving.set(false);
-          const msg = err?.error?.message ?? 'Error al crear OT';
-          this.toast.error(Array.isArray(msg) ? msg.join(', ') : String(msg));
-        },
-      });
-  }
-
-  private resetForm(): void {
-    this.clasificacionTipo.set('maquina');
-    this.setClasificacion('maquina');
-    this.otForm.reset({
-      titulo: '',
-      descripcion: '',
-      sucursalId: '',
-      activoId: '',
-      prioridad: 'media',
-      asignadoAId: '',
-    });
-    this.sucursalFormId.set('');
   }
 
   asignar(orden: WorkOrder, tecnicoId: string): void {

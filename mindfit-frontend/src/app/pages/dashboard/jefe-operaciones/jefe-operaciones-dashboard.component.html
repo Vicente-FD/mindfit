@@ -6,7 +6,7 @@
     </div>
     @if (isActivas()) {
       <button type="button" class="btn-create-ot" (click)="toggleCreateForm()">
-        {{ showCreateForm() ? 'Ocultar formulario' : '+ Crear Orden de Trabajo' }}
+        {{ showCreateForm() ? 'Ocultar formulario' : '+ Registrar reporte / OT' }}
       </button>
     }
   </header>
@@ -67,92 +67,20 @@
   }
 
   @if (showCreateForm() && isActivas()) {
-    <form class="page-card ot-create-form" [formGroup]="otForm" (ngSubmit)="crearOt()">
-      <div class="tipo-falla">
-        <span class="field-label">Tipo de falla</span>
-        <div class="tipo-falla__opts">
-          <label class="tipo-falla__opt">
-            <input
-              type="radio"
-              name="clasificacion"
-              value="maquina"
-              [checked]="clasificacionTipo() === 'maquina'"
-              (change)="setClasificacion('maquina')"
-            />
-            Fallo en Máquina
-          </label>
-          <label class="tipo-falla__opt">
-            <input
-              type="radio"
-              name="clasificacion"
-              value="infraestructura"
-              [checked]="clasificacionTipo() === 'infraestructura'"
-              (change)="setClasificacion('infraestructura')"
-            />
-            Daño de Infraestructura
-          </label>
-        </div>
-      </div>
-
-      <div class="ot-create-form__grid">
-        <div class="ot-create-form__full">
-          <label class="field-label">Título OT *</label>
-          <input class="field-input" formControlName="titulo" />
-        </div>
-        <div>
-          <label class="field-label">Sucursal *</label>
-          <select class="field-input" formControlName="sucursalId">
-            <option value="">Seleccione sede</option>
-            @for (s of sucursales(); track s.id) {
-              <option [value]="s.id">{{ s.nombre }}</option>
-            }
-          </select>
-        </div>
-        @if (clasificacionTipo() === 'maquina') {
-          <div>
-            <label class="field-label">Activo *</label>
-            <select
-              class="field-input"
-              formControlName="activoId"
-              [disabled]="!sucursalFormId()"
-            >
-              <option value="">
-                {{ sucursalFormId() ? 'Seleccione equipo' : 'Seleccione sucursal primero' }}
-              </option>
-              @for (a of activosFiltrados(); track a.id) {
-                <option [value]="a.id">
-                  {{ a.codigoInventario || a.codigoQrToken }} — {{ a.nombre }}
-                </option>
-              }
-            </select>
-          </div>
-        }
-        <div>
-          <label class="field-label">Prioridad</label>
-          <select class="field-input" formControlName="prioridad">
-            @for (p of prioridades; track p.value) {
-              <option [value]="p.value">{{ p.label }}</option>
-            }
-          </select>
-        </div>
-        <div>
-          <label class="field-label">Asignar técnico (opcional)</label>
-          <select class="field-input" formControlName="asignadoAId">
-            <option value="">Sin asignar aún</option>
-            @for (t of tecnicos(); track t.id) {
-              <option [value]="t.id">{{ t.nombre }}</option>
-            }
-          </select>
-        </div>
-        <div class="ot-create-form__full">
-          <label class="field-label">Descripción</label>
-          <textarea class="field-input" rows="2" formControlName="descripcion"></textarea>
-        </div>
-      </div>
-      <button type="submit" class="btn-primary w-full" [disabled]="saving() || otForm.invalid">
-        @if (saving()) { Creando... } @else { Crear orden de trabajo }
-      </button>
-    </form>
+    <section class="page-card">
+      <h2 class="mb-3 text-sm font-semibold text-pure-white">Nuevo reporte híbrido</h2>
+      <p class="mb-3 text-xs text-slate-grey">
+        Máquina (activo + foto obligatorios) o infraestructura / petición sin activo.
+      </p>
+      <app-hybrid-report-form
+        variant="central"
+        [sucursales]="sucursales()"
+        [tecnicos]="tecnicos()"
+        [saving]="savingReporte()"
+        submitLabel="Registrar reporte"
+        (submitted)="onReporteHibrido($event)"
+      />
+    </section>
   }
 
   <section class="ot-list">

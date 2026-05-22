@@ -1,6 +1,7 @@
 import { CategoriaActivo, EstadoOperacionalActivo } from '../common/enums';
 import { Sucursal } from './sucursal.entity';
 import { Marca } from './marca.entity';
+import { Categoria } from './categoria.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
 export declare class Activo {
     id: number;
@@ -13,7 +14,10 @@ export declare class Activo {
     marca: string | null;
     modelo: string | null;
     numeroSerie: string | null;
-    categoria: CategoriaActivo;
+    categoria: CategoriaActivo | null;
+    categoriaId: number | null;
+    categoriaRelacion: Categoria | null;
+    pisoAsignado: number | null;
     sucursalId: number;
     sucursal: Sucursal;
     fechaCompra: string | null;

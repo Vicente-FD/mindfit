@@ -22,6 +22,7 @@ let Sucursal = class Sucursal {
     comuna;
     ciudad;
     estaActiva;
+    cantidadPisos;
     createdAt;
     updatedAt;
     deletedAt;
@@ -58,6 +59,10 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'esta_activa', type: 'boolean', default: true }),
     __metadata("design:type", Boolean)
 ], Sucursal.prototype, "estaActiva", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'cantidad_pisos', type: 'int', default: 1 }),
+    __metadata("design:type", Number)
+], Sucursal.prototype, "cantidadPisos", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)

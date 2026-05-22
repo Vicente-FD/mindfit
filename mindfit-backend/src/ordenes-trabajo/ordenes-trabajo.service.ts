@@ -305,6 +305,7 @@ export class OrdenesTrabajoService {
       descripcion: string;
       prioridad: PrioridadOrden;
       titulo?: string;
+      asignadoAId?: number;
     },
     creadoPorId: number,
     sucursalId: number,
@@ -326,11 +327,15 @@ export class OrdenesTrabajoService {
       peticion: dto.titulo ?? 'Petición de elementos o servicios',
     };
 
+    const clasificacionMap: Record<TipoReporteSucursal, ClasificacionOrden> = {
+      maquina: ClasificacionOrden.MAQUINA,
+      infraestructura: ClasificacionOrden.INFRAESTRUCTURA,
+      peticion: ClasificacionOrden.PETICION,
+    };
+
     const orden = await this.create(
       {
-        clasificacion: esMaquina
-          ? ClasificacionOrden.MAQUINA
-          : ClasificacionOrden.INFRAESTRUCTURA,
+        clasificacion: clasificacionMap[tipo],
         activoId: esMaquina ? Number(dto.activoId) : undefined,
         sucursalId,
         titulo: tituloPorTipo[tipo],
@@ -346,6 +351,10 @@ export class OrdenesTrabajoService {
         tipoEvidencia: TipoEvidencia.ANTES,
         urlImagen: fotoUrl,
       });
+    }
+
+    if (dto.asignadoAId != null && !Number.isNaN(Number(dto.asignadoAId))) {
+      await this.asignar(orden.id, { tecnicoId: Number(dto.asignadoAId) });
     }
 
     return this.findOne(orden.id);
@@ -409,9 +418,9 @@ export class OrdenesTrabajoService {
       codigoOt: await this.generarCodigoOt(),
       clasificacion,
       activoId:
-        clasificacion === ClasificacionOrden.INFRAESTRUCTURA
-          ? null
-          : (dto.activoId ?? null),
+        clasificacion === ClasificacionOrden.MAQUINA
+          ? (dto.activoId ?? null)
+          : null,
       sucursalId: dto.sucursalId,
       creadoPorId,
       titulo: dto.titulo,

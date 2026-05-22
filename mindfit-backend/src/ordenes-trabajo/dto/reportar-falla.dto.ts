@@ -35,4 +35,14 @@ export class ReportarFallaDto {
   @IsOptional()
   @IsString()
   titulo?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  sucursalId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  asignadoAId?: number;
 }

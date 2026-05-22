@@ -52,6 +52,7 @@ export declare class OrdenesTrabajoService {
         descripcion: string;
         prioridad: PrioridadOrden;
         titulo?: string;
+        asignadoAId?: number;
     }, creadoPorId: number, sucursalId: number, fotoUrl?: string): Promise<OrdenTrabajo>;
     private eliminarEvidenciasDespues;
     create(dto: CreateOrdenTrabajoDto, creadoPorId: number): Promise<OrdenTrabajo>;

@@ -1,0 +1,129 @@
+<div class="parametros space-y-4">
+  <header>
+    <h2 class="text-lg font-semibold text-pure-white">Parámetros del sistema</h2>
+    <p class="mt-1 text-xs text-slate-grey">
+      Familias de equipamiento y marcas con siglas para códigos de inventario
+    </p>
+  </header>
+
+  <div class="parametros-grid">
+    <section class="parametros-col">
+      <div class="parametros-col__head">
+        <h3 class="parametros-col__title">Familias / Categorías</h3>
+        <button type="button" class="btn-primary text-xs" (click)="openNewCategoria()">
+          <lucide-icon name="plus" [size]="14" />
+          Agregar categoría
+        </button>
+      </div>
+
+      @if (loadingCat()) {
+        <p class="text-sm text-slate-grey">Cargando...</p>
+      } @else {
+        <ul class="catalog-list">
+          @for (c of categorias(); track c.id) {
+            <li class="catalog-item">
+              <div>
+                <span class="catalog-item__name">{{ c.nombre }}</span>
+                <span class="catalog-item__sigla">[{{ c.sigla }}]</span>
+              </div>
+              <div class="catalog-item__actions">
+                <button type="button" class="icon-btn" (click)="openEditCategoria(c)" title="Editar">
+                  <lucide-icon name="pencil" [size]="16" />
+                </button>
+                <button type="button" class="icon-btn icon-btn--danger" (click)="deleteCategoria(c)" title="Dar de baja">
+                  <lucide-icon name="trash-2" [size]="16" />
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+
+      <form class="parametros-form" [formGroup]="categoriaForm" (ngSubmit)="submitCategoria()">
+        <p class="text-xs text-slate-grey">
+          {{ editingCategoria() ? 'Editar categoría' : 'Nueva categoría' }}
+        </p>
+        <input class="field-input" formControlName="nombre" placeholder="Nombre (ej. Cardio)" />
+        <input
+          class="field-input font-mono uppercase"
+          formControlName="sigla"
+          maxlength="5"
+          placeholder="Sigla (ej. CR)"
+          (input)="onCategoriaSiglaInput($event)"
+        />
+        <button type="submit" class="btn-primary w-full text-sm" [disabled]="savingCat()">
+          @if (savingCat()) { Guardando... } @else {
+            {{ editingCategoria() ? 'Actualizar' : 'Crear categoría' }}
+          }
+        </button>
+      </form>
+    </section>
+
+    <section class="parametros-col">
+      <div class="parametros-col__head">
+        <h3 class="parametros-col__title">Marcas de equipamiento</h3>
+        <button type="button" class="btn-primary text-xs" (click)="openNewMarca()">
+          <lucide-icon name="plus" [size]="14" />
+          Agregar marca
+        </button>
+      </div>
+
+      @if (loadingMarca()) {
+        <p class="text-sm text-slate-grey">Cargando...</p>
+      } @else {
+        <ul class="catalog-list">
+          @for (m of marcas(); track m.id) {
+            <li class="catalog-item">
+              <div class="catalog-item__brand">
+                @if (m.logoUrl) {
+                  <img [src]="m.logoUrl" alt="" class="catalog-logo" />
+                }
+                <div>
+                  <span class="catalog-item__name">{{ m.nombre }}</span>
+                  <span class="catalog-item__sigla">[{{ m.sigla }}]</span>
+                </div>
+              </div>
+              <div class="catalog-item__actions">
+                <button type="button" class="icon-btn" (click)="openEditMarca(m)" title="Editar">
+                  <lucide-icon name="pencil" [size]="16" />
+                </button>
+                <button type="button" class="icon-btn icon-btn--danger" (click)="deleteMarca(m)" title="Dar de baja">
+                  <lucide-icon name="trash-2" [size]="16" />
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+
+      <form class="parametros-form" [formGroup]="marcaForm" (ngSubmit)="submitMarca()">
+        <p class="text-xs text-slate-grey">
+          {{ editingMarca() ? 'Editar marca' : 'Nueva marca' }}
+        </p>
+        <input class="field-input" formControlName="nombre" placeholder="Nombre (ej. Matrix)" />
+        <input
+          class="field-input font-mono uppercase"
+          formControlName="sigla"
+          maxlength="5"
+          placeholder="Sigla (ej. MX)"
+          (input)="onMarcaSiglaInput($event)"
+        />
+        <label class="field-label">Logo de la marca</label>
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          class="field-input text-xs"
+          (change)="onMarcaLogoSelected($event)"
+        />
+        @if (editingMarca()?.logoUrl; as preview) {
+          <img [src]="preview" alt="" class="catalog-logo catalog-logo--preview" />
+        }
+        <button type="submit" class="btn-primary w-full text-sm" [disabled]="savingMarca()">
+          @if (savingMarca()) { Guardando... } @else {
+            {{ editingMarca() ? 'Actualizar' : 'Crear marca' }}
+          }
+        </button>
+      </form>
+    </section>
+  </div>
+</div>

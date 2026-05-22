@@ -79,10 +79,15 @@ export class AuthService {
   patchUser(partial: Partial<AuthUser>): void {
     const current = this.userSignal();
     if (!current) return;
+    const rol = partial.rol ?? current.rol;
+    const permisosUi =
+      partial.permisosUi !== undefined
+        ? resolvePermisosUi(rol, partial.permisosUi)
+        : current.permisosUi;
     const updated: AuthUser = {
       ...current,
       ...partial,
-      permisosUi: partial.permisosUi ?? current.permisosUi,
+      permisosUi,
     };
     this.userSignal.set(updated);
     localStorage.setItem(USER_KEY, JSON.stringify(updated));

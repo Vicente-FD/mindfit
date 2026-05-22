@@ -17,8 +17,9 @@ class UpdateActivoDto {
     marcaId;
     modelo;
     numeroSerie;
-    categoria;
+    categoriaId;
     sucursalId;
+    pisoAsignado;
     fechaCompra;
     fechaVencimientoGarantia;
     costoAdquisicion;
@@ -51,14 +52,19 @@ __decorate([
 ], UpdateActivoDto.prototype, "numeroSerie", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(enums_1.CategoriaActivo),
-    __metadata("design:type", String)
-], UpdateActivoDto.prototype, "categoria", void 0);
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], UpdateActivoDto.prototype, "categoriaId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], UpdateActivoDto.prototype, "sucursalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Object)
+], UpdateActivoDto.prototype, "pisoAsignado", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),

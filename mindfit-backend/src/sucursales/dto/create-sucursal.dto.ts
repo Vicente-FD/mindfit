@@ -1,13 +1,16 @@
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
+  Max,
   MaxLength,
-  MinLength,
+  Min,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 const SIGLA_REGEX = /^[A-Z]{2,3}$/;
 
@@ -44,4 +47,11 @@ export class CreateSucursalDto {
   @IsOptional()
   @IsBoolean()
   estaActiva?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  cantidadPisos?: number;
 }

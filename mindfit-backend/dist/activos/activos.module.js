@@ -10,6 +10,7 @@ exports.ActivosModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const activo_entity_1 = require("../entities/activo.entity");
+const categoria_entity_1 = require("../entities/categoria.entity");
 const marca_entity_1 = require("../entities/marca.entity");
 const inventario_module_1 = require("../inventario/inventario.module");
 const activos_controller_1 = require("./activos.controller");
@@ -20,7 +21,10 @@ let ActivosModule = class ActivosModule {
 exports.ActivosModule = ActivosModule;
 exports.ActivosModule = ActivosModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([activo_entity_1.Activo, marca_entity_1.Marca]), inventario_module_1.InventarioModule],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([activo_entity_1.Activo, marca_entity_1.Marca, categoria_entity_1.Categoria]),
+            inventario_module_1.InventarioModule,
+        ],
         controllers: [activos_controller_1.ActivosController],
         providers: [activos_service_1.ActivosService, codigo_inventario_service_1.CodigoInventarioService],
         exports: [activos_service_1.ActivosService],

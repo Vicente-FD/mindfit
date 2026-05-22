@@ -135,10 +135,7 @@ let AuthService = class AuthService {
         return this.usuarioRepository.save(usuario);
     }
     resolvePermisos(usuario) {
-        return {
-            ...(permisos_ui_interface_1.PERMISOS_BY_ROL[usuario.rol] ?? permisos_ui_interface_1.PERMISOS_UI_DEFAULT),
-            ...(usuario.permisosUi ?? {}),
-        };
+        return (0, permisos_ui_interface_1.resolvePermisosUi)(usuario.rol, usuario.permisosUi);
     }
     toAuthUser(usuario) {
         return {

@@ -15,7 +15,10 @@ const typeorm_1 = require("typeorm");
 const enums_1 = require("../common/enums");
 const orden_trabajo_entity_1 = require("../entities/orden-trabajo.entity");
 const activo_entity_1 = require("../entities/activo.entity");
+const categoria_entity_1 = require("../entities/categoria.entity");
 const marca_entity_1 = require("../entities/marca.entity");
+const sucursal_entity_1 = require("../entities/sucursal.entity");
+const categoria_legacy_util_1 = require("./categoria-legacy.util");
 const transaction_context_service_1 = require("../common/database/transaction-context.service");
 const codigo_inventario_service_1 = require("./codigo-inventario.service");
 let ActivosService = class ActivosService {
@@ -35,6 +38,7 @@ let ActivosService = class ActivosService {
             .createQueryBuilder('a')
             .leftJoinAndSelect('a.sucursal', 'sucursal')
             .leftJoinAndSelect('a.marcaRelacion', 'marca')
+            .leftJoinAndSelect('a.categoriaRelacion', 'categoriaRelacion')
             .orderBy('a.nombre', 'ASC');
         if (filters.sucursalId != null) {
             qb.andWhere('a.sucursal_id = :sucursalId', {
@@ -44,7 +48,12 @@ let ActivosService = class ActivosService {
         if (filters.marcaId != null) {
             qb.andWhere('a.marca_id = :marcaId', { marcaId: filters.marcaId });
         }
-        if (filters.categoria) {
+        if (filters.categoriaId != null) {
+            qb.andWhere('a.categoria_id = :categoriaId', {
+                categoriaId: filters.categoriaId,
+            });
+        }
+        else if (filters.categoria) {
             qb.andWhere('a.categoria = :categoria', { categoria: filters.categoria });
         }
         if (filters.anioCompra != null) {
@@ -62,12 +71,29 @@ let ActivosService = class ActivosService {
     async findOne(id) {
         const activo = await this.repo().findOne({
             where: { id },
-            relations: { sucursal: true, marcaRelacion: true },
+            relations: { sucursal: true, marcaRelacion: true, categoriaRelacion: true },
         });
         if (!activo) {
             throw new common_1.NotFoundException(`Activo ${id} no encontrado`);
         }
         return activo;
+    }
+    async resolvePisoAsignado(manager, sucursalId, pisoAsignado) {
+        const sucursal = await manager.findOne(sucursal_entity_1.Sucursal, { where: { id: sucursalId } });
+        if (!sucursal) {
+            throw new common_1.BadRequestException('Sucursal no encontrada');
+        }
+        const pisos = sucursal.cantidadPisos ?? 1;
+        if (pisos <= 1) {
+            return null;
+        }
+        if (pisoAsignado == null) {
+            throw new common_1.BadRequestException('Debe indicar el piso asignado para sedes con más de un nivel');
+        }
+        if (pisoAsignado < 1 || pisoAsignado > pisos) {
+            throw new common_1.BadRequestException(`El piso debe estar entre 1 y ${pisos} para esta sede`);
+        }
+        return pisoAsignado;
     }
     async findByUuid(uuidActivo) {
         return this.findByPublicIdentifier(uuidActivo);
@@ -75,7 +101,11 @@ let ActivosService = class ActivosService {
     async findByPublicIdentifier(identifier) {
         let activo = await this.repo().findOne({
             where: { uuidActivo: identifier },
-            relations: { sucursal: true, marcaRelacion: true },
+            relations: {
+                sucursal: true,
+                marcaRelacion: true,
+                categoriaRelacion: true,
+            },
         });
         if (!activo) {
             activo = await this.repo().findOne({
@@ -83,7 +113,11 @@ let ActivosService = class ActivosService {
                     { codigoQrToken: identifier },
                     { codigoInventario: identifier },
                 ],
-                relations: { sucursal: true, marcaRelacion: true },
+                relations: {
+                    sucursal: true,
+                    marcaRelacion: true,
+                    categoriaRelacion: true,
+                },
             });
         }
         if (!activo) {
@@ -115,7 +149,8 @@ let ActivosService = class ActivosService {
                 nombre: activo.nombre,
                 marca: activo.marcaRelacion?.nombre ?? activo.marca,
                 modelo: activo.modelo,
-                categoria: activo.categoria,
+                categoria: activo.categoriaRelacion?.nombre ??
+                    (activo.categoria != null ? String(activo.categoria) : ''),
                 estadoOperacional: activo.estadoOperacional,
                 sucursalId: activo.sucursalId,
                 sucursalNombre: activo.sucursal?.nombre ?? null,
@@ -146,14 +181,23 @@ let ActivosService = class ActivosService {
         if (!marca) {
             throw new common_1.BadRequestException('Marca no encontrada');
         }
-        const codigo = await this.codigoInventario.generarCodigo(manager, dto.sucursalId, dto.marcaId, dto.categoria, dto.fechaCompra);
+        const categoria = await manager.findOne(categoria_entity_1.Categoria, {
+            where: { id: dto.categoriaId },
+        });
+        if (!categoria) {
+            throw new common_1.BadRequestException('Categoría no encontrada');
+        }
+        const pisoAsignado = await this.resolvePisoAsignado(manager, dto.sucursalId, dto.pisoAsignado);
+        const codigo = await this.codigoInventario.generarCodigo(manager, dto.sucursalId, dto.marcaId, dto.categoriaId, dto.fechaCompra);
         const activo = manager.create(activo_entity_1.Activo, {
             nombre: dto.nombre,
             marcaId: dto.marcaId,
             marca: marca.nombre,
             modelo: dto.modelo ?? null,
             numeroSerie: dto.numeroSerie ?? null,
-            categoria: dto.categoria,
+            categoriaId: categoria.id,
+            categoria: (0, categoria_legacy_util_1.categoriaEnumFromSigla)(categoria.sigla),
+            pisoAsignado,
             sucursalId: dto.sucursalId,
             fechaCompra: dto.fechaCompra ?? null,
             fechaVencimientoGarantia: dto.fechaVencimientoGarantia ?? null,
@@ -193,10 +237,22 @@ let ActivosService = class ActivosService {
             activo.nombre = dto.nombre;
         if (dto.modelo !== undefined)
             activo.modelo = dto.modelo || null;
-        if (dto.categoria != null)
-            activo.categoria = dto.categoria;
+        if (dto.categoriaId != null) {
+            const categoria = await this.dataSource
+                .getRepository(categoria_entity_1.Categoria)
+                .findOne({ where: { id: dto.categoriaId } });
+            if (!categoria) {
+                throw new common_1.BadRequestException('Categoría no encontrada');
+            }
+            activo.categoriaId = categoria.id;
+            activo.categoria = (0, categoria_legacy_util_1.categoriaEnumFromSigla)(categoria.sigla);
+        }
+        const sucursalId = dto.sucursalId ?? activo.sucursalId;
         if (dto.sucursalId != null)
             activo.sucursalId = dto.sucursalId;
+        if (dto.pisoAsignado !== undefined || dto.sucursalId != null) {
+            activo.pisoAsignado = await this.resolvePisoAsignado(this.transactionContext.getManager(this.dataSource), sucursalId, dto.pisoAsignado !== undefined ? dto.pisoAsignado : activo.pisoAsignado);
+        }
         if (dto.fechaCompra !== undefined) {
             activo.fechaCompra = dto.fechaCompra || null;
         }

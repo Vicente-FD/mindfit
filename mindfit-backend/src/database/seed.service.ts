@@ -17,6 +17,7 @@ import { Usuario } from '../entities/usuario.entity';
 import { Activo } from '../entities/activo.entity';
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
 import { Marca } from '../entities/marca.entity';
+import { Categoria } from '../entities/categoria.entity';
 import { Repuesto } from '../entities/repuesto.entity';
 import { BodegaStock } from '../entities/bodega-stock.entity';
 
@@ -44,6 +45,8 @@ export class SeedService implements OnModuleInit {
     private readonly ordenRepo: Repository<OrdenTrabajo>,
     @InjectRepository(Marca)
     private readonly marcaRepo: Repository<Marca>,
+    @InjectRepository(Categoria)
+    private readonly categoriaRepo: Repository<Categoria>,
     @InjectRepository(Repuesto)
     private readonly repuestoRepo: Repository<Repuesto>,
     @InjectRepository(BodegaStock)
@@ -69,6 +72,7 @@ export class SeedService implements OnModuleInit {
       'Av. Apoquindo 4500',
       'Las Condes',
       'Santiago',
+      3,
     );
     await this.upsertSucursal(
       'Sede Viña del Mar',
@@ -164,15 +168,22 @@ export class SeedService implements OnModuleInit {
     const carrier = await this.marcaRepo.findOne({ where: { sigla: 'CR' } });
     const pedrollo = await this.marcaRepo.findOne({ where: { sigla: 'PD' } });
 
+    const catCardio = await this.categoriaRepo.findOne({ where: { sigla: 'CR' } });
+    const catFuerza = await this.categoriaRepo.findOne({ where: { sigla: 'FZ' } });
+    const catClima = await this.categoriaRepo.findOne({ where: { sigla: 'CL' } });
+    const catBomba = await this.categoriaRepo.findOne({ where: { sigla: 'BA' } });
+
     const activosData = [
       {
         nombre: 'Cinta Correr Pro X500',
         marcaId: matrix?.id,
         marca: 'Matrix',
         modelo: 'X500',
-        codigo: 'LF-MX-25-01-01',
+        codigo: 'LF-MX-25-CR-01',
         categoria: CategoriaActivo.CARDIO,
+        categoriaId: catCardio?.id,
         sucursalId: florida.id,
+        pisoAsignado: null as number | null,
         costo: '4500000',
         fechaCompra: '2025-01-15',
       },
@@ -181,9 +192,11 @@ export class SeedService implements OnModuleInit {
         marcaId: life?.id,
         marca: 'Life Fitness',
         modelo: 'Axiom',
-        codigo: 'LF-LF-25-02-01',
+        codigo: 'LF-LF-25-FZ-01',
         categoria: CategoriaActivo.FUERZA,
+        categoriaId: catFuerza?.id,
         sucursalId: florida.id,
+        pisoAsignado: null as number | null,
         costo: '3200000',
         fechaCompra: '2025-03-10',
       },
@@ -192,9 +205,11 @@ export class SeedService implements OnModuleInit {
         marcaId: carrier?.id,
         marca: 'Carrier',
         modelo: '42QHC018',
-        codigo: 'LC-CR-24-03-01',
+        codigo: 'LC-CR-24-CL-01',
         categoria: CategoriaActivo.CLIMATIZACION,
+        categoriaId: catClima?.id,
         sucursalId: condes.id,
+        pisoAsignado: 2,
         costo: '2800000',
         fechaCompra: '2024-06-01',
       },
@@ -203,9 +218,11 @@ export class SeedService implements OnModuleInit {
         marcaId: pedrollo?.id,
         marca: 'Pedrollo',
         modelo: 'PKm 60',
-        codigo: 'LC-PD-24-05-01',
+        codigo: 'LC-PD-24-BA-01',
         categoria: CategoriaActivo.BOMBA_AGUA,
+        categoriaId: catBomba?.id,
         sucursalId: condes.id,
+        pisoAsignado: 1,
         costo: '890000',
         fechaCompra: '2024-08-20',
       },
@@ -225,6 +242,8 @@ export class SeedService implements OnModuleInit {
           codigoInventario: a.codigo,
           codigoQrToken: a.codigo,
           categoria: a.categoria,
+          categoriaId: a.categoriaId ?? null,
+          pisoAsignado: a.pisoAsignado ?? null,
           sucursalId: a.sucursalId,
           fechaCompra: a.fechaCompra,
           costoAdquisicion: a.costo,
@@ -376,6 +395,7 @@ export class SeedService implements OnModuleInit {
     direccion: string,
     comuna: string,
     ciudad: string,
+    cantidadPisos = 1,
   ): Promise<Sucursal> {
     let sucursal = await this.sucursalRepo.findOne({ where: { nombre } });
     if (!sucursal) {
@@ -387,10 +407,12 @@ export class SeedService implements OnModuleInit {
           comuna,
           ciudad,
           estaActiva: true,
+          cantidadPisos,
         }),
       );
-    } else if (!sucursal.sigla) {
-      sucursal.sigla = sigla;
+    } else {
+      if (!sucursal.sigla) sucursal.sigla = sigla;
+      if (cantidadPisos > 1) sucursal.cantidadPisos = cantidadPisos;
       sucursal = await this.sucursalRepo.save(sucursal);
     }
     return sucursal;

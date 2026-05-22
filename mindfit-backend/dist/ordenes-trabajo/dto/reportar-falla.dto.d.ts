@@ -6,4 +6,6 @@ export declare class ReportarFallaDto {
     descripcion: string;
     prioridad: PrioridadOrden;
     titulo?: string;
+    sucursalId?: number;
+    asignadoAId?: number;
 }

@@ -7,7 +7,7 @@ export type WorkOrderStatus =
   | 'aprobada'
   | 'rechazada';
 export type MaintenanceType = 'correctivo' | 'preventivo';
-export type ClasificacionOt = 'maquina' | 'infraestructura';
+export type ClasificacionOt = 'maquina' | 'infraestructura' | 'peticion';
 
 export interface WorkOrderUsuario {
   id: number;
@@ -35,6 +35,7 @@ export interface WorkOrderEvidencia {
 export interface WorkOrderSucursal {
   id: number;
   nombre: string;
+  cantidadPisos?: number;
   direccion?: string | null;
   comuna?: string | null;
   ciudad?: string | null;

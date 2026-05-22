@@ -38,6 +38,8 @@ export interface ReportarFallaPayload {
   prioridad: WorkOrderPriority;
   titulo?: string;
   fotoFalla?: File;
+  sucursalId?: number;
+  asignadoAId?: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -119,6 +121,12 @@ export class WorkOrdersService {
     formData.append('descripcion', payload.descripcion);
     formData.append('prioridad', payload.prioridad);
     if (payload.titulo) formData.append('titulo', payload.titulo);
+    if (payload.sucursalId != null) {
+      formData.append('sucursalId', String(payload.sucursalId));
+    }
+    if (payload.asignadoAId != null) {
+      formData.append('asignadoAId', String(payload.asignadoAId));
+    }
     if (payload.tipoReporte === 'maquina' && payload.activoId != null) {
       formData.append('activoId', String(payload.activoId));
     }

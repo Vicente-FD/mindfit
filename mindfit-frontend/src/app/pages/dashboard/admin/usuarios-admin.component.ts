@@ -8,7 +8,11 @@ import { LucideAngularModule } from 'lucide-angular';
 import { switchMap, of } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsuariosService } from '../../../core/services/usuarios.service';
-import { resolvePermisosUi } from '../../../core/models/permisos-ui.model';
+import {
+  PERMISOS_UI_DEFAULT,
+  PERMISOS_UI_KEYS,
+  resolvePermisosUi,
+} from '../../../core/models/permisos-ui.model';
 import { SucursalesService } from '../../../core/services/sucursales.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Usuario, PermisosUi } from '../../../core/models/usuario.model';
@@ -37,20 +41,14 @@ const ROLE_TABS: { value: UserRole | 'todos'; label: string }[] = [
 const PERMISO_LABELS: { key: keyof PermisosUi; label: string }[] = [
   { key: 'verDashboardEjecutivo', label: 'Dashboard ejecutivo' },
   { key: 'verGestionActivos', label: 'Gestión de activos' },
-  { key: 'verGestionUsuarios', label: 'Gestión de usuarios' },
-  { key: 'verAsignacionOt', label: 'Asignación de OTs' },
-  { key: 'verReportesSucursal', label: 'Reportes sucursal' },
-  { key: 'generarQrActivos', label: 'Generar QR de activos' },
+  { key: 'verGestionUsuarios', label: 'Personal y permisos' },
+  { key: 'verGestionSucursales', label: 'Sedes y sucursales' },
+  { key: 'verParametrosSistema', label: 'Parámetros del sistema' },
+  { key: 'verCentroMonitoreo', label: 'Centro de operaciones' },
+  { key: 'verAsignacionOts', label: 'Asignación de OTs' },
+  { key: 'verReportesSucursal', label: 'Reportar falla (sede)' },
+  { key: 'verControlBodega', label: 'Control de bodega' },
 ];
-
-const PERMISOS_DEFAULTS: PermisosUi = {
-  verDashboardEjecutivo: false,
-  verGestionActivos: true,
-  verGestionUsuarios: false,
-  verAsignacionOt: true,
-  verReportesSucursal: true,
-  generarQrActivos: false,
-};
 
 @Component({
   selector: 'app-usuarios-admin',
@@ -96,14 +94,11 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
     nuevaPassword: [''],
   });
 
-  readonly permisosForm = this.fb.group({
-    verDashboardEjecutivo: [PERMISOS_DEFAULTS.verDashboardEjecutivo],
-    verGestionActivos: [PERMISOS_DEFAULTS.verGestionActivos],
-    verGestionUsuarios: [PERMISOS_DEFAULTS.verGestionUsuarios],
-    verAsignacionOt: [PERMISOS_DEFAULTS.verAsignacionOt],
-    verReportesSucursal: [PERMISOS_DEFAULTS.verReportesSucursal],
-    generarQrActivos: [PERMISOS_DEFAULTS.generarQrActivos],
-  });
+  readonly permisosForm = this.fb.group(
+    Object.fromEntries(
+      PERMISOS_UI_KEYS.map((key) => [key, [PERMISOS_UI_DEFAULT[key] ?? false]]),
+    ) as Record<keyof PermisosUi, [boolean]>,
+  );
 
   readonly needsSucursal = computed(
     () => this.createForm.controls.rol.value === 'jefe_sucursal',
@@ -178,8 +173,23 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
       : 'perm-chip perm-chip--inactive';
   }
 
+  togglePermiso(key: keyof PermisosUi): void {
+    const ctrl = this.permisosForm.get(key);
+    if (!ctrl) return;
+    ctrl.setValue(!ctrl.value);
+  }
+
   private resetPermisosDefaults(): void {
-    this.permisosForm.patchValue(PERMISOS_DEFAULTS);
+    this.permisosForm.patchValue(PERMISOS_UI_DEFAULT);
+  }
+
+  private patchPermisosFromUsuario(u: Usuario): void {
+    const resolved = resolvePermisosUi(u.rol, u.permisosUi ?? {});
+    const patch: Partial<PermisosUi> = {};
+    for (const key of PERMISOS_UI_KEYS) {
+      patch[key] = resolved[key] === true;
+    }
+    this.permisosForm.patchValue(patch);
   }
 
   setRoleTab(tab: UserRole | 'todos'): void {
@@ -259,15 +269,7 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
       estaActivo: u.estaActivo,
       nuevaPassword: '',
     });
-    const p = u.permisosUi ?? {};
-    this.permisosForm.patchValue({
-      verDashboardEjecutivo: p.verDashboardEjecutivo ?? false,
-      verGestionActivos: p.verGestionActivos ?? true,
-      verGestionUsuarios: p.verGestionUsuarios ?? false,
-      verAsignacionOt: p.verAsignacionOt ?? true,
-      verReportesSucursal: p.verReportesSucursal ?? true,
-      generarQrActivos: p.generarQrActivos ?? false,
-    });
+    this.patchPermisosFromUsuario(u);
   }
 
   submitEdit(): void {

@@ -1,24 +1,33 @@
-<div class="mx-auto max-w-6xl space-y-4">
+<div class="mx-auto max-w-3xl space-y-4">
   <header class="page-card">
-    <h1 class="text-xl font-semibold text-pure-white">Super Admin — Mindfit Ops</h1>
-    <p class="mt-1 text-sm text-slate-grey">Administración del sistema, usuarios, permisos y activos</p>
-    <nav class="tab-nav mt-4 flex flex-wrap gap-2">
-      <button type="button" class="tab-btn" [class.tab-active]="tab() === 'usuarios'" (click)="setTab('usuarios')">Usuarios</button>
-      <button type="button" class="tab-btn" [class.tab-active]="tab() === 'activos'" (click)="setTab('activos')">Activos y QR</button>
-      <button type="button" class="tab-btn" [class.tab-active]="tab() === 'resumen'" (click)="setTab('resumen')">Sistema</button>
-    </nav>
+    <h1 class="text-xl font-semibold text-pure-white">Panel Super Admin</h1>
+    <p class="mt-2 text-sm text-slate-grey">
+      Gestión centralizada y registro de reportes híbridos en cualquier sede.
+    </p>
+    <ul class="mt-4 space-y-1 text-sm text-slate-grey">
+      <li>· Personal y permisos</li>
+      <li>· Activos y códigos QR</li>
+      <li>· Sedes, parámetros y bitácora</li>
+    </ul>
+    <button type="button" class="btn-primary mt-4 text-sm" (click)="toggleReportForm()">
+      {{ showReportForm() ? 'Ocultar reporte' : '+ Registrar reporte en sede' }}
+    </button>
   </header>
-  @if (tab() === 'usuarios') { <app-usuarios-admin /> }
-  @if (tab() === 'activos') { <app-activos-registro /> }
-  @if (tab() === 'resumen') {
+
+  @if (showReportForm()) {
     <section class="page-card">
-      <h2 class="text-lg font-semibold">Panel de sistema</h2>
-      <p class="mt-2 text-sm text-slate-grey">Monitoreo de actividad, auditoría y configuración global (próximas integraciones).</p>
-      <ul class="mt-4 space-y-2 text-sm text-pure-white">
-        <li>· Gestión de roles y permisos UI</li>
-        <li>· Registro de activos con QR imprimible</li>
-        <li>· Trail de auditoría en PostgreSQL</li>
-      </ul>
+      <h2 class="mb-2 text-sm font-semibold text-pure-white">Reporte híbrido (cualquier sede)</h2>
+      <p class="mb-3 text-xs text-slate-grey">
+        Mismo flujo que jefe de sucursal: máquina con foto obligatoria, o infraestructura / petición sin activo.
+      </p>
+      <app-hybrid-report-form
+        variant="central"
+        [sucursales]="sucursales()"
+        [tecnicos]="tecnicos()"
+        [saving]="saving()"
+        submitLabel="Registrar reporte"
+        (submitted)="onReportSubmit($event)"
+      />
     </section>
   }
 </div>

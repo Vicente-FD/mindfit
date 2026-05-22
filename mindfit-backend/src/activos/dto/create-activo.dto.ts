@@ -7,12 +7,11 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
-import {
-  CategoriaActivo,
-  EstadoOperacionalActivo,
-} from '../../common/enums';
+import { EstadoOperacionalActivo } from '../../common/enums';
 
 export class CreateActivoDto {
   @IsString()
@@ -21,6 +20,9 @@ export class CreateActivoDto {
 
   @IsInt()
   marcaId: number;
+
+  @IsInt()
+  categoriaId: number;
 
   @IsOptional()
   @IsString()
@@ -32,11 +34,14 @@ export class CreateActivoDto {
   @MaxLength(100)
   numeroSerie?: string;
 
-  @IsEnum(CategoriaActivo)
-  categoria: CategoriaActivo;
-
   @IsInt()
   sucursalId: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  pisoAsignado?: number | null;
 
   @IsOptional()
   @IsDateString()

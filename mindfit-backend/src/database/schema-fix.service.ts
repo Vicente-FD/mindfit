@@ -14,6 +14,7 @@ export class SchemaFixService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     await this.ensureOtSchema();
+    await this.ensureCatalogosSchema();
     await this.ensureActivoEstadoOperacionalEnum();
     await this.backfillCodigosInventario();
     await this.backfillSucursalSiglas();
@@ -29,16 +30,19 @@ export class SchemaFixService implements OnModuleInit {
       UPDATE ordenes_trabajo SET clasificacion = 'maquina' WHERE clasificacion IS NULL;
     `);
     await this.dataSource.query(`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint WHERE conname = 'ordenes_trabajo_clasificacion_check'
-        ) THEN
-          ALTER TABLE ordenes_trabajo
-          ADD CONSTRAINT ordenes_trabajo_clasificacion_check
-          CHECK (clasificacion IN ('maquina', 'infraestructura'));
-        END IF;
-      END $$;
+      ALTER TABLE ordenes_trabajo
+      ALTER COLUMN activo_id DROP NOT NULL;
+    `).catch(() => {});
+
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      DROP CONSTRAINT IF EXISTS ordenes_trabajo_clasificacion_check;
+    `).catch(() => {});
+
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD CONSTRAINT ordenes_trabajo_clasificacion_check
+      CHECK (clasificacion IN ('maquina', 'infraestructura', 'peticion'));
     `).catch(() => {});
     await syncOtCaseSequence((sql) => this.dataSource.query(sql));
     await this.dataSource.query(`
@@ -120,6 +124,59 @@ export class SchemaFixService implements OnModuleInit {
       );
     `);
     this.logger.log('Esquema OT (clasificación + secuencia) verificado');
+  }
+
+  private async ensureCatalogosSchema(): Promise<void> {
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS categorias (
+        id SERIAL PRIMARY KEY,
+        nombre VARCHAR(100) NOT NULL UNIQUE,
+        sigla VARCHAR(5) NOT NULL UNIQUE,
+        deleted_at TIMESTAMPTZ DEFAULT NULL,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await this.dataSource.query(`
+      INSERT INTO categorias (nombre, sigla) VALUES
+        ('Cardio', 'CR'),
+        ('Fuerza', 'FZ'),
+        ('Climatización', 'CL'),
+        ('Bomba de Agua', 'BA'),
+        ('Infraestructura', 'IF')
+      ON CONFLICT (nombre) DO NOTHING;
+    `);
+
+    await this.dataSource.query(`
+      ALTER TABLE marcas ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+      ALTER TABLE marcas ADD COLUMN IF NOT EXISTS logo_url VARCHAR(500);
+    `);
+
+    await this.dataSource.query(`
+      ALTER TABLE sucursales ADD COLUMN IF NOT EXISTS cantidad_pisos INT DEFAULT 1;
+      UPDATE sucursales SET cantidad_pisos = 1 WHERE cantidad_pisos IS NULL;
+    `);
+
+    await this.dataSource.query(`
+      ALTER TABLE activos ADD COLUMN IF NOT EXISTS categoria_id INT REFERENCES categorias(id);
+      ALTER TABLE activos ADD COLUMN IF NOT EXISTS piso_asignado INT DEFAULT NULL;
+    `);
+
+    await this.dataSource.query(`
+      UPDATE activos a SET categoria_id = c.id
+      FROM categorias c
+      WHERE a.categoria_id IS NULL AND a.categoria IS NOT NULL
+        AND (
+          (a.categoria::text = 'cardio' AND c.sigla = 'CR') OR
+          (a.categoria::text = 'fuerza' AND c.sigla = 'FZ') OR
+          (a.categoria::text = 'climatizacion' AND c.sigla = 'CL') OR
+          (a.categoria::text = 'bomba_agua' AND c.sigla = 'BA') OR
+          (a.categoria::text = 'infraestructura' AND c.sigla = 'IF')
+        );
+    `);
+
+    this.logger.log('Esquema catálogos (categorías, pisos, logos) verificado');
   }
 
   /** Extiende el enum PostgreSQL para estado operacional (en_reparacion). */

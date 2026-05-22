@@ -58,8 +58,11 @@
         </h4>
         <div class="grid grid-cols-2 gap-2">
           @for (p of permisoLabels; track p.key) {
-            <label [class]="permisoChipClass(p.key)">
-              <input type="checkbox" class="sr-only" [formControlName]="p.key" />
+            <button
+              type="button"
+              [class]="permisoChipClass(p.key)"
+              (click)="togglePermiso(p.key)"
+            >
               @if (permisoActivo(p.key)) {
                 <lucide-icon
                   name="check"
@@ -67,8 +70,8 @@
                   class="shrink-0 text-orange-energy"
                 />
               }
-              <span class="leading-tight">{{ p.label }}</span>
-            </label>
+              <span class="leading-tight text-left">{{ p.label }}</span>
+            </button>
           }
         </div>
       </div>

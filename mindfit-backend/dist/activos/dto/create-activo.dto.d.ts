@@ -1,11 +1,12 @@
-import { CategoriaActivo, EstadoOperacionalActivo } from '../../common/enums';
+import { EstadoOperacionalActivo } from '../../common/enums';
 export declare class CreateActivoDto {
     nombre: string;
     marcaId: number;
+    categoriaId: number;
     modelo?: string;
     numeroSerie?: string;
-    categoria: CategoriaActivo;
     sucursalId: number;
+    pisoAsignado?: number | null;
     fechaCompra?: string;
     fechaVencimientoGarantia?: string;
     costoAdquisicion?: number;

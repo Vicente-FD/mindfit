@@ -1,17 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
-import { CategoriaActivo } from '../common/enums';
 import { Activo } from '../entities/activo.entity';
+import { Categoria } from '../entities/categoria.entity';
 import { Marca } from '../entities/marca.entity';
 import { Sucursal } from '../entities/sucursal.entity';
-
-const CATEGORIA_CODIGO: Record<CategoriaActivo, string> = {
-  [CategoriaActivo.CARDIO]: '01',
-  [CategoriaActivo.FUERZA]: '02',
-  [CategoriaActivo.CLIMATIZACION]: '03',
-  [CategoriaActivo.INFRAESTRUCTURA]: '04',
-  [CategoriaActivo.BOMBA_AGUA]: '05',
-};
 
 @Injectable()
 export class CodigoInventarioService {
@@ -21,7 +13,7 @@ export class CodigoInventarioService {
     manager: EntityManager,
     sucursalId: number,
     marcaId: number,
-    categoria: CategoriaActivo,
+    categoriaId: number,
     fechaCompra?: string | null,
   ): Promise<string> {
     const sucursal = await manager.findOne(Sucursal, {
@@ -36,9 +28,15 @@ export class CodigoInventarioService {
       throw new BadRequestException('La marca no tiene sigla configurada');
     }
 
+    const categoria = await manager.findOne(Categoria, {
+      where: { id: categoriaId },
+    });
+    if (!categoria?.sigla) {
+      throw new BadRequestException('La categoría no tiene sigla configurada');
+    }
+
     const year = this.resolveYear(fechaCompra);
-    const catCode = CATEGORIA_CODIGO[categoria];
-    const prefix = `${sucursal.sigla}-${marca.sigla}-${year}-${catCode}-`;
+    const prefix = `${sucursal.sigla}-${marca.sigla}-${year}-${categoria.sigla}-`;
 
     const rows = await manager
       .createQueryBuilder(Activo, 'a')
@@ -60,7 +58,7 @@ export class CodigoInventarioService {
 
     if (correlativo > 99) {
       throw new BadRequestException(
-        'Límite de correlativo alcanzado para esta combinación',
+        'Límite de correlativo alcanzado para esta combinación sede/marca/categoría',
       );
     }
 

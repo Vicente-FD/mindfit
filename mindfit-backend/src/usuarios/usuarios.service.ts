@@ -12,6 +12,7 @@ import { TransactionContextService } from '../common/database/transaction-contex
 import {
   PERMISOS_BY_ROL,
   PERMISOS_UI_DEFAULT,
+  resolvePermisosUi,
 } from '../common/interfaces/permisos-ui.interface';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
@@ -143,12 +144,19 @@ export class UsuariosService {
       usuario.sucursalId = sucursalId ?? null;
     }
 
+    const permisosCambiaron =
+      dto.permisosUi !== undefined &&
+      JSON.stringify(resolvePermisosUi(usuario.rol, usuario.permisosUi)) !==
+        JSON.stringify(resolvePermisosUi(usuario.rol, dto.permisosUi));
+
     const { sucursalId: _omit, ...rest } = dto;
     Object.assign(usuario, rest);
 
     if (dto.estaActivo === false) {
       await this.invalidateTokens(id);
       usuario.estadoSesion = EstadoSesionUsuario.DESCONECTADO;
+    } else if (permisosCambiaron) {
+      await this.invalidateTokens(id);
     }
 
     await this.repo().save(usuario);

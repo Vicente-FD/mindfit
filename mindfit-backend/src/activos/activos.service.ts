@@ -4,11 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, In } from 'typeorm';
+import { DataSource, EntityManager, In } from 'typeorm';
 import { EstadoOrdenTrabajo } from '../common/enums';
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
 import { Activo } from '../entities/activo.entity';
+import { Categoria } from '../entities/categoria.entity';
 import { Marca } from '../entities/marca.entity';
+import { Sucursal } from '../entities/sucursal.entity';
+import { categoriaEnumFromSigla } from './categoria-legacy.util';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import { CodigoInventarioService } from './codigo-inventario.service';
 import { CreateActivoDto } from './dto/create-activo.dto';
@@ -37,6 +40,7 @@ export class ActivosService {
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.sucursal', 'sucursal')
       .leftJoinAndSelect('a.marcaRelacion', 'marca')
+      .leftJoinAndSelect('a.categoriaRelacion', 'categoriaRelacion')
       .orderBy('a.nombre', 'ASC');
 
     if (filters.sucursalId != null) {
@@ -47,7 +51,11 @@ export class ActivosService {
     if (filters.marcaId != null) {
       qb.andWhere('a.marca_id = :marcaId', { marcaId: filters.marcaId });
     }
-    if (filters.categoria) {
+    if (filters.categoriaId != null) {
+      qb.andWhere('a.categoria_id = :categoriaId', {
+        categoriaId: filters.categoriaId,
+      });
+    } else if (filters.categoria) {
       qb.andWhere('a.categoria = :categoria', { categoria: filters.categoria });
     }
     if (filters.anioCompra != null) {
@@ -71,12 +79,38 @@ export class ActivosService {
   async findOne(id: number) {
     const activo = await this.repo().findOne({
       where: { id },
-      relations: { sucursal: true, marcaRelacion: true },
+      relations: { sucursal: true, marcaRelacion: true, categoriaRelacion: true },
     });
     if (!activo) {
       throw new NotFoundException(`Activo ${id} no encontrado`);
     }
     return activo;
+  }
+
+  private async resolvePisoAsignado(
+    manager: EntityManager,
+    sucursalId: number,
+    pisoAsignado?: number | null,
+  ): Promise<number | null> {
+    const sucursal = await manager.findOne(Sucursal, { where: { id: sucursalId } });
+    if (!sucursal) {
+      throw new BadRequestException('Sucursal no encontrada');
+    }
+    const pisos = sucursal.cantidadPisos ?? 1;
+    if (pisos <= 1) {
+      return null;
+    }
+    if (pisoAsignado == null) {
+      throw new BadRequestException(
+        'Debe indicar el piso asignado para sedes con más de un nivel',
+      );
+    }
+    if (pisoAsignado < 1 || pisoAsignado > pisos) {
+      throw new BadRequestException(
+        `El piso debe estar entre 1 y ${pisos} para esta sede`,
+      );
+    }
+    return pisoAsignado;
   }
 
   async findByUuid(uuidActivo: string) {
@@ -86,7 +120,11 @@ export class ActivosService {
   async findByPublicIdentifier(identifier: string) {
     let activo = await this.repo().findOne({
       where: { uuidActivo: identifier },
-      relations: { sucursal: true, marcaRelacion: true },
+      relations: {
+        sucursal: true,
+        marcaRelacion: true,
+        categoriaRelacion: true,
+      },
     });
 
     if (!activo) {
@@ -95,7 +133,11 @@ export class ActivosService {
           { codigoQrToken: identifier },
           { codigoInventario: identifier },
         ],
-        relations: { sucursal: true, marcaRelacion: true },
+        relations: {
+          sucursal: true,
+          marcaRelacion: true,
+          categoriaRelacion: true,
+        },
       });
     }
 
@@ -133,7 +175,9 @@ export class ActivosService {
         nombre: activo.nombre,
         marca: activo.marcaRelacion?.nombre ?? activo.marca,
         modelo: activo.modelo,
-        categoria: activo.categoria,
+        categoria:
+          activo.categoriaRelacion?.nombre ??
+          (activo.categoria != null ? String(activo.categoria) : ''),
         estadoOperacional: activo.estadoOperacional,
         sucursalId: activo.sucursalId,
         sucursalNombre: activo.sucursal?.nombre ?? null,
@@ -168,11 +212,24 @@ export class ActivosService {
       throw new BadRequestException('Marca no encontrada');
     }
 
+    const categoria = await manager.findOne(Categoria, {
+      where: { id: dto.categoriaId },
+    });
+    if (!categoria) {
+      throw new BadRequestException('Categoría no encontrada');
+    }
+
+    const pisoAsignado = await this.resolvePisoAsignado(
+      manager,
+      dto.sucursalId,
+      dto.pisoAsignado,
+    );
+
     const codigo = await this.codigoInventario.generarCodigo(
       manager,
       dto.sucursalId,
       dto.marcaId,
-      dto.categoria,
+      dto.categoriaId,
       dto.fechaCompra,
     );
 
@@ -182,7 +239,9 @@ export class ActivosService {
       marca: marca.nombre,
       modelo: dto.modelo ?? null,
       numeroSerie: dto.numeroSerie ?? null,
-      categoria: dto.categoria,
+      categoriaId: categoria.id,
+      categoria: categoriaEnumFromSigla(categoria.sigla),
+      pisoAsignado,
       sucursalId: dto.sucursalId,
       fechaCompra: dto.fechaCompra ?? null,
       fechaVencimientoGarantia: dto.fechaVencimientoGarantia ?? null,
@@ -226,8 +285,25 @@ export class ActivosService {
 
     if (dto.nombre != null) activo.nombre = dto.nombre;
     if (dto.modelo !== undefined) activo.modelo = dto.modelo || null;
-    if (dto.categoria != null) activo.categoria = dto.categoria;
+    if (dto.categoriaId != null) {
+      const categoria = await this.dataSource
+        .getRepository(Categoria)
+        .findOne({ where: { id: dto.categoriaId } });
+      if (!categoria) {
+        throw new BadRequestException('Categoría no encontrada');
+      }
+      activo.categoriaId = categoria.id;
+      activo.categoria = categoriaEnumFromSigla(categoria.sigla);
+    }
+    const sucursalId = dto.sucursalId ?? activo.sucursalId;
     if (dto.sucursalId != null) activo.sucursalId = dto.sucursalId;
+    if (dto.pisoAsignado !== undefined || dto.sucursalId != null) {
+      activo.pisoAsignado = await this.resolvePisoAsignado(
+        this.transactionContext.getManager(this.dataSource),
+        sucursalId,
+        dto.pisoAsignado !== undefined ? dto.pisoAsignado : activo.pisoAsignado,
+      );
+    }
     if (dto.fechaCompra !== undefined) {
       activo.fechaCompra = dto.fechaCompra || null;
     }

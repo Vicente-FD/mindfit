@@ -9,10 +9,7 @@ import {
   IsUrl,
   MaxLength,
 } from 'class-validator';
-import {
-  CategoriaActivo,
-  EstadoOperacionalActivo,
-} from '../../common/enums';
+import { EstadoOperacionalActivo } from '../../common/enums';
 
 /** Campos editables del activo (no incluye códigos QR ni UUID). */
 export class UpdateActivoDto {
@@ -36,12 +33,16 @@ export class UpdateActivoDto {
   numeroSerie?: string;
 
   @IsOptional()
-  @IsEnum(CategoriaActivo)
-  categoria?: CategoriaActivo;
+  @IsInt()
+  categoriaId?: number;
 
   @IsOptional()
   @IsInt()
   sucursalId?: number;
+
+  @IsOptional()
+  @IsInt()
+  pisoAsignado?: number | null;
 
   @IsOptional()
   @IsDateString()

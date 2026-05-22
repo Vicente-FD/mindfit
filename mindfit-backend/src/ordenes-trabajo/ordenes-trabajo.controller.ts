@@ -101,7 +101,11 @@ export class OrdenesTrabajoController {
   }
 
   @Post('reportar-falla')
-  @Roles(RolUsuario.JEFE_SUCURSAL)
+  @Roles(
+    RolUsuario.JEFE_SUCURSAL,
+    RolUsuario.ADMIN,
+    RolUsuario.JEFE_OPERACIONES,
+  )
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'foto_falla', maxCount: 1 }], {
       storage: evidenciasMulterStorage,
@@ -113,8 +117,11 @@ export class OrdenesTrabajoController {
     @Body() dto: ReportarFallaDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    if (!user.sucursalId) {
-      throw new BadRequestException('Usuario sin sucursal asignada');
+    const sucursalId = user.sucursalId ?? dto.sucursalId;
+    if (sucursalId == null) {
+      throw new BadRequestException(
+        'Debe indicar la sucursal del reporte',
+      );
     }
 
     const tipoReporte = dto.tipoReporte ?? 'maquina';
@@ -126,7 +133,8 @@ export class OrdenesTrabajoController {
           'Debe indicar el activo para reportes de máquina',
         );
       }
-      if (!foto) {
+      const fotoObligatoria = user.rol === RolUsuario.JEFE_SUCURSAL;
+      if (fotoObligatoria && !foto) {
         throw new BadRequestException(
           'La foto de la falla es obligatoria para equipos',
         );
@@ -146,9 +154,10 @@ export class OrdenesTrabajoController {
         descripcion: dto.descripcion,
         prioridad: dto.prioridad,
         titulo: dto.titulo,
+        asignadoAId: dto.asignadoAId,
       },
       user.id,
-      user.sucursalId,
+      sucursalId,
       fotoUrl,
     );
   }

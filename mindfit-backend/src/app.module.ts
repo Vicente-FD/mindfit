@@ -18,6 +18,7 @@ import {
   AuditTrail,
   ComentarioOt,
   EvidenciaOt,
+  Categoria,
   Marca,
   OrdenTrabajo,
   PlanPreventivo,
@@ -31,6 +32,7 @@ import { InventarioModule } from './inventario/inventario.module';
 import { AuditTrailModule } from './audit-trail/audit-trail.module';
 import { PlanesPreventivosModule } from './planes-preventivos/planes-preventivos.module';
 import { MarcasModule } from './marcas/marcas.module';
+import { CategoriasModule } from './categorias/categorias.module';
 import { SucursalesModule } from './sucursales/sucursales.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { ActivosModule } from './activos/activos.module';
@@ -75,6 +77,7 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
           entities: [
             Sucursal,
             Usuario,
+            Categoria,
             Marca,
             Activo,
             OrdenTrabajo,
@@ -96,6 +99,7 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
     TypeOrmModule.forFeature([
       Sucursal,
       Usuario,
+      Categoria,
       Marca,
       Activo,
       OrdenTrabajo,
@@ -109,6 +113,7 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
     UsuariosModule,
     ActivosModule,
     MarcasModule,
+    CategoriasModule,
     OrdenesTrabajoModule,
     AnalyticsModule,
     PlanesPreventivosModule,

@@ -7,6 +7,7 @@ const typeorm_1 = require("typeorm");
 const path_1 = require("path");
 const app_module_1 = require("./app.module");
 const evidencias_storage_1 = require("./ordenes-trabajo/storage/evidencias.storage");
+const marcas_logo_storage_1 = require("./marcas/storage/marcas-logo.storage");
 const ANSI = {
     reset: '\x1b[0m',
     bold: '\x1b[1m',
@@ -33,6 +34,7 @@ ${ANSI.orange}${ANSI.bold}┌─────────────────
 }
 async function bootstrap() {
     (0, evidencias_storage_1.ensureUploadDir)();
+    (0, marcas_logo_storage_1.ensureMarcasUploadDir)();
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.useStaticAssets((0, path_1.join)(process.cwd(), 'uploads'), {
         prefix: '/uploads/',

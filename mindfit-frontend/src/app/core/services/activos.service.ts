@@ -16,6 +16,7 @@ export interface Activo extends PublicAsset {
 export interface ActivosFilter {
   sucursalId?: number;
   marcaId?: number;
+  categoriaId?: number;
   categoria?: AssetCategory;
   anioCompra?: number;
   busqueda?: string;
@@ -26,8 +27,9 @@ export interface CreateActivoPayload {
   marcaId: number;
   modelo?: string;
   numeroSerie?: string;
-  categoria: AssetCategory;
+  categoriaId: number;
   sucursalId: number;
+  pisoAsignado?: number | null;
   fechaCompra?: string;
   fechaVencimientoGarantia?: string;
   costoAdquisicion?: number;
@@ -38,8 +40,9 @@ export interface UpdateActivoPayload {
   marcaId?: number;
   modelo?: string;
   numeroSerie?: string;
-  categoria?: AssetCategory;
+  categoriaId?: number;
   sucursalId?: number;
+  pisoAsignado?: number | null;
   fechaCompra?: string;
   fechaVencimientoGarantia?: string;
   costoAdquisicion?: number;
@@ -60,7 +63,9 @@ export class ActivosService {
     if (filters.marcaId != null) {
       params = params.set('marcaId', String(filters.marcaId));
     }
-    if (filters.categoria) {
+    if (filters.categoriaId != null) {
+      params = params.set('categoriaId', String(filters.categoriaId));
+    } else if (filters.categoria) {
       params = params.set('categoria', filters.categoria);
     }
     if (filters.anioCompra != null) {

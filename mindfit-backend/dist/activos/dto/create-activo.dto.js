@@ -15,10 +15,11 @@ const enums_1 = require("../../common/enums");
 class CreateActivoDto {
     nombre;
     marcaId;
+    categoriaId;
     modelo;
     numeroSerie;
-    categoria;
     sucursalId;
+    pisoAsignado;
     fechaCompra;
     fechaVencimientoGarantia;
     costoAdquisicion;
@@ -36,6 +37,10 @@ __decorate([
     __metadata("design:type", Number)
 ], CreateActivoDto.prototype, "marcaId", void 0);
 __decorate([
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], CreateActivoDto.prototype, "categoriaId", void 0);
+__decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(100),
@@ -48,13 +53,16 @@ __decorate([
     __metadata("design:type", String)
 ], CreateActivoDto.prototype, "numeroSerie", void 0);
 __decorate([
-    (0, class_validator_1.IsEnum)(enums_1.CategoriaActivo),
-    __metadata("design:type", String)
-], CreateActivoDto.prototype, "categoria", void 0);
-__decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], CreateActivoDto.prototype, "sucursalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(50),
+    __metadata("design:type", Object)
+], CreateActivoDto.prototype, "pisoAsignado", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),

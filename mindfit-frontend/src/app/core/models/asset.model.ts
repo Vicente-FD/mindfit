@@ -4,6 +4,13 @@ export interface MarcaRef {
   id: number;
   nombre: string;
   sigla: string;
+  logoUrl?: string | null;
+}
+
+export interface CategoriaRef {
+  id: number;
+  nombre: string;
+  sigla: string;
 }
 
 export interface PublicAsset {
@@ -18,6 +25,9 @@ export interface PublicAsset {
   modelo: string | null;
   numeroSerie: string | null;
   categoria: string;
+  categoriaId?: number | null;
+  categoriaRelacion?: CategoriaRef | null;
+  pisoAsignado?: number | null;
   sucursalId: number;
   estadoOperacional: string;
   sucursal?: WorkOrderSucursal & { sigla?: string };

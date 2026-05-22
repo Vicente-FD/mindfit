@@ -121,6 +121,19 @@
               <input class="field-input" formControlName="ciudad" />
             </div>
           </div>
+          <div>
+            <label class="field-label">Cantidad de pisos *</label>
+            <input
+              type="number"
+              min="1"
+              max="20"
+              class="field-input"
+              formControlName="cantidadPisos"
+            />
+            <p class="mt-1 text-xs text-slate-grey">
+              Si la sede tiene más de un piso, el registro de activos exigirá asignar el nivel.
+            </p>
+          </div>
           <label class="flex items-center gap-2 text-sm text-slate-grey">
             <input type="checkbox" formControlName="estaActiva" />
             Sede activa comercialmente

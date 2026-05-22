@@ -158,11 +158,17 @@ let UsuariosService = class UsuariosService {
         if (dto.rol !== undefined || dto.sucursalId !== undefined) {
             usuario.sucursalId = sucursalId ?? null;
         }
+        const permisosCambiaron = dto.permisosUi !== undefined &&
+            JSON.stringify((0, permisos_ui_interface_1.resolvePermisosUi)(usuario.rol, usuario.permisosUi)) !==
+                JSON.stringify((0, permisos_ui_interface_1.resolvePermisosUi)(usuario.rol, dto.permisosUi));
         const { sucursalId: _omit, ...rest } = dto;
         Object.assign(usuario, rest);
         if (dto.estaActivo === false) {
             await this.invalidateTokens(id);
             usuario.estadoSesion = enums_1.EstadoSesionUsuario.DESCONECTADO;
+        }
+        else if (permisosCambiaron) {
+            await this.invalidateTokens(id);
         }
         await this.repo().save(usuario);
         return this.findOne(id);

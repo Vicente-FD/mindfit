@@ -51,6 +51,7 @@ export enum EstadoOrdenTrabajo {
 export enum ClasificacionOrden {
   MAQUINA = 'maquina',
   INFRAESTRUCTURA = 'infraestructura',
+  PETICION = 'peticion',
 }
 
 export enum TipoEvidencia {

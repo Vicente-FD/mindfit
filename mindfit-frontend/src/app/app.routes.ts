@@ -59,6 +59,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'parametros',
+        canActivate: [rolesGuard(['admin', 'jefe_operaciones'])],
+        loadComponent: () =>
+          import('./pages/dashboard/admin/parametros-admin.component').then(
+            (m) => m.ParametrosAdminComponent,
+          ),
+      },
+      {
         path: 'activos',
         canActivate: [rolesGuard(['admin', 'jefe_operaciones'])],
         loadComponent: () =>

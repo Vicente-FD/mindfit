@@ -1,15 +1,1 @@
-.tab-nav .tab-btn {
-  border-radius: 9999px;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  padding: 0.4rem 0.9rem;
-  font-size: 0.8rem;
-  color: var(--color-slate-grey, #94a3b8);
-  transition: all 0.2s;
-}
-
-.tab-nav .tab-active {
-  border-color: var(--color-orange-energy, #ff6600);
-  background: rgb(255 102 0 / 0.12);
-  color: var(--color-orange-energy, #ff6600);
-  font-weight: 600;
-}
+/* Panel admin — estilos mínimos; hereda page-card global */

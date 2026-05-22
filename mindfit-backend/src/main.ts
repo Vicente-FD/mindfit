@@ -6,6 +6,7 @@ import { DataSource } from 'typeorm';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { ensureUploadDir } from './ordenes-trabajo/storage/evidencias.storage';
+import { ensureMarcasUploadDir } from './marcas/storage/marcas-logo.storage';
 
 const ANSI = {
   reset: '\x1b[0m',
@@ -36,6 +37,7 @@ ${ANSI.orange}${ANSI.bold}┌─────────────────
 
 async function bootstrap() {
   ensureUploadDir();
+  ensureMarcasUploadDir();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {

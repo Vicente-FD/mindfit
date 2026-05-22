@@ -113,6 +113,9 @@
   gap: 0.375rem;
   width: 100%;
   cursor: pointer;
+  text-align: left;
+  border: none;
+  font: inherit;
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;

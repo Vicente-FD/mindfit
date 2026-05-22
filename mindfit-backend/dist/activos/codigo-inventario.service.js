@@ -12,23 +12,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CodigoInventarioService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("typeorm");
-const enums_1 = require("../common/enums");
 const activo_entity_1 = require("../entities/activo.entity");
+const categoria_entity_1 = require("../entities/categoria.entity");
 const marca_entity_1 = require("../entities/marca.entity");
 const sucursal_entity_1 = require("../entities/sucursal.entity");
-const CATEGORIA_CODIGO = {
-    [enums_1.CategoriaActivo.CARDIO]: '01',
-    [enums_1.CategoriaActivo.FUERZA]: '02',
-    [enums_1.CategoriaActivo.CLIMATIZACION]: '03',
-    [enums_1.CategoriaActivo.INFRAESTRUCTURA]: '04',
-    [enums_1.CategoriaActivo.BOMBA_AGUA]: '05',
-};
 let CodigoInventarioService = class CodigoInventarioService {
     dataSource;
     constructor(dataSource) {
         this.dataSource = dataSource;
     }
-    async generarCodigo(manager, sucursalId, marcaId, categoria, fechaCompra) {
+    async generarCodigo(manager, sucursalId, marcaId, categoriaId, fechaCompra) {
         const sucursal = await manager.findOne(sucursal_entity_1.Sucursal, {
             where: { id: sucursalId },
         });
@@ -39,9 +32,14 @@ let CodigoInventarioService = class CodigoInventarioService {
         if (!marca?.sigla) {
             throw new common_1.BadRequestException('La marca no tiene sigla configurada');
         }
+        const categoria = await manager.findOne(categoria_entity_1.Categoria, {
+            where: { id: categoriaId },
+        });
+        if (!categoria?.sigla) {
+            throw new common_1.BadRequestException('La categoría no tiene sigla configurada');
+        }
         const year = this.resolveYear(fechaCompra);
-        const catCode = CATEGORIA_CODIGO[categoria];
-        const prefix = `${sucursal.sigla}-${marca.sigla}-${year}-${catCode}-`;
+        const prefix = `${sucursal.sigla}-${marca.sigla}-${year}-${categoria.sigla}-`;
         const rows = await manager
             .createQueryBuilder(activo_entity_1.Activo, 'a')
             .select('a.codigoInventario', 'codigo')
@@ -59,7 +57,7 @@ let CodigoInventarioService = class CodigoInventarioService {
             }
         }
         if (correlativo > 99) {
-            throw new common_1.BadRequestException('Límite de correlativo alcanzado para esta combinación');
+            throw new common_1.BadRequestException('Límite de correlativo alcanzado para esta combinación sede/marca/categoría');
         }
         return `${prefix}${String(correlativo).padStart(2, '0')}`;
     }

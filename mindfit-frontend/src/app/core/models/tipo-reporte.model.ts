@@ -1,5 +1,13 @@
 export type TipoReporteSucursal = 'maquina' | 'infraestructura' | 'peticion';
 
+export const TIPOS_REPORTE_HIBRIDO: {
+  value: 'maquina' | 'hibrido';
+  label: string;
+}[] = [
+  { value: 'maquina', label: 'Fallo de máquina' },
+  { value: 'hibrido', label: 'Infraestructura / petición' },
+];
+
 export const TIPOS_REPORTE_SUCURSAL: {
   value: TipoReporteSucursal;
   label: string;

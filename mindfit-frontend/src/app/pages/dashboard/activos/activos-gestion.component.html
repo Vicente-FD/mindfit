@@ -29,10 +29,11 @@
         <input class="field-input" formControlName="modelo" />
       </div>
       <div>
-        <label class="field-label">Categoría *</label>
-        <select class="field-input" formControlName="categoria">
-          @for (c of categorias; track c.value) {
-            <option [value]="c.value">{{ c.label }}</option>
+        <label class="field-label">Familia / Categoría *</label>
+        <select class="field-input" formControlName="categoriaId">
+          <option value="">Seleccione categoría</option>
+          @for (c of categorias(); track c.id) {
+            <option [value]="c.id">{{ c.nombre }} ({{ c.sigla }})</option>
           }
         </select>
       </div>
@@ -45,6 +46,17 @@
           }
         </select>
       </div>
+      @if (showPiso()) {
+        <div>
+          <label class="field-label">Piso asignado *</label>
+          <select class="field-input" formControlName="pisoAsignado">
+            <option value="">Seleccione piso</option>
+            @for (p of pisosOpciones(); track p) {
+              <option [value]="p">Piso {{ p }}</option>
+            }
+          </select>
+        </div>
+      }
       <div>
         <label class="field-label">Fecha compra</label>
         <input type="date" class="field-input" formControlName="fechaCompra" />
@@ -88,10 +100,10 @@
       </div>
       <div>
         <label class="field-label">Categoría</label>
-        <select class="field-input" formControlName="categoria">
+        <select class="field-input" formControlName="categoriaId">
           <option value="">Todas</option>
-          @for (c of categorias; track c.value) {
-            <option [value]="c.value">{{ c.label }}</option>
+          @for (c of categorias(); track c.id) {
+            <option [value]="c.id">{{ c.nombre }}</option>
           }
         </select>
       </div>
@@ -118,21 +130,32 @@
     @for (a of activos(); track a.id) {
       <article class="activo-row">
         <div class="activo-main">
-          <span
-            class="health-dot-wrap"
-            [attr.title]="healthLabel(a.estadoOperacional)"
-            [attr.aria-label]="healthLabel(a.estadoOperacional)"
-          >
-            <span [class]="healthDotClass(a.estadoOperacional)"></span>
-          </span>
+          <div class="activo-visual">
+            <span
+              class="health-dot-wrap"
+              [attr.title]="healthLabel(a.estadoOperacional)"
+              [attr.aria-label]="healthLabel(a.estadoOperacional)"
+            >
+              <span [class]="healthDotClass(a.estadoOperacional)"></span>
+            </span>
+            @if (marcaLogo(a); as logo) {
+              <img
+                [src]="logo"
+                [alt]="marcaLabel(a)"
+                class="marca-logo-thumb"
+                loading="lazy"
+              />
+            }
+          </div>
           <div>
-          <p class="font-mono text-sm font-semibold text-orange-energy">
-            {{ a.codigoInventario || a.codigoQrToken }}
-          </p>
-          <p class="text-sm text-pure-white">{{ a.nombre }}</p>
-          <p class="text-xs text-slate-grey">
-            {{ marcaLabel(a) }} · {{ a.categoria }} · {{ a.sucursal?.nombre }}
-          </p>
+            <p class="font-mono text-sm font-semibold text-orange-energy">
+              {{ a.codigoInventario || a.codigoQrToken }}
+            </p>
+            <p class="text-sm text-pure-white">{{ a.nombre }}</p>
+            <p class="text-xs text-slate-grey">
+              {{ marcaLabel(a) }} · {{ categoriaLabel(a) }} · {{ a.sucursal?.nombre }}
+              @if (pisoLabel(a); as pl) { · {{ pl }} }
+            </p>
           </div>
         </div>
         <div class="activo-actions">

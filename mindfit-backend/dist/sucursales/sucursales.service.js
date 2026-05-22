@@ -52,6 +52,7 @@ let SucursalesService = class SucursalesService {
             comuna: s.comuna,
             ciudad: s.ciudad,
             estaActiva: s.estaActiva,
+            cantidadPisos: s.cantidadPisos ?? 1,
             activosOperativos: countMap.get(s.id) ?? 0,
             createdAt: s.createdAt,
             updatedAt: s.updatedAt,
@@ -94,6 +95,7 @@ let SucursalesService = class SucursalesService {
             comuna: dto.comuna.trim(),
             ciudad: dto.ciudad.trim(),
             estaActiva: dto.estaActiva ?? true,
+            cantidadPisos: dto.cantidadPisos ?? 1,
         });
         try {
             return await this.repo().save(sucursal);
@@ -115,6 +117,8 @@ let SucursalesService = class SucursalesService {
             sucursal.ciudad = dto.ciudad.trim();
         if (dto.estaActiva != null)
             sucursal.estaActiva = dto.estaActiva;
+        if (dto.cantidadPisos != null)
+            sucursal.cantidadPisos = dto.cantidadPisos;
         if (dto.sigla != null) {
             const sigla = this.normalizeSigla(dto.sigla);
             await this.assertSiglaUnique(sigla, id);

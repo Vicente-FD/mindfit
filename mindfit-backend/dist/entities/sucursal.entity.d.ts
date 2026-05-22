@@ -9,6 +9,7 @@ export declare class Sucursal {
     comuna: string | null;
     ciudad: string | null;
     estaActiva: boolean;
+    cantidadPisos: number;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;

@@ -19,6 +19,7 @@ export interface SucursalListItem {
   comuna: string | null;
   ciudad: string | null;
   estaActiva: boolean;
+  cantidadPisos: number;
   activosOperativos: number;
   createdAt: Date;
   updatedAt: Date;
@@ -66,6 +67,7 @@ export class SucursalesService {
       comuna: s.comuna,
       ciudad: s.ciudad,
       estaActiva: s.estaActiva,
+      cantidadPisos: s.cantidadPisos ?? 1,
       activosOperativos: countMap.get(s.id) ?? 0,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt,
@@ -115,6 +117,7 @@ export class SucursalesService {
       comuna: dto.comuna.trim(),
       ciudad: dto.ciudad.trim(),
       estaActiva: dto.estaActiva ?? true,
+      cantidadPisos: dto.cantidadPisos ?? 1,
     });
 
     try {
@@ -133,6 +136,7 @@ export class SucursalesService {
     if (dto.comuna != null) sucursal.comuna = dto.comuna.trim();
     if (dto.ciudad != null) sucursal.ciudad = dto.ciudad.trim();
     if (dto.estaActiva != null) sucursal.estaActiva = dto.estaActiva;
+    if (dto.cantidadPisos != null) sucursal.cantidadPisos = dto.cantidadPisos;
     if (dto.sigla != null) {
       const sigla = this.normalizeSigla(dto.sigla);
       await this.assertSiglaUnique(sigla, id);

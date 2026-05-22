@@ -2,19 +2,18 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { ActivosService, Activo } from '../../../core/services/activos.service';
+import { CategoriasService } from '../../../core/services/categorias.service';
 import { MarcasService } from '../../../core/services/marcas.service';
 import { SucursalesService } from '../../../core/services/sucursales.service';
 import { ToastService } from '../../../core/services/toast.service';
-import {
-  AssetCategory,
-  CATEGORIAS_ACTIVO,
-} from '../../../core/models/analytics.model';
+import { Categoria } from '../../../core/models/categoria.model';
 import { Sucursal } from '../../../core/models/sucursal.model';
 import { Marca } from '../../../core/models/marca.model';
 import { LucideAngularModule } from 'lucide-angular';
 import { QrLabelModalComponent } from '../../../shared/qr-label-modal/qr-label-modal.component';
 import { EditAssetModalComponent } from '../../../shared/edit-asset-modal/edit-asset-modal.component';
 import { AssetHistoryModalComponent } from '../../../shared/asset-history-modal/asset-history-modal.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-activos-gestion',
@@ -31,11 +30,12 @@ import { AssetHistoryModalComponent } from '../../../shared/asset-history-modal/
 export class ActivosGestionComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly activosService = inject(ActivosService);
+  private readonly categoriasService = inject(CategoriasService);
   private readonly marcasService = inject(MarcasService);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly toast = inject(ToastService);
 
-  readonly categorias = CATEGORIAS_ACTIVO;
+  readonly categorias = signal<Categoria[]>([]);
   readonly sucursales = signal<Sucursal[]>([]);
   readonly marcas = signal<Marca[]>([]);
   readonly activos = signal<Activo[]>([]);
@@ -44,23 +44,26 @@ export class ActivosGestionComponent implements OnInit {
   readonly qrActivo = signal<Activo | null>(null);
   readonly editActivo = signal<Activo | null>(null);
   readonly historyActivo = signal<Activo | null>(null);
+  readonly showPiso = signal(false);
+  readonly pisosOpciones = signal<number[]>([]);
 
   readonly anios = Array.from({ length: 8 }, (_, i) => new Date().getFullYear() - i);
 
   readonly filterForm = this.fb.nonNullable.group({
     sucursalId: [''],
     marcaId: [''],
-    categoria: [''],
+    categoriaId: [''],
     anioCompra: [''],
     busqueda: [''],
   });
 
-  readonly form = this.fb.nonNullable.group({
+  readonly form = this.fb.group({
     nombre: ['', Validators.required],
     marcaId: ['', Validators.required],
     modelo: [''],
-    categoria: ['cardio' as const, Validators.required],
+    categoriaId: ['', Validators.required],
     sucursalId: ['', Validators.required],
+    pisoAsignado: [null as number | null],
     fechaCompra: [''],
     fechaVencimientoGarantia: [''],
     costoAdquisicion: [null as number | null],
@@ -69,10 +72,44 @@ export class ActivosGestionComponent implements OnInit {
   ngOnInit(): void {
     this.sucursalesService.list().subscribe({ next: (s) => this.sucursales.set(s) });
     this.marcasService.list().subscribe({ next: (m) => this.marcas.set(m) });
+    this.categoriasService.list().subscribe({ next: (c) => this.categorias.set(c) });
     this.loadActivos();
     this.filterForm.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(() => this.loadActivos());
+
+    this.form.get('sucursalId')?.valueChanges.subscribe((id) => {
+      this.applyPisoRules(id ? Number(id) : null);
+    });
+  }
+
+  private applyPisoRules(sucursalId: number | null): void {
+    const ctrl = this.form.get('pisoAsignado');
+    if (!ctrl) return;
+
+    if (sucursalId == null) {
+      this.showPiso.set(false);
+      ctrl.clearValidators();
+      ctrl.setValue(null);
+      ctrl.updateValueAndValidity();
+      return;
+    }
+
+    const sucursal = this.sucursales().find((s) => s.id === sucursalId);
+    const pisos = sucursal?.cantidadPisos ?? 1;
+
+    if (pisos > 1) {
+      this.showPiso.set(true);
+      this.pisosOpciones.set(
+        Array.from({ length: pisos }, (_, i) => i + 1),
+      );
+      ctrl.setValidators(Validators.required);
+    } else {
+      this.showPiso.set(false);
+      ctrl.clearValidators();
+      ctrl.setValue(null);
+    }
+    ctrl.updateValueAndValidity();
   }
 
   toggleForm(): void {
@@ -85,7 +122,7 @@ export class ActivosGestionComponent implements OnInit {
       .list({
         sucursalId: f.sucursalId ? Number(f.sucursalId) : undefined,
         marcaId: f.marcaId ? Number(f.marcaId) : undefined,
-        categoria: f.categoria ? (f.categoria as AssetCategory) : undefined,
+        categoriaId: f.categoriaId ? Number(f.categoriaId) : undefined,
         anioCompra: f.anioCompra ? Number(f.anioCompra) : undefined,
         busqueda: f.busqueda || undefined,
       })
@@ -104,11 +141,13 @@ export class ActivosGestionComponent implements OnInit {
     this.saving.set(true);
     this.activosService
       .create({
-        nombre: v.nombre,
+        nombre: v.nombre!,
         marcaId: Number(v.marcaId),
         modelo: v.modelo || undefined,
-        categoria: v.categoria,
+        categoriaId: Number(v.categoriaId),
         sucursalId: Number(v.sucursalId),
+        pisoAsignado:
+          v.pisoAsignado == null ? null : Number(v.pisoAsignado),
         fechaCompra: v.fechaCompra || undefined,
         fechaVencimientoGarantia: v.fechaVencimientoGarantia || undefined,
         costoAdquisicion: v.costoAdquisicion ?? undefined,
@@ -122,12 +161,14 @@ export class ActivosGestionComponent implements OnInit {
             nombre: '',
             marcaId: '',
             modelo: '',
-            categoria: 'cardio',
+            categoriaId: '',
             sucursalId: '',
+            pisoAsignado: null,
             fechaCompra: '',
             fechaVencimientoGarantia: '',
             costoAdquisicion: null,
           });
+          this.showPiso.set(false);
           this.loadActivos();
         },
         error: (err) => {
@@ -168,6 +209,26 @@ export class ActivosGestionComponent implements OnInit {
 
   marcaLabel(activo: Activo): string {
     return activo.marcaRelacion?.nombre ?? activo.marca ?? '—';
+  }
+
+  marcaLogo(activo: Activo): string | null {
+    const raw = activo.marcaRelacion?.logoUrl?.trim();
+    if (!raw) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    if (raw.startsWith('/')) return `${environment.uploadsBaseUrl}${raw}`;
+    return `${environment.uploadsBaseUrl}/${raw}`;
+  }
+
+  categoriaLabel(activo: Activo): string {
+    const rel = activo.categoriaRelacion;
+    if (rel) return `${rel.nombre} [${rel.sigla}]`;
+    return activo.categoria ?? '—';
+  }
+
+  pisoLabel(activo: Activo): string | null {
+    const pisos = activo.sucursal?.cantidadPisos ?? 1;
+    if (pisos <= 1 || activo.pisoAsignado == null) return null;
+    return `Piso ${activo.pisoAsignado}`;
   }
 
   healthDotClass(estado: string): string {

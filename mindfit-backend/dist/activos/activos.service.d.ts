@@ -15,6 +15,7 @@ export declare class ActivosService {
     private repo;
     findAll(filters?: FilterActivosDto): Promise<Activo[]>;
     findOne(id: number): Promise<Activo>;
+    private resolvePisoAsignado;
     findByUuid(uuidActivo: string): Promise<Activo>;
     findByPublicIdentifier(identifier: string): Promise<Activo>;
     getFichaPublica(identifier: string): Promise<ActivoFichaDto>;

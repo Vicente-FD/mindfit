@@ -68,8 +68,9 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
         return this.ordenesService.findBySucursal(user.sucursalId);
     }
     reportarFalla(files, dto, user) {
-        if (!user.sucursalId) {
-            throw new common_1.BadRequestException('Usuario sin sucursal asignada');
+        const sucursalId = user.sucursalId ?? dto.sucursalId;
+        if (sucursalId == null) {
+            throw new common_1.BadRequestException('Debe indicar la sucursal del reporte');
         }
         const tipoReporte = dto.tipoReporte ?? 'maquina';
         const foto = files.foto_falla?.[0];
@@ -77,7 +78,8 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
             if (dto.activoId == null || Number.isNaN(Number(dto.activoId))) {
                 throw new common_1.BadRequestException('Debe indicar el activo para reportes de máquina');
             }
-            if (!foto) {
+            const fotoObligatoria = user.rol === enums_1.RolUsuario.JEFE_SUCURSAL;
+            if (fotoObligatoria && !foto) {
                 throw new common_1.BadRequestException('La foto de la falla es obligatoria para equipos');
             }
         }
@@ -91,7 +93,8 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
             descripcion: dto.descripcion,
             prioridad: dto.prioridad,
             titulo: dto.titulo,
-        }, user.id, user.sucursalId, fotoUrl);
+            asignadoAId: dto.asignadoAId,
+        }, user.id, sucursalId, fotoUrl);
     }
     findOne(id) {
         return this.ordenesService.findOne(id);
@@ -214,7 +217,7 @@ __decorate([
 ], OrdenesTrabajoController.prototype, "findMiSucursal", null);
 __decorate([
     (0, common_1.Post)('reportar-falla'),
-    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.JEFE_SUCURSAL),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.JEFE_SUCURSAL, enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([{ name: 'foto_falla', maxCount: 1 }], {
         storage: evidencias_storage_1.evidenciasMulterStorage,
     })),

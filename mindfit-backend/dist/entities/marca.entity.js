@@ -16,8 +16,10 @@ let Marca = class Marca {
     id;
     nombre;
     sigla;
+    logoUrl;
     createdAt;
     updatedAt;
+    deletedAt;
     activos;
 };
 exports.Marca = Marca;
@@ -34,6 +36,10 @@ __decorate([
     __metadata("design:type", String)
 ], Marca.prototype, "sigla", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: 'logo_url', type: 'varchar', length: 500, nullable: true }),
+    __metadata("design:type", Object)
+], Marca.prototype, "logoUrl", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)
 ], Marca.prototype, "createdAt", void 0);
@@ -41,6 +47,10 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ name: 'updated_at' }),
     __metadata("design:type", Date)
 ], Marca.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.DeleteDateColumn)({ name: 'deleted_at' }),
+    __metadata("design:type", Object)
+], Marca.prototype, "deletedAt", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => activo_entity_1.Activo, (activo) => activo.marcaRelacion),
     __metadata("design:type", Array)

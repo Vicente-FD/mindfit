@@ -34,10 +34,11 @@
           <input class="field-input" formControlName="numeroSerie" />
         </div>
         <div>
-          <label class="field-label">Categoría *</label>
-          <select class="field-input" formControlName="categoria">
-            @for (c of categorias; track c.value) {
-              <option [value]="c.value">{{ c.label }}</option>
+          <label class="field-label">Familia / Categoría *</label>
+          <select class="field-input" formControlName="categoriaId">
+            <option value="">Seleccione categoría</option>
+            @for (c of categorias(); track c.id) {
+              <option [value]="c.id">{{ c.nombre }} ({{ c.sigla }})</option>
             }
           </select>
         </div>
@@ -50,6 +51,17 @@
             }
           </select>
         </div>
+        @if (showPiso()) {
+          <div>
+            <label class="field-label">Piso asignado *</label>
+            <select class="field-input" formControlName="pisoAsignado">
+              <option value="">Seleccione piso</option>
+              @for (p of pisosOpciones(); track p) {
+                <option [value]="p">Piso {{ p }}</option>
+              }
+            </select>
+          </div>
+        }
         <div>
           <label class="field-label">Estado operacional *</label>
           <select class="field-input" formControlName="estadoOperacional">

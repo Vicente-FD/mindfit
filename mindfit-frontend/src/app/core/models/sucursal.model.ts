@@ -6,6 +6,7 @@ export interface Sucursal {
   comuna?: string | null;
   ciudad?: string | null;
   estaActiva?: boolean;
+  cantidadPisos?: number;
   activosOperativos?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -18,6 +19,7 @@ export interface CreateSucursalPayload {
   comuna: string;
   ciudad: string;
   estaActiva?: boolean;
+  cantidadPisos?: number;
 }
 
 export interface UpdateSucursalPayload {
@@ -27,6 +29,7 @@ export interface UpdateSucursalPayload {
   comuna?: string;
   ciudad?: string;
   estaActiva?: boolean;
+  cantidadPisos?: number;
 }
 
 export const CASA_CENTRAL_VALUE = 'casa_central';

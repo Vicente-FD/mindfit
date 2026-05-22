@@ -27,6 +27,7 @@ const inventario_module_1 = require("./inventario/inventario.module");
 const audit_trail_module_1 = require("./audit-trail/audit-trail.module");
 const planes_preventivos_module_1 = require("./planes-preventivos/planes-preventivos.module");
 const marcas_module_1 = require("./marcas/marcas.module");
+const categorias_module_1 = require("./categorias/categorias.module");
 const sucursales_module_1 = require("./sucursales/sucursales.module");
 const usuarios_module_1 = require("./usuarios/usuarios.module");
 const activos_module_1 = require("./activos/activos.module");
@@ -69,6 +70,7 @@ exports.AppModule = AppModule = __decorate([
                         entities: [
                             entities_1.Sucursal,
                             entities_1.Usuario,
+                            entities_1.Categoria,
                             entities_1.Marca,
                             entities_1.Activo,
                             entities_1.OrdenTrabajo,
@@ -90,6 +92,7 @@ exports.AppModule = AppModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([
                 entities_1.Sucursal,
                 entities_1.Usuario,
+                entities_1.Categoria,
                 entities_1.Marca,
                 entities_1.Activo,
                 entities_1.OrdenTrabajo,
@@ -103,6 +106,7 @@ exports.AppModule = AppModule = __decorate([
             usuarios_module_1.UsuariosModule,
             activos_module_1.ActivosModule,
             marcas_module_1.MarcasModule,
+            categorias_module_1.CategoriasModule,
             ordenes_trabajo_module_1.OrdenesTrabajoModule,
             analytics_module_1.AnalyticsModule,
             planes_preventivos_module_1.PlanesPreventivosModule,

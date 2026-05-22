@@ -14,6 +14,11 @@ export class FilterActivosDto {
   marcaId?: number;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  categoriaId?: number;
+
+  @IsOptional()
   @IsEnum(CategoriaActivo)
   categoria?: CategoriaActivo;
 

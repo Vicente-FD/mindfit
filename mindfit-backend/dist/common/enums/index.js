@@ -55,6 +55,7 @@ var ClasificacionOrden;
 (function (ClasificacionOrden) {
     ClasificacionOrden["MAQUINA"] = "maquina";
     ClasificacionOrden["INFRAESTRUCTURA"] = "infraestructura";
+    ClasificacionOrden["PETICION"] = "peticion";
 })(ClasificacionOrden || (exports.ClasificacionOrden = ClasificacionOrden = {}));
 var TipoEvidencia;
 (function (TipoEvidencia) {

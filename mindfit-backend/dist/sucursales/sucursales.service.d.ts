@@ -11,6 +11,7 @@ export interface SucursalListItem {
     comuna: string | null;
     ciudad: string | null;
     estaActiva: boolean;
+    cantidadPisos: number;
     activosOperativos: number;
     createdAt: Date;
     updatedAt: Date;

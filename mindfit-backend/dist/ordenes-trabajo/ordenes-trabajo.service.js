@@ -219,10 +219,13 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
             infraestructura: dto.titulo ?? 'Incidente de infraestructura / instalaciones',
             peticion: dto.titulo ?? 'Petición de elementos o servicios',
         };
+        const clasificacionMap = {
+            maquina: enums_1.ClasificacionOrden.MAQUINA,
+            infraestructura: enums_1.ClasificacionOrden.INFRAESTRUCTURA,
+            peticion: enums_1.ClasificacionOrden.PETICION,
+        };
         const orden = await this.create({
-            clasificacion: esMaquina
-                ? enums_1.ClasificacionOrden.MAQUINA
-                : enums_1.ClasificacionOrden.INFRAESTRUCTURA,
+            clasificacion: clasificacionMap[tipo],
             activoId: esMaquina ? Number(dto.activoId) : undefined,
             sucursalId,
             titulo: tituloPorTipo[tipo],
@@ -235,6 +238,9 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
                 tipoEvidencia: enums_1.TipoEvidencia.ANTES,
                 urlImagen: fotoUrl,
             });
+        }
+        if (dto.asignadoAId != null && !Number.isNaN(Number(dto.asignadoAId))) {
+            await this.asignar(orden.id, { tecnicoId: Number(dto.asignadoAId) });
         }
         return this.findOne(orden.id);
     }
@@ -282,9 +288,9 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         const orden = manager.create(orden_trabajo_entity_1.OrdenTrabajo, {
             codigoOt: await this.generarCodigoOt(),
             clasificacion,
-            activoId: clasificacion === enums_1.ClasificacionOrden.INFRAESTRUCTURA
-                ? null
-                : (dto.activoId ?? null),
+            activoId: clasificacion === enums_1.ClasificacionOrden.MAQUINA
+                ? (dto.activoId ?? null)
+                : null,
             sucursalId: dto.sucursalId,
             creadoPorId,
             titulo: dto.titulo,

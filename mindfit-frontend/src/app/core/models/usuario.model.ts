@@ -1,13 +1,7 @@
 import { UserRole, EstadoSesion } from './user.model';
+import type { PermisosUi } from './permisos-ui.model';
 
-export interface PermisosUi {
-  verDashboardEjecutivo?: boolean;
-  verGestionActivos?: boolean;
-  verGestionUsuarios?: boolean;
-  verAsignacionOt?: boolean;
-  verReportesSucursal?: boolean;
-  generarQrActivos?: boolean;
-}
+export type { PermisosUi };
 
 export interface Usuario {
   id: number;

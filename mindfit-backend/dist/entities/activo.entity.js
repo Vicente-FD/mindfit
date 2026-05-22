@@ -15,6 +15,7 @@ const uuid_1 = require("uuid");
 const enums_1 = require("../common/enums");
 const sucursal_entity_1 = require("./sucursal.entity");
 const marca_entity_1 = require("./marca.entity");
+const categoria_entity_1 = require("./categoria.entity");
 const orden_trabajo_entity_1 = require("./orden-trabajo.entity");
 let Activo = class Activo {
     id;
@@ -28,6 +29,9 @@ let Activo = class Activo {
     modelo;
     numeroSerie;
     categoria;
+    categoriaId;
+    categoriaRelacion;
+    pisoAsignado;
     sucursalId;
     sucursal;
     fechaCompra;
@@ -113,9 +117,25 @@ __decorate([
     __metadata("design:type", Object)
 ], Activo.prototype, "numeroSerie", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: enums_1.CategoriaActivo }),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)({ type: 'enum', enum: enums_1.CategoriaActivo, nullable: true }),
+    __metadata("design:type", Object)
 ], Activo.prototype, "categoria", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'categoria_id', type: 'int', nullable: true }),
+    __metadata("design:type", Object)
+], Activo.prototype, "categoriaId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => categoria_entity_1.Categoria, (cat) => cat.activos, {
+        nullable: true,
+        onDelete: 'RESTRICT',
+    }),
+    (0, typeorm_1.JoinColumn)({ name: 'categoria_id' }),
+    __metadata("design:type", Object)
+], Activo.prototype, "categoriaRelacion", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'piso_asignado', type: 'int', nullable: true }),
+    __metadata("design:type", Object)
+], Activo.prototype, "pisoAsignado", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'sucursal_id', type: 'int' }),
     __metadata("design:type", Number)
