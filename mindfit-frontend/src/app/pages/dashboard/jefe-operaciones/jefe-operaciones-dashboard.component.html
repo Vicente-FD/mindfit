@@ -5,9 +5,15 @@
       <p class="mt-1 text-sm text-slate-grey">Crear y asignar órdenes de trabajo en todas las sedes</p>
     </div>
     @if (isActivas()) {
-      <button type="button" class="btn-create-ot" (click)="toggleCreateForm()">
-        {{ showCreateForm() ? 'Ocultar formulario' : '+ Registrar reporte / OT' }}
-      </button>
+      <div class="ops-header-actions">
+        <a routerLink="/dashboard/operations/planner" class="btn-planner">
+          <lucide-icon name="calendar" [size]="16" />
+          Planificador Semanal
+        </a>
+        <button type="button" class="btn-create-ot" (click)="toggleCreateForm()">
+          {{ showCreateForm() ? 'Ocultar formulario' : '+ Registrar reporte / OT' }}
+        </button>
+      </div>
     }
   </header>
 

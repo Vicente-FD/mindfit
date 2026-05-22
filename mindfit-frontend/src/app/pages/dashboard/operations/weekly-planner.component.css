@@ -1,0 +1,160 @@
+.planner-page {
+  padding-bottom: 2rem;
+}
+
+.planner-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.planner-meta {
+  width: 100%;
+  max-width: 36rem;
+}
+
+.week-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1200px) {
+  .week-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .week-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.day-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 12rem;
+  padding: 1rem;
+}
+
+.day-column-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.day-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.day-count {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.day-tasks {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.task-card {
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  background: #000000;
+  padding: 0.75rem;
+}
+
+.task-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.task-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-input-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.btn-icon-trash {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  padding: 0.25rem;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.btn-icon-trash:hover {
+  background: rgb(239 68 68 / 0.12);
+  color: #f87171;
+}
+
+.btn-add-task {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 0.5rem;
+  border: 1px dashed rgb(255 102 0 / 0.45);
+  background: rgb(255 102 0 / 0.06);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ff6600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-add-task:hover {
+  background: rgb(255 102 0 / 0.12);
+  border-color: #ff6600;
+}
+
+.planner-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.btn-save-plan {
+  border-radius: 0.75rem;
+  background: #ff6600;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #000000;
+  transition: filter 0.15s;
+}
+
+.btn-save-plan:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.btn-save-plan:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

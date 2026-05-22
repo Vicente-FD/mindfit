@@ -6,6 +6,7 @@ import { TransactionContextService } from '../common/database/transaction-contex
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
 import { EvidenciaOt } from '../entities/evidencia-ot.entity';
 import { ComentarioOt } from '../entities/comentario-ot.entity';
+import { BulkOrdenTrabajoItemDto } from './dto/bulk-orden-trabajo-item.dto';
 import { CreateOrdenTrabajoDto } from './dto/create-orden-trabajo.dto';
 import { UpdateOrdenTrabajoDto } from './dto/update-orden-trabajo.dto';
 import { AsignarOrdenDto } from './dto/asignar-orden.dto';
@@ -56,6 +57,11 @@ export declare class OrdenesTrabajoService {
     }, creadoPorId: number, sucursalId: number, fotoUrl?: string): Promise<OrdenTrabajo>;
     private eliminarEvidenciasDespues;
     create(dto: CreateOrdenTrabajoDto, creadoPorId: number): Promise<OrdenTrabajo>;
+    createBulk(tasks: BulkOrdenTrabajoItemDto[], creadoPorId: number): Promise<{
+        created: OrdenTrabajo[];
+        total: number;
+    }>;
+    private persistOrdenInManager;
     private assertOrdenEditable;
     update(id: number, dto: UpdateOrdenTrabajoDto): Promise<OrdenTrabajo>;
     remove(id: number): Promise<void>;

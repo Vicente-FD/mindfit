@@ -9,6 +9,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SucursalesModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
+const activo_entity_1 = require("../entities/activo.entity");
+const orden_trabajo_entity_1 = require("../entities/orden-trabajo.entity");
 const sucursal_entity_1 = require("../entities/sucursal.entity");
 const sucursales_controller_1 = require("./sucursales.controller");
 const sucursales_service_1 = require("./sucursales.service");
@@ -17,7 +19,9 @@ let SucursalesModule = class SucursalesModule {
 exports.SucursalesModule = SucursalesModule;
 exports.SucursalesModule = SucursalesModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([sucursal_entity_1.Sucursal])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([sucursal_entity_1.Sucursal, activo_entity_1.Activo, orden_trabajo_entity_1.OrdenTrabajo]),
+        ],
         controllers: [sucursales_controller_1.SucursalesController],
         providers: [sucursales_service_1.SucursalesService],
         exports: [sucursales_service_1.SucursalesService],

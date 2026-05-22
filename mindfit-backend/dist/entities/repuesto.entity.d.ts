@@ -1,4 +1,5 @@
 import { BodegaStock } from './bodega-stock.entity';
+import { MovimientoInventario } from './movimiento-inventario.entity';
 import { OrdenTrabajoRepuesto } from './orden-trabajo-repuesto.entity';
 export declare class Repuesto {
     id: number;
@@ -8,6 +9,8 @@ export declare class Repuesto {
     costoUnitario: string;
     createdAt: Date;
     updatedAt: Date;
+    deletedAt: Date | null;
     stocks: BodegaStock[];
+    movimientos: MovimientoInventario[];
     consumos: OrdenTrabajoRepuesto[];
 }

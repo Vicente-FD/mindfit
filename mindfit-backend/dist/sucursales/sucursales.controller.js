@@ -27,6 +27,12 @@ let SucursalesController = class SucursalesController {
     findAll() {
         return this.sucursalesService.findAll();
     }
+    getMonitoreoGlobal() {
+        return this.sucursalesService.getMonitoreoGlobal();
+    }
+    getMonitoreo(id) {
+        return this.sucursalesService.getMonitoreo(id);
+    }
     findOne(id) {
         return this.sucursalesService.findOne(id);
     }
@@ -43,11 +49,26 @@ let SucursalesController = class SucursalesController {
 exports.SucursalesController = SucursalesController;
 __decorate([
     (0, common_1.Get)(),
-    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.GERENTE_BI),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SucursalesController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('monitoreo/global'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.GERENTE_BI),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], SucursalesController.prototype, "getMonitoreoGlobal", null);
+__decorate([
+    (0, common_1.Get)(':id/monitoreo'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.GERENTE_BI),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], SucursalesController.prototype, "getMonitoreo", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES),

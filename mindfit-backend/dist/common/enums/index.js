@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OperacionAuditoria = exports.TipoEvidencia = exports.ClasificacionOrden = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.RolUsuario = void 0;
+exports.TipoMovimientoInventario = exports.OperacionAuditoria = exports.TipoEvidencia = exports.ClasificacionOrden = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.RolUsuario = void 0;
 var RolUsuario;
 (function (RolUsuario) {
     RolUsuario["ADMIN"] = "admin";
@@ -68,4 +68,11 @@ var OperacionAuditoria;
     OperacionAuditoria["UPDATE"] = "UPDATE";
     OperacionAuditoria["DELETE"] = "DELETE";
 })(OperacionAuditoria || (exports.OperacionAuditoria = OperacionAuditoria = {}));
+var TipoMovimientoInventario;
+(function (TipoMovimientoInventario) {
+    TipoMovimientoInventario["INGRESO_COMPRA"] = "ingreso_compra";
+    TipoMovimientoInventario["AJUSTE_MANUAL_POSITIVO"] = "ajuste_manual_positivo";
+    TipoMovimientoInventario["AJUSTE_MANUAL_NEGATIVO"] = "ajuste_manual_negativo";
+    TipoMovimientoInventario["CONSUMO_OT"] = "consumo_ot";
+})(TipoMovimientoInventario || (exports.TipoMovimientoInventario = TipoMovimientoInventario = {}));
 //# sourceMappingURL=index.js.map

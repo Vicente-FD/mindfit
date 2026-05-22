@@ -5,6 +5,7 @@ import { AsignarOrdenDto } from './dto/asignar-orden.dto';
 import { CerrarOrdenDto } from './dto/cerrar-orden.dto';
 import { CreateComentarioDto } from './dto/create-comentario.dto';
 import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
+import { BulkCreateOrdenesTrabajoDto } from './dto/bulk-create-ordenes-trabajo.dto';
 import { CreateOrdenTrabajoDto } from './dto/create-orden-trabajo.dto';
 import { UpdateOrdenTrabajoDto } from './dto/update-orden-trabajo.dto';
 import { ReportarFallaDto } from './dto/reportar-falla.dto';
@@ -22,6 +23,10 @@ export declare class OrdenesTrabajoController {
         foto_falla?: Express.Multer.File[];
     }, dto: ReportarFallaDto, user: JwtPayload): Promise<import("../entities").OrdenTrabajo>;
     findOne(id: number): Promise<import("../entities").OrdenTrabajo>;
+    createBulk(dto: BulkCreateOrdenesTrabajoDto, user: JwtPayload): Promise<{
+        created: import("../entities").OrdenTrabajo[];
+        total: number;
+    }>;
     create(dto: CreateOrdenTrabajoDto, user: JwtPayload): Promise<import("../entities").OrdenTrabajo>;
     update(id: number, dto: UpdateOrdenTrabajoDto): Promise<import("../entities").OrdenTrabajo>;
     remove(id: number): Promise<void>;

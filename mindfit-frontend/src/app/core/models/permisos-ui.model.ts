@@ -85,7 +85,7 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
     verGestionUsuarios: false,
     verGestionSucursales: false,
     verParametrosSistema: false,
-    verCentroMonitoreo: false,
+    verCentroMonitoreo: true,
     verAsignacionOts: false,
     verReportesSucursal: false,
     verControlBodega: false,

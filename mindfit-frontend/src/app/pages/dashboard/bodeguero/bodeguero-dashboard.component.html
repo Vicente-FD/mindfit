@@ -1,10 +1,45 @@
 <div class="bodega-page space-y-5">
-  <header>
-    <h1 class="text-xl font-semibold text-pure-white">Bodega central</h1>
-    <p class="text-sm text-slate-grey">
-      Inventario único compartido por todas las sucursales de Mindfit
-    </p>
+  <header class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-semibold text-pure-white">Bodega central</h1>
+      <p class="text-sm text-slate-grey">
+        Catálogo maestro, stock global y Kardex de trazabilidad por sede
+      </p>
+    </div>
+    <button type="button" class="btn-create-catalog" (click)="toggleCreatePanel()">
+      <lucide-icon name="plus" [size]="16" />
+      {{ activePanel() === 'create' ? 'Cerrar formulario' : 'Crear nuevo repuesto en catálogo' }}
+    </button>
   </header>
+
+  @if (activePanel() === 'create') {
+    <section class="page-card catalog-panel">
+      <h2 class="text-sm font-semibold text-pure-white">Nuevo insumo en catálogo</h2>
+      <form class="mt-4 grid gap-3 sm:grid-cols-2" [formGroup]="createForm" (ngSubmit)="submitCreateRepuesto()">
+        <div>
+          <label class="field-label">SKU *</label>
+          <input class="field-input" formControlName="sku" placeholder="Ej. CORR-TROT-01" />
+        </div>
+        <div>
+          <label class="field-label">Nombre *</label>
+          <input class="field-input" formControlName="nombre" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label">Descripción</label>
+          <input class="field-input" formControlName="descripcion" />
+        </div>
+        <div>
+          <label class="field-label">Costo unitario inicial *</label>
+          <input class="field-input" type="number" min="0" step="0.01" formControlName="costoUnitario" />
+        </div>
+        <div class="flex items-end">
+          <button type="submit" class="btn-primary" [disabled]="saving() || createForm.invalid">
+            Guardar en catálogo
+          </button>
+        </div>
+      </form>
+    </section>
+  }
 
   <div class="kpi-grid">
     <article class="kpi-card">
@@ -68,16 +103,30 @@
             <tr>
               <th>SKU</th>
               <th>Repuesto</th>
-              <th>Stock actual</th>
-              <th>Mín. alerta</th>
+              <th>Costo unit.</th>
+              <th>Stock</th>
+              <th>Mín.</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             @for (row of stockFiltrado(); track row.id) {
               <tr [class.row-alert]="bajoMinimo(row)">
-                <td class="font-mono text-xs">{{ row.repuesto.sku }}</td>
-                <td>{{ row.repuesto.nombre }}</td>
+                <td>
+                  <button type="button" class="link-sku" (click)="openEditRepuesto(row)">
+                    {{ row.repuesto.sku }}
+                  </button>
+                </td>
+                <td>
+                  <button type="button" class="link-name" (click)="openEditRepuesto(row)">
+                    {{ row.repuesto.nombre }}
+                  </button>
+                </td>
+                <td class="text-xs">
+                  <button type="button" class="link-costo" (click)="openEditRepuesto(row)" title="Modificar costo">
+                    {{ row.repuesto.costoUnitario | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                  </button>
+                </td>
                 <td>
                   <span [class.text-orange-energy]="bajoMinimo(row)">
                     {{ row.cantidadActual }}
@@ -85,6 +134,19 @@
                 </td>
                 <td class="text-slate-grey">{{ row.cantidadMinimaAlerta }}</td>
                 <td class="actions-cell">
+                  <button
+                    type="button"
+                    class="btn-table btn-table--modify"
+                    (click)="openEditRepuesto(row)"
+                    title="Modificar nombre, SKU o costo"
+                  >
+                    <lucide-icon name="pencil" [size]="14" />
+                    Modificar
+                  </button>
+                  <button type="button" class="btn-table" (click)="openTrazabilidad(row)" title="Trazabilidad">
+                    <lucide-icon name="history" [size]="14" />
+                    Trazabilidad
+                  </button>
                   <button type="button" class="btn-table" (click)="openAjustar(row)">
                     Editar stock
                   </button>
@@ -101,39 +163,172 @@
   </div>
 </div>
 
-@if (showModal() && selectedRow(); as row) {
-  <div class="modal-backdrop" (click)="closeModal()">
+@if (activePanel() === 'edit' && selectedRow(); as row) {
+  <div class="modal-backdrop" (click)="closePanel()">
     <div class="modal-panel" (click)="$event.stopPropagation()">
-      <div class="flex items-start justify-between gap-3 mb-4">
+      <div class="modal-head">
+        <div>
+          <h2 class="text-lg font-semibold text-pure-white">Modificar repuesto</h2>
+          <p class="text-xs text-slate-grey">ID catálogo · {{ row.repuesto.sku }}</p>
+          <p class="mt-1 text-xs text-orange-energy">
+            Actualice nombre o costo de compra; las nuevas OT usarán el valor vigente.
+          </p>
+        </div>
+        <button type="button" class="btn-ghost" (click)="closePanel()">
+          <lucide-icon name="x" [size]="18" />
+        </button>
+      </div>
+      <form [formGroup]="editForm" (ngSubmit)="submitEditRepuesto()" class="space-y-3">
+        <div>
+          <label class="field-label">SKU (código interno)</label>
+          <input class="field-input" formControlName="sku" />
+        </div>
+        <div>
+          <label class="field-label">Nombre del insumo *</label>
+          <input class="field-input" formControlName="nombre" placeholder="Ej. Correa transmisión trotadora" />
+        </div>
+        <div>
+          <label class="field-label">Descripción</label>
+          <input class="field-input" formControlName="descripcion" />
+        </div>
+        <div>
+          <label class="field-label">Costo unitario de adquisición (CLP) *</label>
+          <input class="field-input" type="number" min="0" step="0.01" formControlName="costoUnitario" />
+          <p class="mt-1 text-xs text-slate-grey">
+            Valor actual en tabla:
+            {{ row.repuesto.costoUnitario | currency:'CLP':'symbol-narrow':'1.0-0' }}
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 pt-2">
+          <button type="submit" class="btn-primary flex-1" [disabled]="saving() || editForm.invalid">
+            Guardar modificación
+          </button>
+          <button type="button" class="btn-danger-outline" (click)="softDeleteRepuesto(row)">
+            Descontinuar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (activePanel() === 'stock' && selectedRow(); as row) {
+  <div class="modal-backdrop" (click)="closePanel()">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
+      <div class="modal-head">
         <div>
           <h2 class="text-lg font-semibold text-pure-white">
-            {{ modalMode() === 'ajustar' ? 'Ajustar stock' : 'Registrar ingreso' }}
+            {{ stockModalMode() === 'ajustar' ? 'Ajuste de inventario' : 'Ingreso por compra' }}
           </h2>
           <p class="text-xs text-slate-grey">
             {{ row.repuesto.sku }} · {{ row.repuesto.nombre }}
           </p>
           <p class="text-xs text-slate-grey mt-1">Stock actual: {{ row.cantidadActual }} u.</p>
         </div>
-        <button type="button" class="btn-ghost" (click)="closeModal()">
+        <button type="button" class="btn-ghost" (click)="closePanel()">
           <lucide-icon name="x" [size]="18" />
         </button>
       </div>
-      <form [formGroup]="stockForm" (ngSubmit)="submitStock()" class="space-y-4">
+      <form [formGroup]="stockForm" (ngSubmit)="submitStock()" class="space-y-3">
+        <div>
+          <label class="field-label">Sede de trazabilidad *</label>
+          <select class="field-input" formControlName="sucursalId">
+            @for (s of sedes(); track s.id) {
+              <option [value]="s.id">{{ s.nombre }} ({{ s.sigla }})</option>
+            }
+          </select>
+        </div>
+
+        @if (stockModalMode() === 'ingreso') {
+          <div>
+            <label class="field-label">Unidades a ingresar *</label>
+            <input type="number" min="1" class="field-input" formControlName="cantidad" />
+          </div>
+        } @else {
+          <div>
+            <label class="field-label">Nueva cantidad en bodega *</label>
+            <input type="number" min="0" class="field-input" formControlName="nuevaCantidad" />
+          </div>
+        }
+
         <div>
           <label class="field-label">
-            {{ modalMode() === 'ajustar' ? 'Nueva cantidad en bodega' : 'Unidades a ingresar' }}
+            {{ stockModalMode() === 'ingreso' ? 'Nº factura / motivo *' : 'Motivo del ajuste *' }}
           </label>
-          <input
-            type="number"
-            min="0"
-            class="field-input"
-            formControlName="cantidad"
-          />
+          <textarea
+            class="field-input min-h-[4rem]"
+            formControlName="motivo"
+            placeholder="Ej. Factura #203 · Ajuste inventario mensual"
+          ></textarea>
         </div>
+
         <button type="submit" class="btn-primary w-full" [disabled]="saving() || stockForm.invalid">
-          @if (saving()) { Guardando... } @else { Confirmar }
+          @if (saving()) { Registrando… } @else { Confirmar y registrar en Kardex }
         </button>
       </form>
+    </div>
+  </div>
+}
+
+@if (activePanel() === 'trazabilidad' && selectedRow(); as row) {
+  <div class="modal-backdrop" (click)="closePanel()">
+    <div class="modal-panel modal-panel--wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <h2 class="text-lg font-semibold text-pure-white">Historial de movimientos de insumo</h2>
+          <p class="text-xs text-slate-grey">
+            {{ row.repuesto.sku }} · {{ row.repuesto.nombre }}
+          </p>
+        </div>
+        <button type="button" class="btn-ghost" (click)="closePanel()">
+          <lucide-icon name="x" [size]="18" />
+        </button>
+      </div>
+
+      <div class="mb-4">
+        <label class="field-label">Filtrar por sede (opcional)</label>
+        <select
+          class="field-input"
+          [value]="trazabilidadSedeId() ?? ''"
+          (change)="onTrazabilidadSedeChange($any($event.target).value)"
+        >
+          <option value="">Todas las sedes</option>
+          @for (s of sedes(); track s.id) {
+            <option [value]="s.id">{{ s.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      @if (trazabilidadLoading()) {
+        <p class="text-sm text-slate-grey">Cargando Kardex…</p>
+      } @else if (trazabilidad().length === 0) {
+        <p class="text-sm text-slate-grey">Sin movimientos registrados para este insumo.</p>
+      } @else {
+        <ul class="kardex-list">
+          @for (m of trazabilidad(); track m.id) {
+            <li class="kardex-item">
+              <div class="kardex-item-head">
+                <span class="kardex-icon">{{ movimientoIcon(m) }}</span>
+                <span class="kardex-qty" [class.kardex-qty--out]="!m.esEntrada">
+                  {{ signoCantidad(m) }}{{ m.cantidad }} u.
+                </span>
+                <span class="kardex-type">{{ movimientoTipoLabel(m) }}</span>
+              </div>
+              <p class="kardex-motivo">Motivo: {{ m.motivo }}</p>
+              <p class="kardex-meta">
+                {{ m.sucursalNombre }} ({{ m.sucursalSigla }}) · Por: {{ m.usuarioNombre }}
+                @if (m.codigoOt) {
+                  · {{ m.codigoOt }}
+                  @if (m.activoNombre || m.ordenTitulo) {
+                    [{{ m.activoNombre ?? m.ordenTitulo }}]
+                  }
+                }
+              </p>
+              <time class="kardex-date">{{ m.createdAt | date:'dd/MM/yyyy HH:mm' }}</time>
+            </li>
+          }
+        </ul>
+      }
     </div>
   </div>
 }

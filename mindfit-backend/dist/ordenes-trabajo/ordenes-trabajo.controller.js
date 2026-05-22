@@ -24,6 +24,7 @@ const asignar_orden_dto_1 = require("./dto/asignar-orden.dto");
 const cerrar_orden_dto_1 = require("./dto/cerrar-orden.dto");
 const create_comentario_dto_1 = require("./dto/create-comentario.dto");
 const create_evidencia_dto_1 = require("./dto/create-evidencia.dto");
+const bulk_create_ordenes_trabajo_dto_1 = require("./dto/bulk-create-ordenes-trabajo.dto");
 const create_orden_trabajo_dto_1 = require("./dto/create-orden-trabajo.dto");
 const update_orden_trabajo_dto_1 = require("./dto/update-orden-trabajo.dto");
 const reportar_falla_dto_1 = require("./dto/reportar-falla.dto");
@@ -98,6 +99,9 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
     }
     findOne(id) {
         return this.ordenesService.findOne(id);
+    }
+    createBulk(dto, user) {
+        return this.ordenesService.createBulk(dto.tasks, user.id);
     }
     create(dto, user) {
         return this.ordenesService.create(dto, user.id);
@@ -237,6 +241,16 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], OrdenesTrabajoController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Post)('bulk'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [bulk_create_ordenes_trabajo_dto_1.BulkCreateOrdenesTrabajoDto,
+        jwt_payload_interface_1.JwtPayload]),
+    __metadata("design:returntype", void 0)
+], OrdenesTrabajoController.prototype, "createBulk", null);
 __decorate([
     (0, common_1.Post)(),
     (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.JEFE_SUCURSAL),

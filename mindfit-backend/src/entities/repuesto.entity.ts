@@ -1,12 +1,14 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { BodegaStock } from './bodega-stock.entity';
+import { MovimientoInventario } from './movimiento-inventario.entity';
 import { OrdenTrabajoRepuesto } from './orden-trabajo-repuesto.entity';
 
 @Entity('repuestos')
@@ -38,8 +40,14 @@ export class Repuesto {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt: Date | null;
+
   @OneToMany(() => BodegaStock, (stock) => stock.repuesto)
   stocks: BodegaStock[];
+
+  @OneToMany(() => MovimientoInventario, (mov) => mov.repuesto)
+  movimientos: MovimientoInventario[];
 
   @OneToMany(() => OrdenTrabajoRepuesto, (consumo) => consumo.repuesto)
   consumos: OrdenTrabajoRepuesto[];

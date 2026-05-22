@@ -14,14 +14,17 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventarioController = void 0;
 const common_1 = require("@nestjs/common");
+const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const enums_1 = require("../common/enums");
+const jwt_payload_interface_1 = require("../common/interfaces/jwt-payload.interface");
 const inventario_service_1 = require("./inventario.service");
 const create_repuesto_dto_1 = require("./dto/create-repuesto.dto");
 const update_repuesto_dto_1 = require("./dto/update-repuesto.dto");
 const filter_bodega_dto_1 = require("./dto/filter-bodega.dto");
 const ajustar_stock_dto_1 = require("./dto/ajustar-stock.dto");
 const ingreso_stock_dto_1 = require("./dto/ingreso-stock.dto");
+const bodega_ajuste_dto_1 = require("./dto/bodega-ajuste.dto");
 let InventarioController = class InventarioController {
     inventario;
     constructor(inventario) {
@@ -36,8 +39,20 @@ let InventarioController = class InventarioController {
     createRepuesto(dto) {
         return this.inventario.createRepuesto(dto);
     }
+    getTrazabilidad(id, sucursalId) {
+        const parsed = sucursalId != null && sucursalId !== ''
+            ? Number(sucursalId)
+            : undefined;
+        return this.inventario.getTrazabilidad(id, parsed);
+    }
     updateRepuesto(id, dto) {
         return this.inventario.updateRepuesto(id, dto);
+    }
+    removeRepuesto(id) {
+        return this.inventario.softDeleteRepuesto(id);
+    }
+    registrarAjuste(dto, user) {
+        return this.inventario.registrarAjuste(dto, user.id);
     }
     listStock(query) {
         return this.inventario.findStock(query);
@@ -79,6 +94,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], InventarioController.prototype, "createRepuesto", null);
 __decorate([
+    (0, common_1.Get)('repuestos/:id/trazabilidad'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Query)('sucursalId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, String]),
+    __metadata("design:returntype", void 0)
+], InventarioController.prototype, "getTrazabilidad", null);
+__decorate([
     (0, common_1.Patch)('repuestos/:id'),
     (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -87,6 +111,24 @@ __decorate([
     __metadata("design:paramtypes", [Number, update_repuesto_dto_1.UpdateRepuestoDto]),
     __metadata("design:returntype", void 0)
 ], InventarioController.prototype, "updateRepuesto", null);
+__decorate([
+    (0, common_1.Delete)('repuestos/:id'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], InventarioController.prototype, "removeRepuesto", null);
+__decorate([
+    (0, common_1.Post)('bodega/ajuste'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [bodega_ajuste_dto_1.BodegaAjusteDto,
+        jwt_payload_interface_1.JwtPayload]),
+    __metadata("design:returntype", void 0)
+], InventarioController.prototype, "registrarAjuste", null);
 __decorate([
     (0, common_1.Get)('bodega/stock'),
     (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO),

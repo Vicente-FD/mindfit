@@ -28,6 +28,7 @@ import { AsignarOrdenDto } from './dto/asignar-orden.dto';
 import { CerrarOrdenDto } from './dto/cerrar-orden.dto';
 import { CreateComentarioDto } from './dto/create-comentario.dto';
 import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
+import { BulkCreateOrdenesTrabajoDto } from './dto/bulk-create-ordenes-trabajo.dto';
 import { CreateOrdenTrabajoDto } from './dto/create-orden-trabajo.dto';
 import { UpdateOrdenTrabajoDto } from './dto/update-orden-trabajo.dto';
 import { UpdateEstadoOrdenDto } from './dto/update-estado-orden.dto';
@@ -172,6 +173,15 @@ export class OrdenesTrabajoController {
   )
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.ordenesService.findOne(id);
+  }
+
+  @Post('bulk')
+  @Roles(RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES)
+  createBulk(
+    @Body() dto: BulkCreateOrdenesTrabajoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.ordenesService.createBulk(dto.tasks, user.id);
   }
 
   @Post()

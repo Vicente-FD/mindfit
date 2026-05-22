@@ -31,6 +31,8 @@ import {
   Building2,
   Camera,
   Settings,
+  Activity,
+  Eye,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -68,6 +70,8 @@ export const appConfig: ApplicationConfig = {
         Building2,
         Camera,
         Settings,
+        Activity,
+        Eye,
       }),
     ),
     provideRouter(routes),

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
+exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
 var categoria_entity_1 = require("./categoria.entity");
 Object.defineProperty(exports, "Categoria", { enumerable: true, get: function () { return categoria_entity_1.Categoria; } });
 var marca_entity_1 = require("./marca.entity");
@@ -27,4 +27,6 @@ var bodega_stock_entity_1 = require("./bodega-stock.entity");
 Object.defineProperty(exports, "BodegaStock", { enumerable: true, get: function () { return bodega_stock_entity_1.BodegaStock; } });
 var orden_trabajo_repuesto_entity_1 = require("./orden-trabajo-repuesto.entity");
 Object.defineProperty(exports, "OrdenTrabajoRepuesto", { enumerable: true, get: function () { return orden_trabajo_repuesto_entity_1.OrdenTrabajoRepuesto; } });
+var movimiento_inventario_entity_1 = require("./movimiento-inventario.entity");
+Object.defineProperty(exports, "MovimientoInventario", { enumerable: true, get: function () { return movimiento_inventario_entity_1.MovimientoInventario; } });
 //# sourceMappingURL=index.js.map

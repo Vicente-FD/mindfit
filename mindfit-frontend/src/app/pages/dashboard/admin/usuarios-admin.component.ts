@@ -39,15 +39,15 @@ const ROLE_TABS: { value: UserRole | 'todos'; label: string }[] = [
 ];
 
 const PERMISO_LABELS: { key: keyof PermisosUi; label: string }[] = [
-  { key: 'verDashboardEjecutivo', label: 'Dashboard ejecutivo' },
-  { key: 'verGestionActivos', label: 'Gestión de activos' },
-  { key: 'verGestionUsuarios', label: 'Personal y permisos' },
-  { key: 'verGestionSucursales', label: 'Sedes y sucursales' },
-  { key: 'verParametrosSistema', label: 'Parámetros del sistema' },
-  { key: 'verCentroMonitoreo', label: 'Centro de operaciones' },
-  { key: 'verAsignacionOts', label: 'Asignación de OTs' },
-  { key: 'verReportesSucursal', label: 'Reportar falla (sede)' },
-  { key: 'verControlBodega', label: 'Control de bodega' },
+  { key: 'verDashboardEjecutivo', label: 'Dashboard Ejecutivo' },
+  { key: 'verGestionActivos', label: 'Gestión de Activos' },
+  { key: 'verGestionUsuarios', label: 'Personal y Permisos' },
+  { key: 'verGestionSucursales', label: 'Sedes y Sucursales' },
+  { key: 'verParametrosSistema', label: 'Parámetros del Sistema' },
+  { key: 'verCentroMonitoreo', label: 'Centro de Monitoreo' },
+  { key: 'verAsignacionOts', label: 'Centro de Operaciones (Asignación)' },
+  { key: 'verReportesSucursal', label: 'Reportar Falla' },
+  { key: 'verControlBodega', label: 'Control de Bodega' },
 ];
 
 @Component({

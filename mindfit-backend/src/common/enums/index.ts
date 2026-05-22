@@ -64,3 +64,10 @@ export enum OperacionAuditoria {
   UPDATE = 'UPDATE',
   DELETE = 'DELETE',
 }
+
+export enum TipoMovimientoInventario {
+  INGRESO_COMPRA = 'ingreso_compra',
+  AJUSTE_MANUAL_POSITIVO = 'ajuste_manual_positivo',
+  AJUSTE_MANUAL_NEGATIVO = 'ajuste_manual_negativo',
+  CONSUMO_OT = 'consumo_ot',
+}

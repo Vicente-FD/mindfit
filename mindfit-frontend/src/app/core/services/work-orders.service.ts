@@ -11,6 +11,10 @@ import {
   WorkOrderPriority,
 } from '../models/work-order.model';
 import { TipoReporteSucursal } from '../models/tipo-reporte.model';
+import {
+  BulkCreateWorkOrdersResponse,
+  BulkWorkOrderTask,
+} from '../models/bulk-work-order.model';
 
 export interface UpdateWorkOrderPayload {
   titulo?: string;
@@ -99,6 +103,15 @@ export class WorkOrdersService {
 
   create(payload: CreateWorkOrderPayload): Observable<WorkOrder> {
     return this.http.post<WorkOrder>(this.baseUrl, payload);
+  }
+
+  crearOrdenesEnLote(
+    tasks: BulkWorkOrderTask[],
+  ): Observable<BulkCreateWorkOrdersResponse> {
+    return this.http.post<BulkCreateWorkOrdersResponse>(
+      `${this.baseUrl}/bulk`,
+      { tasks },
+    );
   }
 
   asignar(id: number, tecnicoId: number): Observable<WorkOrder> {

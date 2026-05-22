@@ -3,6 +3,7 @@ import { Sucursal } from '../entities/sucursal.entity';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import { CreateSucursalDto } from './dto/create-sucursal.dto';
 import { UpdateSucursalDto } from './dto/update-sucursal.dto';
+import { SucursalMonitoreoResponseDto } from './dto/sucursal-monitoreo.dto';
 export interface SucursalListItem {
     id: number;
     nombre: string;
@@ -23,6 +24,14 @@ export declare class SucursalesService {
     private repo;
     findAll(): Promise<SucursalListItem[]>;
     findOne(id: number): Promise<Sucursal>;
+    getMonitoreo(sucursalId: number): Promise<SucursalMonitoreoResponseDto>;
+    getMonitoreoGlobal(): Promise<SucursalMonitoreoResponseDto>;
+    private buildMonitoreoPayload;
+    private sedeRefOrden;
+    private resolutionDate;
+    private comentarioCierre;
+    private evidenciasAntesDespues;
+    private elapsedFrom;
     private normalizeSigla;
     private assertSiglaUnique;
     create(dto: CreateSucursalDto): Promise<Sucursal>;

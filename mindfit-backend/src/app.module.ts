@@ -25,6 +25,7 @@ import {
   Repuesto,
   BodegaStock,
   OrdenTrabajoRepuesto,
+  MovimientoInventario,
   Sucursal,
   Usuario,
 } from './entities';
@@ -88,6 +89,7 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
             Repuesto,
             BodegaStock,
             OrdenTrabajoRepuesto,
+            MovimientoInventario,
           ],
           synchronize: configService.get<string>('NODE_ENV') !== 'production',
           retryAttempts: 10,

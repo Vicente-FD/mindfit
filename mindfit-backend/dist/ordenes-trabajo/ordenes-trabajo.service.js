@@ -269,8 +269,39 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         }
     }
     async create(dto, creadoPorId) {
-        const clasificacion = dto.clasificacion ?? enums_1.ClasificacionOrden.MAQUINA;
         const manager = this.manager();
+        const id = await this.persistOrdenInManager(manager, dto, creadoPorId);
+        return this.findOne(id);
+    }
+    async createBulk(tasks, creadoPorId) {
+        if (!tasks?.length) {
+            throw new common_1.BadRequestException('Debe enviar al menos una tarea en el plan semanal');
+        }
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            this.transactionContext.setManager(queryRunner.manager);
+            const ids = [];
+            for (const task of tasks) {
+                const id = await this.persistOrdenInManager(queryRunner.manager, task, creadoPorId);
+                ids.push(id);
+            }
+            await queryRunner.commitTransaction();
+            const created = await Promise.all(ids.map((id) => this.findOne(id)));
+            return { created, total: created.length };
+        }
+        catch (err) {
+            await queryRunner.rollbackTransaction();
+            throw err;
+        }
+        finally {
+            this.transactionContext.clearManager();
+            await queryRunner.release();
+        }
+    }
+    async persistOrdenInManager(manager, dto, creadoPorId) {
+        const clasificacion = dto.clasificacion ?? enums_1.ClasificacionOrden.MAQUINA;
         if (clasificacion === enums_1.ClasificacionOrden.MAQUINA) {
             if (dto.activoId == null) {
                 throw new common_1.BadRequestException('activoId es obligatorio para OT de máquina');
@@ -285,27 +316,43 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
                 throw new common_1.BadRequestException('El activo no pertenece a la sucursal seleccionada');
             }
         }
+        const fechaProgramacion = dto.fechaProgramacion
+            ? new Date(dto.fechaProgramacion)
+            : null;
+        const asignadoAId = dto.asignadoAId ?? null;
+        let estado = enums_1.EstadoOrdenTrabajo.PENDIENTE;
+        if (asignadoAId != null) {
+            const tecnico = await manager.findOne(usuario_entity_1.Usuario, {
+                where: { id: asignadoAId, rol: enums_1.RolUsuario.TECNICO },
+            });
+            if (!tecnico?.estaActivo) {
+                throw new common_1.BadRequestException('Técnico no válido o inactivo');
+            }
+            if (asignadoAId != null && fechaProgramacion) {
+                estado = enums_1.EstadoOrdenTrabajo.ASIGNADA;
+            }
+        }
+        const codigoOt = await (0, ot_codigo_sequence_1.nextOtCodigo)((sql) => manager.query(sql));
         const orden = manager.create(orden_trabajo_entity_1.OrdenTrabajo, {
-            codigoOt: await this.generarCodigoOt(),
+            codigoOt,
             clasificacion,
             activoId: clasificacion === enums_1.ClasificacionOrden.MAQUINA
                 ? (dto.activoId ?? null)
                 : null,
             sucursalId: dto.sucursalId,
             creadoPorId,
-            titulo: dto.titulo,
-            descripcion: dto.descripcion ?? null,
+            asignadoAId,
+            titulo: dto.titulo.trim(),
+            descripcion: dto.descripcion?.trim() ?? null,
             prioridad: dto.prioridad ?? enums_1.PrioridadOrden.MEDIA,
             tipoMantenimiento: dto.tipoMantenimiento,
-            estado: enums_1.EstadoOrdenTrabajo.PENDIENTE,
+            estado,
             tiempoEstimadoMinutos: dto.tiempoEstimadoMinutos ?? null,
-            fechaProgramacion: dto.fechaProgramacion
-                ? new Date(dto.fechaProgramacion)
-                : null,
+            fechaProgramacion,
         });
         const saved = await manager.save(orden_trabajo_entity_1.OrdenTrabajo, orden);
         await this.syncActivoAlCrearOt(manager, saved);
-        return this.findOne(saved.id);
+        return saved.id;
     }
     assertOrdenEditable(estado) {
         if (estado === enums_1.EstadoOrdenTrabajo.FINALIZADA ||
@@ -429,7 +476,7 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         await queryRunner.startTransaction();
         try {
             const manager = queryRunner.manager;
-            const costoMateriales = await this.inventarioService.procesarConsumoEnTransaccion(manager, id, repuestos);
+            const costoMateriales = await this.inventarioService.procesarConsumoEnTransaccion(manager, id, ordenPrev.sucursalId, tecnicoId, ordenPrev.codigoOt, repuestos);
             const comentarioEnt = manager.getRepository(comentario_ot_entity_1.ComentarioOt).create({
                 ordenTrabajoId: id,
                 autorId: tecnicoId,

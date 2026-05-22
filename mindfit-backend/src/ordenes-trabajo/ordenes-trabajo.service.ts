@@ -20,6 +20,7 @@ import { TransactionContextService } from '../common/database/transaction-contex
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
 import { EvidenciaOt } from '../entities/evidencia-ot.entity';
 import { ComentarioOt } from '../entities/comentario-ot.entity';
+import { BulkOrdenTrabajoItemDto } from './dto/bulk-orden-trabajo-item.dto';
 import { CreateOrdenTrabajoDto } from './dto/create-orden-trabajo.dto';
 import { UpdateOrdenTrabajoDto } from './dto/update-orden-trabajo.dto';
 import { AsignarOrdenDto } from './dto/asignar-orden.dto';
@@ -392,8 +393,63 @@ export class OrdenesTrabajoService {
   }
 
   async create(dto: CreateOrdenTrabajoDto, creadoPorId: number) {
-    const clasificacion = dto.clasificacion ?? ClasificacionOrden.MAQUINA;
     const manager = this.manager();
+    const id = await this.persistOrdenInManager(
+      manager,
+      dto,
+      creadoPorId,
+    );
+    return this.findOne(id);
+  }
+
+  async createBulk(
+    tasks: BulkOrdenTrabajoItemDto[],
+    creadoPorId: number,
+  ): Promise<{ created: OrdenTrabajo[]; total: number }> {
+    if (!tasks?.length) {
+      throw new BadRequestException(
+        'Debe enviar al menos una tarea en el plan semanal',
+      );
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      this.transactionContext.setManager(queryRunner.manager);
+      const ids: number[] = [];
+
+      for (const task of tasks) {
+        const id = await this.persistOrdenInManager(
+          queryRunner.manager,
+          task,
+          creadoPorId,
+        );
+        ids.push(id);
+      }
+
+      await queryRunner.commitTransaction();
+
+      const created = await Promise.all(
+        ids.map((id) => this.findOne(id)),
+      );
+      return { created, total: created.length };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      this.transactionContext.clearManager();
+      await queryRunner.release();
+    }
+  }
+
+  private async persistOrdenInManager(
+    manager: EntityManager,
+    dto: BulkOrdenTrabajoItemDto,
+    creadoPorId: number,
+  ): Promise<number> {
+    const clasificacion = dto.clasificacion ?? ClasificacionOrden.MAQUINA;
 
     if (clasificacion === ClasificacionOrden.MAQUINA) {
       if (dto.activoId == null) {
@@ -414,8 +470,28 @@ export class OrdenesTrabajoService {
       }
     }
 
+    const fechaProgramacion = dto.fechaProgramacion
+      ? new Date(dto.fechaProgramacion)
+      : null;
+    const asignadoAId = dto.asignadoAId ?? null;
+
+    let estado = EstadoOrdenTrabajo.PENDIENTE;
+    if (asignadoAId != null) {
+      const tecnico = await manager.findOne(Usuario, {
+        where: { id: asignadoAId, rol: RolUsuario.TECNICO },
+      });
+      if (!tecnico?.estaActivo) {
+        throw new BadRequestException('Técnico no válido o inactivo');
+      }
+      if (asignadoAId != null && fechaProgramacion) {
+        estado = EstadoOrdenTrabajo.ASIGNADA;
+      }
+    }
+
+    const codigoOt = await nextOtCodigo((sql) => manager.query(sql));
+
     const orden = manager.create(OrdenTrabajo, {
-      codigoOt: await this.generarCodigoOt(),
+      codigoOt,
       clasificacion,
       activoId:
         clasificacion === ClasificacionOrden.MAQUINA
@@ -423,19 +499,19 @@ export class OrdenesTrabajoService {
           : null,
       sucursalId: dto.sucursalId,
       creadoPorId,
-      titulo: dto.titulo,
-      descripcion: dto.descripcion ?? null,
+      asignadoAId,
+      titulo: dto.titulo.trim(),
+      descripcion: dto.descripcion?.trim() ?? null,
       prioridad: dto.prioridad ?? PrioridadOrden.MEDIA,
       tipoMantenimiento: dto.tipoMantenimiento,
-      estado: EstadoOrdenTrabajo.PENDIENTE,
+      estado,
       tiempoEstimadoMinutos: dto.tiempoEstimadoMinutos ?? null,
-      fechaProgramacion: dto.fechaProgramacion
-        ? new Date(dto.fechaProgramacion)
-        : null,
+      fechaProgramacion,
     });
+
     const saved = await manager.save(OrdenTrabajo, orden);
     await this.syncActivoAlCrearOt(manager, saved);
-    return this.findOne(saved.id);
+    return saved.id;
   }
 
   private assertOrdenEditable(estado: EstadoOrdenTrabajo): void {
@@ -617,6 +693,9 @@ export class OrdenesTrabajoService {
         await this.inventarioService.procesarConsumoEnTransaccion(
           manager,
           id,
+          ordenPrev.sucursalId,
+          tecnicoId,
+          ordenPrev.codigoOt,
           repuestos,
         );
 

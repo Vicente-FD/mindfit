@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Repuesto = void 0;
 const typeorm_1 = require("typeorm");
 const bodega_stock_entity_1 = require("./bodega-stock.entity");
+const movimiento_inventario_entity_1 = require("./movimiento-inventario.entity");
 const orden_trabajo_repuesto_entity_1 = require("./orden-trabajo-repuesto.entity");
 let Repuesto = class Repuesto {
     id;
@@ -21,7 +22,9 @@ let Repuesto = class Repuesto {
     costoUnitario;
     createdAt;
     updatedAt;
+    deletedAt;
     stocks;
+    movimientos;
     consumos;
 };
 exports.Repuesto = Repuesto;
@@ -60,9 +63,17 @@ __decorate([
     __metadata("design:type", Date)
 ], Repuesto.prototype, "updatedAt", void 0);
 __decorate([
+    (0, typeorm_1.DeleteDateColumn)({ name: 'deleted_at' }),
+    __metadata("design:type", Object)
+], Repuesto.prototype, "deletedAt", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => bodega_stock_entity_1.BodegaStock, (stock) => stock.repuesto),
     __metadata("design:type", Array)
 ], Repuesto.prototype, "stocks", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => movimiento_inventario_entity_1.MovimientoInventario, (mov) => mov.repuesto),
+    __metadata("design:type", Array)
+], Repuesto.prototype, "movimientos", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => orden_trabajo_repuesto_entity_1.OrdenTrabajoRepuesto, (consumo) => consumo.repuesto),
     __metadata("design:type", Array)

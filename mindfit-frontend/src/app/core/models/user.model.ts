@@ -36,6 +36,6 @@ export const ROLE_DASHBOARD_ROUTES: Record<UserRole, string> = {
   jefe_operaciones: '/dashboard/jefe-operaciones',
   tecnico: '/dashboard/tecnico',
   jefe_sucursal: '/dashboard/sucursal',
-  gerente_bi: '/dashboard/gerente',
+  gerente_bi: '/dashboard/monitoreo',
   bodeguero: '/dashboard/bodeguero',
 };

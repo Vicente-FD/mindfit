@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { rolesGuard } from './core/guards/roles.guard';
+import { permisoGuard } from './core/guards/permiso.guard';
 import { dashboardRedirectGuard } from './core/guards/dashboard-redirect.guard';
 
 export const routes: Routes = [
@@ -75,11 +76,36 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'monitoreo',
+        canActivate: [
+          rolesGuard(['admin', 'jefe_operaciones', 'gerente_bi']),
+          permisoGuard('verCentroMonitoreo'),
+        ],
+        loadComponent: () =>
+          import('./pages/dashboard/monitoreo/sede-monitoreo.component').then(
+            (m) => m.SedeMonitoreoComponent,
+          ),
+      },
+      {
         path: 'jefe-operaciones',
-        canActivate: [rolesGuard(['jefe_operaciones'])],
+        canActivate: [
+          rolesGuard(['admin', 'jefe_operaciones']),
+          permisoGuard('verAsignacionOts'),
+        ],
         loadComponent: () =>
           import('./pages/dashboard/jefe-operaciones/jefe-operaciones-dashboard.component').then(
             (m) => m.JefeOperacionesDashboardComponent,
+          ),
+      },
+      {
+        path: 'operations/planner',
+        canActivate: [
+          rolesGuard(['admin', 'jefe_operaciones']),
+          permisoGuard('verAsignacionOts'),
+        ],
+        loadComponent: () =>
+          import('./pages/dashboard/operations/weekly-planner.component').then(
+            (m) => m.WeeklyPlannerComponent,
           ),
       },
       {

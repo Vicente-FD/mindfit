@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { interval, startWith } from 'rxjs';
 import { WorkOrdersService } from '../../../core/services/work-orders.service';
 import { SucursalesService } from '../../../core/services/sucursales.service';
@@ -43,6 +44,7 @@ import {
   selector: 'app-jefe-operaciones-dashboard',
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     LucideAngularModule,
     DeleteOtConfirmModalComponent,
     EditOtModalComponent,

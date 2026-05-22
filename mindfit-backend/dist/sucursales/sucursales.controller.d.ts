@@ -5,6 +5,8 @@ export declare class SucursalesController {
     private readonly sucursalesService;
     constructor(sucursalesService: SucursalesService);
     findAll(): Promise<import("./sucursales.service").SucursalListItem[]>;
+    getMonitoreoGlobal(): Promise<import("./dto/sucursal-monitoreo.dto").SucursalMonitoreoResponseDto>;
+    getMonitoreo(id: number): Promise<import("./dto/sucursal-monitoreo.dto").SucursalMonitoreoResponseDto>;
     findOne(id: number): Promise<import("../entities").Sucursal>;
     create(dto: CreateSucursalDto): Promise<import("../entities").Sucursal>;
     update(id: number, dto: UpdateSucursalDto): Promise<import("../entities").Sucursal>;

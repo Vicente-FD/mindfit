@@ -3,10 +3,14 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  BodegaAjustePayload,
   BodegaKpis,
   BodegaStockRow,
+  CreateRepuestoPayload,
+  MovimientoTrazabilidad,
   Repuesto,
   RepuestoDisponible,
+  UpdateRepuestoPayload,
 } from '../models/inventario.model';
 
 @Injectable({ providedIn: 'root' })
@@ -39,17 +43,38 @@ export class InventarioService {
     return this.http.get<Repuesto[]>(`${this.api}/repuestos`);
   }
 
-  ajustarStock(stockId: number, cantidadActual: number): Observable<BodegaStockRow> {
-    return this.http.post<BodegaStockRow>(
-      `${this.api}/bodega/stock/${stockId}/ajustar`,
-      { cantidadActual },
+  createRepuesto(payload: CreateRepuestoPayload): Observable<Repuesto> {
+    return this.http.post<Repuesto>(`${this.api}/repuestos`, payload);
+  }
+
+  updateRepuesto(
+    id: number,
+    payload: UpdateRepuestoPayload,
+  ): Observable<Repuesto> {
+    return this.http.patch<Repuesto>(`${this.api}/repuestos/${id}`, payload);
+  }
+
+  deleteRepuesto(id: number): Observable<{ deleted: boolean }> {
+    return this.http.delete<{ deleted: boolean }>(
+      `${this.api}/repuestos/${id}`,
     );
   }
 
-  registrarIngreso(stockId: number, cantidad: number): Observable<BodegaStockRow> {
-    return this.http.post<BodegaStockRow>(
-      `${this.api}/bodega/stock/${stockId}/ingreso`,
-      { cantidad },
+  registrarAjuste(payload: BodegaAjustePayload): Observable<BodegaStockRow> {
+    return this.http.post<BodegaStockRow>(`${this.api}/bodega/ajuste`, payload);
+  }
+
+  getTrazabilidad(
+    repuestoId: number,
+    sucursalId?: number,
+  ): Observable<MovimientoTrazabilidad[]> {
+    let params = new HttpParams();
+    if (sucursalId != null) {
+      params = params.set('sucursalId', String(sucursalId));
+    }
+    return this.http.get<MovimientoTrazabilidad[]>(
+      `${this.api}/repuestos/${repuestoId}/trazabilidad`,
+      { params },
     );
   }
 

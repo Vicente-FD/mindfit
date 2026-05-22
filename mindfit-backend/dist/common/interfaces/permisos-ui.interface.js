@@ -95,7 +95,7 @@ exports.PERMISOS_BY_ROL = {
         verGestionUsuarios: false,
         verGestionSucursales: false,
         verParametrosSistema: false,
-        verCentroMonitoreo: false,
+        verCentroMonitoreo: true,
         verAsignacionOts: false,
         verReportesSucursal: false,
         verControlBodega: false,

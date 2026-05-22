@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const repuesto_entity_1 = require("../entities/repuesto.entity");
 const bodega_stock_entity_1 = require("../entities/bodega-stock.entity");
+const movimiento_inventario_entity_1 = require("../entities/movimiento-inventario.entity");
 const orden_trabajo_repuesto_entity_1 = require("../entities/orden-trabajo-repuesto.entity");
 const inventario_controller_1 = require("./inventario.controller");
 const inventario_service_1 = require("./inventario.service");
@@ -20,7 +21,12 @@ exports.InventarioModule = InventarioModule;
 exports.InventarioModule = InventarioModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([repuesto_entity_1.Repuesto, bodega_stock_entity_1.BodegaStock, orden_trabajo_repuesto_entity_1.OrdenTrabajoRepuesto]),
+            typeorm_1.TypeOrmModule.forFeature([
+                repuesto_entity_1.Repuesto,
+                bodega_stock_entity_1.BodegaStock,
+                movimiento_inventario_entity_1.MovimientoInventario,
+                orden_trabajo_repuesto_entity_1.OrdenTrabajoRepuesto,
+            ]),
         ],
         controllers: [inventario_controller_1.InventarioController],
         providers: [inventario_service_1.InventarioService],

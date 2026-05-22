@@ -19,9 +19,33 @@ export class SucursalesController {
   constructor(private readonly sucursalesService: SucursalesService) {}
 
   @Get()
-  @Roles(RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES)
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.GERENTE_BI,
+  )
   findAll() {
     return this.sucursalesService.findAll();
+  }
+
+  @Get('monitoreo/global')
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.GERENTE_BI,
+  )
+  getMonitoreoGlobal() {
+    return this.sucursalesService.getMonitoreoGlobal();
+  }
+
+  @Get(':id/monitoreo')
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.GERENTE_BI,
+  )
+  getMonitoreo(@Param('id', ParseIntPipe) id: number) {
+    return this.sucursalesService.getMonitoreo(id);
   }
 
   @Get(':id')

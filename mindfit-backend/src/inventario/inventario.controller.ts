@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -8,14 +9,17 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolUsuario } from '../common/enums';
+import { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 import { InventarioService } from './inventario.service';
 import { CreateRepuestoDto } from './dto/create-repuesto.dto';
 import { UpdateRepuestoDto } from './dto/update-repuesto.dto';
 import { FilterBodegaDto } from './dto/filter-bodega.dto';
 import { AjustarStockDto } from './dto/ajustar-stock.dto';
 import { IngresoStockDto } from './dto/ingreso-stock.dto';
+import { BodegaAjusteDto } from './dto/bodega-ajuste.dto';
 
 @Controller()
 export class InventarioController {
@@ -48,6 +52,23 @@ export class InventarioController {
     return this.inventario.createRepuesto(dto);
   }
 
+  @Get('repuestos/:id/trazabilidad')
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.BODEGUERO,
+  )
+  getTrazabilidad(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('sucursalId') sucursalId?: string,
+  ) {
+    const parsed =
+      sucursalId != null && sucursalId !== ''
+        ? Number(sucursalId)
+        : undefined;
+    return this.inventario.getTrazabilidad(id, parsed);
+  }
+
   @Patch('repuestos/:id')
   @Roles(RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES, RolUsuario.BODEGUERO)
   updateRepuesto(
@@ -55,6 +76,21 @@ export class InventarioController {
     @Body() dto: UpdateRepuestoDto,
   ) {
     return this.inventario.updateRepuesto(id, dto);
+  }
+
+  @Delete('repuestos/:id')
+  @Roles(RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES, RolUsuario.BODEGUERO)
+  removeRepuesto(@Param('id', ParseIntPipe) id: number) {
+    return this.inventario.softDeleteRepuesto(id);
+  }
+
+  @Post('bodega/ajuste')
+  @Roles(RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES, RolUsuario.BODEGUERO)
+  registrarAjuste(
+    @Body() dto: BodegaAjusteDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.inventario.registrarAjuste(dto, user.id);
   }
 
   @Get('bodega/stock')

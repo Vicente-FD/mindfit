@@ -1,0 +1,163 @@
+<div class="planner-page mx-auto max-w-7xl space-y-6" [formGroup]="plannerForm">
+  <header class="planner-header page-card">
+    <div>
+      <a
+        routerLink="/dashboard/jefe-operaciones"
+        class="mb-2 inline-flex text-xs text-slate-grey hover:text-pure-white"
+      >
+        ← Volver al Centro de operaciones
+      </a>
+      <p class="text-xs font-semibold uppercase tracking-widest text-orange-energy">
+        Workforce Optimization
+      </p>
+      <h1 class="page-title mt-1">Planificador Semanal</h1>
+      <p class="page-desc">
+        Asigne múltiples OTs preventivas o de inspección de lunes a viernes para un técnico.
+      </p>
+    </div>
+
+    <div class="planner-meta grid gap-3 sm:grid-cols-2">
+      <div>
+        <label class="field-label" for="tecnico-select">Técnico de campo</label>
+        <select id="tecnico-select" class="field-input" formControlName="tecnicoId">
+          <option value="">Seleccione técnico</option>
+          @for (t of tecnicos(); track t.id) {
+            <option [value]="t.id">{{ t.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="week-select">Semana de planificación</label>
+        <select id="week-select" class="field-input" formControlName="weekOffset">
+          <option [value]="0">Semana actual ({{ weekRangeLabel() }})</option>
+          <option [value]="1">Semana siguiente</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <div class="week-grid">
+    @for (day of dayKeys; track day) {
+      <section class="day-column page-card">
+        <div class="day-column-head">
+          <h2 class="day-title">{{ dayLabels[day] }}</h2>
+          <span class="day-count">{{ tasksForDay(day).length }} tarea(s)</span>
+        </div>
+
+        <div class="day-tasks" [formArrayName]="day">
+          @for (task of tasksForDay(day).controls; track $index; let i = $index) {
+            <article class="task-card" [formGroupName]="i">
+              <div class="task-card-head">
+                <span class="text-xs text-slate-grey">Tarea {{ i + 1 }}</span>
+                <button
+                  type="button"
+                  class="btn-icon-trash"
+                  aria-label="Eliminar tarea"
+                  (click)="removeTask(day, i)"
+                >
+                  <lucide-icon name="trash-2" [size]="16" />
+                </button>
+              </div>
+
+              <div class="task-fields">
+                <div>
+                  <label class="field-label">Título *</label>
+                  <input class="field-input field-input-sm" formControlName="titulo" placeholder="Ej. Inspección cardio piso 2" />
+                </div>
+
+                <div>
+                  <label class="field-label">Tipo</label>
+                  <select
+                    class="field-input field-input-sm"
+                    formControlName="tipoReporte"
+                    (change)="onTipoReporteChange(task)"
+                  >
+                    <option value="maquina">Máquina</option>
+                    <option value="infraestructura">Infraestructura</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="field-label">Sucursal *</label>
+                  <select
+                    class="field-input field-input-sm"
+                    formControlName="sucursalId"
+                    (change)="onSucursalChange(task)"
+                  >
+                    <option value="">Seleccione sede</option>
+                    @for (s of sedes(); track s.id) {
+                      <option [value]="s.id">{{ s.nombre }}</option>
+                    }
+                  </select>
+                </div>
+
+                @if (isMaquina(task)) {
+                  <div>
+                    <label class="field-label">Activo *</label>
+                    <select class="field-input field-input-sm" formControlName="activoId">
+                      <option value="">Seleccione activo</option>
+                      @for (a of activosForTask(task); track a.id) {
+                        <option [value]="a.id">
+                          {{ a.nombre }}
+                          @if (a.codigoInventario) {
+                            ({{ a.codigoInventario }})
+                          }
+                        </option>
+                      }
+                    </select>
+                  </div>
+                }
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="field-label">Prioridad</label>
+                    <select class="field-input field-input-sm" formControlName="prioridad">
+                      <option value="baja">Baja</option>
+                      <option value="media">Media</option>
+                      <option value="alta">Alta</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">Mantenimiento</label>
+                    <select class="field-input field-input-sm" formControlName="tipoMantenimiento">
+                      <option value="preventivo">Preventivo</option>
+                      <option value="correctivo">Correctivo</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="field-label">Hora programada</label>
+                  <input class="field-input field-input-sm" type="time" formControlName="horaProgramada" />
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+
+        <button type="button" class="btn-add-task" (click)="addTask(day)">
+          <lucide-icon name="plus" [size]="14" />
+          Añadir tarea
+        </button>
+      </section>
+    }
+  </div>
+
+  <footer class="planner-footer page-card">
+    <p class="text-sm text-slate-grey">
+      {{ totalTasks() }} tarea(s) en el plan · Se crearán como OT asignadas al técnico seleccionado
+    </p>
+    <button
+      type="button"
+      class="btn-save-plan"
+      [disabled]="saving() || totalTasks() === 0"
+      (click)="submitPlan()"
+    >
+      @if (saving()) {
+        Guardando plan…
+      } @else {
+        Guardar Plan Semanal
+      }
+    </button>
+  </footer>
+</div>

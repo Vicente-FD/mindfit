@@ -7,6 +7,7 @@ import {
   Sucursal,
   UpdateSucursalPayload,
 } from '../models/sucursal.model';
+import { SucursalMonitoreoResponse } from '../models/sucursal-monitoreo.model';
 
 @Injectable({ providedIn: 'root' })
 export class SucursalesService {
@@ -20,6 +21,18 @@ export class SucursalesService {
 
   getById(id: number): Observable<Sucursal> {
     return this.http.get<Sucursal>(`${this.baseUrl}/${id}`);
+  }
+
+  getMonitoreo(id: number): Observable<SucursalMonitoreoResponse> {
+    return this.http.get<SucursalMonitoreoResponse>(
+      `${this.baseUrl}/${id}/monitoreo`,
+    );
+  }
+
+  getMonitoreoGlobal(): Observable<SucursalMonitoreoResponse> {
+    return this.http.get<SucursalMonitoreoResponse>(
+      `${this.baseUrl}/monitoreo/global`,
+    );
   }
 
   create(payload: CreateSucursalPayload): Observable<Sucursal> {

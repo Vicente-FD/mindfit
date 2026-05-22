@@ -2,7 +2,7 @@ export interface Repuesto {
   id: number;
   sku: string;
   nombre: string;
-  descripcion: string | null;
+  descripcion?: string | null;
   costoUnitario: string | number;
 }
 
@@ -33,4 +33,50 @@ export interface BodegaKpis {
 export interface RepuestoCierreItem {
   repuestoId: number;
   cantidad: number;
+}
+
+export type TipoMovimientoInventario =
+  | 'ingreso_compra'
+  | 'ajuste_manual_positivo'
+  | 'ajuste_manual_negativo'
+  | 'consumo_ot';
+
+export interface CreateRepuestoPayload {
+  sku: string;
+  nombre: string;
+  descripcion?: string;
+  costoUnitario: number;
+}
+
+export interface UpdateRepuestoPayload {
+  sku?: string;
+  nombre?: string;
+  descripcion?: string;
+  costoUnitario?: number;
+}
+
+export interface BodegaAjustePayload {
+  sucursalId: number;
+  repuestoId: number;
+  cantidad: number;
+  tipoMovimiento: TipoMovimientoInventario;
+  motivo: string;
+}
+
+export interface MovimientoTrazabilidad {
+  id: number;
+  tipoMovimiento: TipoMovimientoInventario;
+  cantidad: number;
+  costoUnitarioMomento: number;
+  motivo: string;
+  createdAt: string;
+  sucursalId: number;
+  sucursalNombre: string;
+  sucursalSigla: string;
+  usuarioNombre: string;
+  ordenTrabajoId: number | null;
+  codigoOt: string | null;
+  ordenTitulo: string | null;
+  activoNombre: string | null;
+  esEntrada: boolean;
 }

@@ -81,6 +81,7 @@ exports.AppModule = AppModule = __decorate([
                             entities_1.Repuesto,
                             entities_1.BodegaStock,
                             entities_1.OrdenTrabajoRepuesto,
+                            entities_1.MovimientoInventario,
                         ],
                         synchronize: configService.get('NODE_ENV') !== 'production',
                         retryAttempts: 10,
