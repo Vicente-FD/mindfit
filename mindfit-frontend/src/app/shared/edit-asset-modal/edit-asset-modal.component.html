@@ -71,12 +71,20 @@
           </select>
         </div>
         <div>
-          <label class="field-label">Fecha compra</label>
-          <input type="date" class="field-input" formControlName="fechaCompra" />
+          <mindfit-date-picker
+            mode="single"
+            label="Fecha compra"
+            placeholder="Seleccionar fecha"
+            formControlName="fechaCompra"
+          />
         </div>
         <div>
-          <label class="field-label">Fin garantía</label>
-          <input type="date" class="field-input" formControlName="fechaVencimientoGarantia" />
+          <mindfit-date-picker
+            mode="single"
+            label="Fin garantía"
+            placeholder="Seleccionar fecha"
+            formControlName="fechaVencimientoGarantia"
+          />
         </div>
         <div>
           <label class="field-label">Costo adquisición (CLP)</label>

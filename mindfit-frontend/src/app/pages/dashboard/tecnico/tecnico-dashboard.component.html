@@ -64,11 +64,12 @@
         <lucide-icon [name]="showListaGastos() ? 'chevron-up' : 'chevron-down'" [size]="16" />
       </button>
       <div class="historial-gastos-actions">
-        <input
-          type="month"
-          class="field-input historial-mes-input"
+        <mindfit-date-picker
+          view="month"
+          mode="single"
+          class="historial-mes-picker"
           [ngModel]="mesGastos()"
-          (ngModelChange)="onMesGastosChange($event)"
+          (ngModelChange)="onMesGastosChange($event ?? '')"
         />
         <button
           type="button"

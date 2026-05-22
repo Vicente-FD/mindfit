@@ -11,31 +11,17 @@
     </div>
 
     <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
-      <div class="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label class="field-label" for="fechaInicio">Fecha de inicio (desde)</label>
-          <input
-            id="fechaInicio"
-            type="date"
-            class="field-input"
-            formControlName="fechaInicio"
-            (change)="validateRange()"
-          />
-        </div>
-        <div>
-          <label class="field-label" for="fechaFin">Fecha de término (hasta)</label>
-          <input
-            id="fechaFin"
-            type="date"
-            class="field-input"
-            formControlName="fechaFin"
-            (change)="validateRange()"
-          />
-        </div>
-      </div>
+      <mindfit-date-picker
+        mode="range"
+        label="Periodo del reporte"
+        placeholder="Seleccione rango de fechas"
+        formControlName="periodo"
+      />
 
       @if (fechaInvalida()) {
-        <p class="text-xs text-orange-energy">La fecha de término debe ser posterior o igual a la de inicio.</p>
+        <p class="text-xs text-orange-energy">
+          La fecha de término debe ser posterior o igual a la de inicio.
+        </p>
       }
 
       <div>

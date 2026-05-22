@@ -33,6 +33,13 @@ export interface CreateActivoPayload {
   fechaCompra?: string;
   fechaVencimientoGarantia?: string;
   costoAdquisicion?: number;
+  /** Cada unidad recibe su propio código de inventario (máx. 50). */
+  cantidad?: number;
+}
+
+export interface CreateActivosResponse {
+  total: number;
+  activos: Activo[];
 }
 
 export interface UpdateActivoPayload {
@@ -83,8 +90,8 @@ export class ActivosService {
     );
   }
 
-  create(payload: CreateActivoPayload): Observable<Activo> {
-    return this.http.post<Activo>(this.baseUrl, payload);
+  create(payload: CreateActivoPayload): Observable<CreateActivosResponse> {
+    return this.http.post<CreateActivosResponse>(this.baseUrl, payload);
   }
 
   update(id: number, payload: UpdateActivoPayload): Observable<Activo> {

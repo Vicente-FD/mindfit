@@ -1,0 +1,138 @@
+<div class="mdp" [class.mdp--open]="isOpen()" [class.mdp--disabled]="isDisabled()">
+  @if (label()) {
+    <label class="field-label mdp__label" [attr.for]="inputId">{{ label() }}</label>
+  }
+
+  <button
+    type="button"
+    class="mdp__trigger"
+    [id]="inputId"
+    [disabled]="isDisabled()"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-haspopup]="'dialog'"
+    (click)="toggle()"
+  >
+    <lucide-icon name="calendar" [size]="18" class="mdp__icon shrink-0 text-orange-energy" />
+    <span class="mdp__text" [class.mdp__text--placeholder]="!hasValue()">{{ displayText() }}</span>
+    @if (hasValue() && !isDisabled()) {
+      <span
+        class="mdp__clear"
+        role="button"
+        tabindex="-1"
+        aria-label="Limpiar fecha"
+        (click)="clear($event)"
+      >
+        <lucide-icon name="x" [size]="14" />
+      </span>
+    }
+  </button>
+
+  @if (isOpen()) {
+    @if (isMobile()) {
+      <div class="mdp__sheet-backdrop" (click)="close()"></div>
+    }
+
+    <div
+      class="mdp__panel"
+      [class.mdp__panel--popover]="!isMobile()"
+      [class.mdp__panel--sheet]="isMobile()"
+      role="dialog"
+      aria-modal="true"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="mdp__panel-inner">
+        @if (mode() === 'range' && view() === 'day') {
+          <aside class="mdp__presets">
+            <p class="mdp__presets-title">Atajos</p>
+            @for (preset of rangePresets; track preset.id) {
+              <button type="button" class="mdp__preset-btn" (click)="applyPreset(preset)">
+                {{ preset.label }}
+              </button>
+            }
+          </aside>
+        }
+
+        <div class="mdp__main">
+          @if (isMobile()) {
+            <div class="mdp__sheet-handle"></div>
+            <div class="mdp__sheet-head">
+              <span class="text-sm font-semibold text-pure-white">
+                {{ mode() === 'range' ? 'Rango de fechas' : view() === 'month' ? 'Mes' : 'Fecha' }}
+              </span>
+              <button type="button" class="mdp__sheet-close" (click)="close()">
+                <lucide-icon name="x" [size]="18" />
+              </button>
+            </div>
+          }
+
+          @if (mode() === 'range' && view() === 'day' && isMobile()) {
+            <div class="mdp__presets mdp__presets--mobile">
+              @for (preset of rangePresets; track preset.id) {
+                <button type="button" class="mdp__preset-chip" (click)="applyPreset(preset)">
+                  {{ preset.label }}
+                </button>
+              }
+            </div>
+          }
+
+          @if (view() === 'month') {
+            <div class="mdp__nav">
+              <button type="button" class="mdp__nav-btn" aria-label="Año anterior" (click)="prevYear()">
+                <lucide-icon name="chevron-left" [size]="18" />
+              </button>
+              <span class="mdp__nav-title capitalize">{{ yearTitle() }}</span>
+              <button type="button" class="mdp__nav-btn" aria-label="Año siguiente" (click)="nextYear()">
+                <lucide-icon name="chevron-right" [size]="18" />
+              </button>
+            </div>
+            <div class="mdp__months-grid">
+              @for (label of monthLabels; track label; let i = $index) {
+                <button
+                  type="button"
+                  class="mdp-month"
+                  [class.mdp-month--selected]="isMonthSelected(i)"
+                  (click)="selectMonth(i)"
+                >
+                  {{ label }}
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="mdp__nav">
+              <button type="button" class="mdp__nav-btn" aria-label="Mes anterior" (click)="prevMonth()">
+                <lucide-icon name="chevron-left" [size]="18" />
+              </button>
+              <span class="mdp__nav-title capitalize">{{ monthTitle() }}</span>
+              <button type="button" class="mdp__nav-btn" aria-label="Mes siguiente" (click)="nextMonth()">
+                <lucide-icon name="chevron-right" [size]="18" />
+              </button>
+            </div>
+
+            <div class="mdp__weekdays">
+              @for (wd of weekdayLabels; track wd) {
+                <span class="mdp__weekday">{{ wd }}</span>
+              }
+            </div>
+
+            <div class="mdp__days">
+              @for (day of calendarDays(); track dayTrackKey(day)) {
+                <button
+                  type="button"
+                  class="mdp-day"
+                  [ngClass]="dayClasses(day)"
+                  (click)="selectDay(day)"
+                >
+                  {{ day.getDate() }}
+                </button>
+              }
+            </div>
+
+            @if (mode() === 'range') {
+              <p class="mdp__hint">Seleccione inicio y fin, o use un atajo rápido.</p>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

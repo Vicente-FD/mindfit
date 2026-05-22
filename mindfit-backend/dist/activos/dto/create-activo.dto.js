@@ -25,6 +25,7 @@ class CreateActivoDto {
     costoAdquisicion;
     documentacionUrls;
     estadoOperacional;
+    cantidad;
 }
 exports.CreateActivoDto = CreateActivoDto;
 __decorate([
@@ -89,4 +90,11 @@ __decorate([
     (0, class_validator_1.IsEnum)(enums_1.EstadoOperacionalActivo),
     __metadata("design:type", String)
 ], CreateActivoDto.prototype, "estadoOperacional", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(50),
+    __metadata("design:type", Number)
+], CreateActivoDto.prototype, "cantidad", void 0);
 //# sourceMappingURL=create-activo.dto.js.map

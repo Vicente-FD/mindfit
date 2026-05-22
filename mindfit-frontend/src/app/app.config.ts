@@ -35,6 +35,8 @@ import {
   Eye,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Wallet,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
@@ -77,6 +79,8 @@ export const appConfig: ApplicationConfig = {
         Eye,
         ChevronDown,
         ChevronUp,
+        ChevronLeft,
+        ChevronRight,
         Wallet,
       }),
     ),

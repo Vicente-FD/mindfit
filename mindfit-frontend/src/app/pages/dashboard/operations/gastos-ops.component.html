@@ -32,13 +32,13 @@
 
     <div class="gastos-filtros">
       <div>
-        <label class="field-label" for="filtro-mes">Mes</label>
-        <input
-          id="filtro-mes"
-          type="month"
-          class="field-input gastos-filtro-input"
+        <mindfit-date-picker
+          view="month"
+          mode="single"
+          label="Mes"
+          placeholder="Seleccionar mes"
           [ngModel]="mesFiltro()"
-          (ngModelChange)="mesFiltro.set($event); onFiltrosChange()"
+          (ngModelChange)="onMesFiltroChange($event)"
         />
       </div>
       <div>

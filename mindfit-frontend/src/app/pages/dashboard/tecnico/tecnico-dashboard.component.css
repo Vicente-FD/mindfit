@@ -115,10 +115,13 @@
   gap: 0.35rem;
 }
 
-.historial-mes-input {
-  width: 8.5rem;
+.historial-mes-picker {
+  width: 9.5rem;
+}
+
+.historial-mes-picker .mdp__trigger {
+  padding: 0.4rem 0.55rem;
   font-size: 0.7rem;
-  padding: 0.35rem 0.5rem;
 }
 
 .btn-export-gastos-mini {

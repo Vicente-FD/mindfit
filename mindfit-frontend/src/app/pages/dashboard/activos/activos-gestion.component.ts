@@ -14,6 +14,7 @@ import { QrLabelModalComponent } from '../../../shared/qr-label-modal/qr-label-m
 import { EditAssetModalComponent } from '../../../shared/edit-asset-modal/edit-asset-modal.component';
 import { AssetHistoryModalComponent } from '../../../shared/asset-history-modal/asset-history-modal.component';
 import { environment } from '../../../../environments/environment';
+import { MindfitDatePickerComponent } from '../../../common/components/date-picker/date-picker.component';
 
 @Component({
   selector: 'app-activos-gestion',
@@ -23,6 +24,7 @@ import { environment } from '../../../../environments/environment';
     QrLabelModalComponent,
     EditAssetModalComponent,
     AssetHistoryModalComponent,
+    MindfitDatePickerComponent,
   ],
   templateUrl: './activos-gestion.component.html',
   styleUrl: './activos-gestion.component.css',
@@ -47,13 +49,11 @@ export class ActivosGestionComponent implements OnInit {
   readonly showPiso = signal(false);
   readonly pisosOpciones = signal<number[]>([]);
 
-  readonly anios = Array.from({ length: 8 }, (_, i) => new Date().getFullYear() - i);
-
   readonly filterForm = this.fb.nonNullable.group({
     sucursalId: [''],
     marcaId: [''],
     categoriaId: [''],
-    anioCompra: [''],
+    mesCompra: [''],
     busqueda: [''],
   });
 
@@ -67,6 +67,7 @@ export class ActivosGestionComponent implements OnInit {
     fechaCompra: [''],
     fechaVencimientoGarantia: [''],
     costoAdquisicion: [null as number | null],
+    cantidad: [1, [Validators.required, Validators.min(1), Validators.max(50)]],
   });
 
   ngOnInit(): void {
@@ -123,7 +124,9 @@ export class ActivosGestionComponent implements OnInit {
         sucursalId: f.sucursalId ? Number(f.sucursalId) : undefined,
         marcaId: f.marcaId ? Number(f.marcaId) : undefined,
         categoriaId: f.categoriaId ? Number(f.categoriaId) : undefined,
-        anioCompra: f.anioCompra ? Number(f.anioCompra) : undefined,
+        anioCompra: f.mesCompra
+          ? Number(String(f.mesCompra).split('-')[0])
+          : undefined,
         busqueda: f.busqueda || undefined,
       })
       .subscribe({
@@ -139,6 +142,8 @@ export class ActivosGestionComponent implements OnInit {
     }
     const v = this.form.getRawValue();
     this.saving.set(true);
+    const cantidad = Math.min(50, Math.max(1, Number(v.cantidad) || 1));
+
     this.activosService
       .create({
         nombre: v.nombre!,
@@ -151,11 +156,34 @@ export class ActivosGestionComponent implements OnInit {
         fechaCompra: v.fechaCompra || undefined,
         fechaVencimientoGarantia: v.fechaVencimientoGarantia || undefined,
         costoAdquisicion: v.costoAdquisicion ?? undefined,
+        cantidad,
       })
       .subscribe({
-        next: (activo) => {
+        next: (res) => {
           this.saving.set(false);
-          this.toast.success(`Activo registrado: ${activo.codigoInventario}`);
+          const codigos = res.activos
+            .map((a) => a.codigoInventario)
+            .filter(Boolean)
+            .slice(0, 3);
+          const codigosHint =
+            res.total > 3
+              ? `${codigos.join(', ')} … (+${res.total - 3} más)`
+              : codigos.join(', ');
+
+          if (res.total === 1) {
+            this.toast.success(
+              `Activo registrado: ${res.activos[0]?.codigoInventario ?? ''}`,
+            );
+          } else {
+            this.toast.success(
+              `${res.total} activos registrados con códigos únicos (${codigosHint})`,
+            );
+          }
+
+          if (res.total === 1 && res.activos[0]) {
+            this.qrActivo.set(res.activos[0]);
+          }
+
           this.showForm.set(false);
           this.form.reset({
             nombre: '',
@@ -167,6 +195,7 @@ export class ActivosGestionComponent implements OnInit {
             fechaCompra: '',
             fechaVencimientoGarantia: '',
             costoAdquisicion: null,
+            cantidad: 1,
           });
           this.showPiso.set(false);
           this.loadActivos();

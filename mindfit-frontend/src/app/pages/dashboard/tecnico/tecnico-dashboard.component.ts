@@ -32,6 +32,7 @@ import {
 } from '../../../core/models/gastos.model';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
+import { MindfitDatePickerComponent } from '../../../common/components/date-picker/date-picker.component';
 
 function mesActual(): string {
   const n = new Date();
@@ -52,6 +53,7 @@ const ACTIVE_STATUSES: WorkOrderStatus[] = [
     RenderGastoModalComponent,
     LucideAngularModule,
     FormsModule,
+    MindfitDatePickerComponent,
   ],
   templateUrl: './tecnico-dashboard.component.html',
   styleUrl: './tecnico-dashboard.component.css',
@@ -240,8 +242,10 @@ export class TecnicoDashboardComponent implements OnInit {
     });
   }
 
-  onMesGastosChange(mes: string): void {
-    this.mesGastos.set(mes);
+  onMesGastosChange(mes: string | null): void {
+    const n = new Date();
+    const fallback = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+    this.mesGastos.set(mes && /^\d{4}-\d{2}$/.test(mes) ? mes : fallback);
     this.loadListaGastos();
   }
 

@@ -11,6 +11,7 @@ import {
   RendicionGasto,
   SaldoTecnicoResumen,
 } from '../../../core/models/gastos.model';
+import { MindfitDatePickerComponent } from '../../../common/components/date-picker/date-picker.component';
 
 function mesActual(): string {
   const n = new Date();
@@ -19,7 +20,7 @@ function mesActual(): string {
 
 @Component({
   selector: 'app-gastos-ops',
-  imports: [FormsModule, LucideAngularModule],
+  imports: [FormsModule, LucideAngularModule, MindfitDatePickerComponent],
   templateUrl: './gastos-ops.component.html',
   styleUrl: './gastos-ops.component.css',
 })
@@ -93,6 +94,11 @@ export class GastosOpsComponent implements OnInit {
 
   onFiltrosChange(): void {
     this.loadLista();
+  }
+
+  onMesFiltroChange(value: string | null): void {
+    this.mesFiltro.set(value ?? mesActual());
+    this.onFiltrosChange();
   }
 
   async exportarPdf(): Promise<void> {

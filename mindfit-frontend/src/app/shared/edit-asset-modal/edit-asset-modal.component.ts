@@ -13,6 +13,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { Categoria } from '../../core/models/categoria.model';
 import { Marca } from '../../core/models/marca.model';
 import { Sucursal } from '../../core/models/sucursal.model';
+import { MindfitDatePickerComponent } from '../../common/components/date-picker/date-picker.component';
 
 const ESTADOS_OPERACIONAL = [
   { value: 'operativo', label: 'Operativo' },
@@ -23,7 +24,7 @@ const ESTADOS_OPERACIONAL = [
 
 @Component({
   selector: 'app-edit-asset-modal',
-  imports: [ReactiveFormsModule, LucideAngularModule],
+  imports: [ReactiveFormsModule, LucideAngularModule, MindfitDatePickerComponent],
   templateUrl: './edit-asset-modal.component.html',
   styleUrl: './edit-asset-modal.component.css',
 })

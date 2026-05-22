@@ -13,7 +13,7 @@ export declare class ActivosController {
     findAll(filters: FilterActivosDto): Promise<import("../entities").Activo[]>;
     getHistorial(id: number): Promise<import("./dto/activo-historial.dto").ActivoHistorialItemDto[]>;
     findOne(id: number): Promise<import("../entities").Activo>;
-    create(dto: CreateActivoDto): Promise<import("../entities").Activo>;
+    create(dto: CreateActivoDto): Promise<import("./dto/create-activos-result.dto").CreateActivosResultDto>;
     update(id: number, dto: UpdateActivoDto): Promise<import("../entities").Activo>;
     remove(id: number): Promise<{
         deleted: boolean;

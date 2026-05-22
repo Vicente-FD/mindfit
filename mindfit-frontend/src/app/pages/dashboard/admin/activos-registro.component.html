@@ -15,8 +15,8 @@
     <div><label class="field-label">Sucursal *</label>
       <select class="field-input" formControlName="sucursalId"><option value="">Seleccione</option>@for (s of sucursales(); track s.id) {<option [value]="s.id">{{ s.nombre }}</option>}</select>
     </div>
-    <div><label class="field-label">Fecha compra</label><input type="date" class="field-input" formControlName="fechaCompra" /></div>
-    <div><label class="field-label">Fin garantía</label><input type="date" class="field-input" formControlName="fechaVencimientoGarantia" /></div>
+    <div><mindfit-date-picker mode="single" label="Fecha compra" placeholder="Seleccionar fecha" formControlName="fechaCompra" /></div>
+    <div><mindfit-date-picker mode="single" label="Fin garantía" placeholder="Seleccionar fecha" formControlName="fechaVencimientoGarantia" /></div>
     <div><label class="field-label">Costo adquisición</label><input type="number" class="field-input" formControlName="costoAdquisicion" /></div>
     <div class="sm:col-span-2"><button type="submit" class="btn-primary w-full" [disabled]="saving() || form.invalid">@if (saving()) { Guardando... } @else { Registrar activo }</button></div>
   </form>

@@ -168,15 +168,57 @@ let ActivosService = class ActivosService {
         };
     }
     async create(dto) {
-        const manager = this.transactionContext.getManager(this.dataSource);
+        const cantidad = dto.cantidad ?? 1;
+        if (cantidad > 1 && dto.numeroSerie) {
+            throw new common_1.BadRequestException('No puede indicar número de serie al registrar varias unidades iguales');
+        }
+        if (cantidad === 1) {
+            const activo = await this.createOne(dto);
+            return { total: 1, activos: [activo] };
+        }
+        const activos = await this.createMany(dto, cantidad);
+        return { total: activos.length, activos };
+    }
+    async createOne(dto, manager) {
+        const em = manager ?? this.transactionContext.getManager(this.dataSource);
         if (dto.numeroSerie) {
-            const exists = await manager.findOne(activo_entity_1.Activo, {
+            const exists = await em.findOne(activo_entity_1.Activo, {
                 where: { numeroSerie: dto.numeroSerie },
             });
             if (exists) {
                 throw new common_1.ConflictException('Número de serie ya registrado');
             }
         }
+        const saved = await this.persistActivo(em, dto);
+        return this.findOne(saved.id);
+    }
+    async createMany(dto, cantidad) {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            const manager = queryRunner.manager;
+            const ids = [];
+            for (let i = 0; i < cantidad; i++) {
+                const saved = await this.persistActivo(manager, dto);
+                ids.push(saved.id);
+            }
+            await queryRunner.commitTransaction();
+            const creados = [];
+            for (const id of ids) {
+                creados.push(await this.findOne(id));
+            }
+            return creados;
+        }
+        catch (err) {
+            await queryRunner.rollbackTransaction();
+            throw err;
+        }
+        finally {
+            await queryRunner.release();
+        }
+    }
+    async persistActivo(manager, dto) {
         const marca = await manager.findOne(marca_entity_1.Marca, { where: { id: dto.marcaId } });
         if (!marca) {
             throw new common_1.BadRequestException('Marca no encontrada');
@@ -207,8 +249,7 @@ let ActivosService = class ActivosService {
             codigoInventario: codigo,
             codigoQrToken: codigo,
         });
-        const saved = await manager.save(activo);
-        return this.findOne(saved.id);
+        return manager.save(activo);
     }
     async update(id, dto) {
         const activo = await this.findOne(id);

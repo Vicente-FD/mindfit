@@ -1,15 +1,30 @@
-import { Component, inject, input, output, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject, input, OnInit, output, signal } from '@angular/core';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { Sucursal } from '../../core/models/sucursal.model';
+import { MindfitDatePickerComponent } from '../../common/components/date-picker/date-picker.component';
+import { DateRangeValue } from '../../common/components/date-picker/date-picker.types';
+
+function rangeRequired(control: AbstractControl): ValidationErrors | null {
+  const v = control.value as DateRangeValue | null;
+  if (!v?.start || !v?.end) return { required: true };
+  if (v.end < v.start) return { invalidRange: true };
+  return null;
+}
 
 @Component({
   selector: 'app-ot-report-modal',
-  imports: [ReactiveFormsModule, LucideAngularModule],
+  imports: [ReactiveFormsModule, LucideAngularModule, MindfitDatePickerComponent],
   templateUrl: './ot-report-modal.component.html',
   styleUrl: './ot-report-modal.component.css',
 })
-export class OtReportModalComponent {
+export class OtReportModalComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   readonly sucursales = input.required<Sucursal[]>();
@@ -22,23 +37,27 @@ export class OtReportModalComponent {
   }>();
 
   readonly form = this.fb.nonNullable.group({
-    fechaInicio: ['', Validators.required],
-    fechaFin: ['', Validators.required],
+    periodo: [null as DateRangeValue | null, rangeRequired],
     sucursalId: [''],
   });
+
+  readonly fechaInvalida = signal(false);
+
+  ngOnInit(): void {
+    this.form.controls.periodo.valueChanges.subscribe(() => this.validateRange());
+  }
 
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.validateRange();
       return;
     }
     const v = this.form.getRawValue();
-    if (v.fechaFin < v.fechaInicio) {
-      return;
-    }
+    const p = v.periodo!;
     this.generate.emit({
-      fechaInicio: v.fechaInicio,
-      fechaFin: v.fechaFin,
+      fechaInicio: p.start,
+      fechaFin: p.end,
       sucursalId: v.sucursalId ? Number(v.sucursalId) : null,
     });
   }
@@ -47,12 +66,9 @@ export class OtReportModalComponent {
     this.closed.emit();
   }
 
-  readonly fechaInvalida = signal(false);
-
   validateRange(): void {
-    const v = this.form.getRawValue();
-    this.fechaInvalida.set(
-      !!v.fechaInicio && !!v.fechaFin && v.fechaFin < v.fechaInicio,
-    );
+    const p = this.form.controls.periodo.value;
+    this.fechaInvalida.set(!!p?.start && !!p?.end && p.end < p.start);
   }
+
 }

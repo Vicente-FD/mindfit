@@ -58,20 +58,48 @@
         </div>
       }
       <div>
-        <label class="field-label">Fecha compra</label>
-        <input type="date" class="field-input" formControlName="fechaCompra" />
+        <mindfit-date-picker
+          mode="single"
+          label="Fecha compra"
+          placeholder="Seleccionar fecha"
+          formControlName="fechaCompra"
+        />
       </div>
       <div>
-        <label class="field-label">Fin garantía</label>
-        <input type="date" class="field-input" formControlName="fechaVencimientoGarantia" />
+        <mindfit-date-picker
+          mode="single"
+          label="Fin garantía"
+          placeholder="Seleccionar fecha"
+          formControlName="fechaVencimientoGarantia"
+        />
       </div>
       <div>
         <label class="field-label">Costo adquisición (CLP)</label>
-        <input type="number" class="field-input" formControlName="costoAdquisicion" />
+        <input type="number" class="field-input" formControlName="costoAdquisicion" min="0" />
+      </div>
+      <div>
+        <label class="field-label">Cantidad de unidades *</label>
+        <input
+          type="number"
+          class="field-input"
+          formControlName="cantidad"
+          min="1"
+          max="50"
+          step="1"
+        />
+        <p class="mt-1 text-xs text-slate-grey">
+          Cada unidad recibe su propio código de inventario y QR (máx. 50 por registro).
+        </p>
       </div>
       <div class="sm:col-span-2">
         <button type="submit" class="btn-primary w-full" [disabled]="saving() || form.invalid">
-          @if (saving()) { Registrando... } @else { Registrar y generar código }
+          @if (saving()) {
+            Registrando...
+          } @else if ((form.controls.cantidad.value ?? 1) > 1) {
+            Registrar {{ form.controls.cantidad.value }} activos y generar códigos
+          } @else {
+            Registrar y generar código
+          }
         </button>
       </div>
     </form>
@@ -108,13 +136,13 @@
         </select>
       </div>
       <div>
-        <label class="field-label">Año compra</label>
-        <select class="field-input" formControlName="anioCompra">
-          <option value="">Todos</option>
-          @for (y of anios; track y) {
-            <option [value]="y">{{ y }}</option>
-          }
-        </select>
+        <mindfit-date-picker
+          view="month"
+          mode="single"
+          label="Mes / año compra"
+          placeholder="Todos"
+          formControlName="mesCompra"
+        />
       </div>
       <div class="sm:col-span-2 lg:col-span-1">
         <label class="field-label">Buscar</label>

@@ -63,4 +63,11 @@ export class CreateActivoDto {
   @IsOptional()
   @IsEnum(EstadoOperacionalActivo)
   estadoOperacional?: EstadoOperacionalActivo;
+
+  /** Unidades idénticas a registrar; cada una recibe su propio código de inventario. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  cantidad?: number;
 }

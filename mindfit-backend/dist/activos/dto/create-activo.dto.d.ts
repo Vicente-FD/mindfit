@@ -12,4 +12,5 @@ export declare class CreateActivoDto {
     costoAdquisicion?: number;
     documentacionUrls?: string[];
     estadoOperacional?: EstadoOperacionalActivo;
+    cantidad?: number;
 }
