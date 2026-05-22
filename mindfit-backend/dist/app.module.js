@@ -23,6 +23,7 @@ const database_module_1 = require("./database/database.module");
 const seed_service_1 = require("./database/seed.service");
 const schema_fix_service_1 = require("./database/schema-fix.service");
 const entities_1 = require("./entities");
+const rendiciones_gastos_module_1 = require("./rendiciones-gastos/rendiciones-gastos.module");
 const inventario_module_1 = require("./inventario/inventario.module");
 const audit_trail_module_1 = require("./audit-trail/audit-trail.module");
 const planes_preventivos_module_1 = require("./planes-preventivos/planes-preventivos.module");
@@ -82,6 +83,7 @@ exports.AppModule = AppModule = __decorate([
                             entities_1.BodegaStock,
                             entities_1.OrdenTrabajoRepuesto,
                             entities_1.MovimientoInventario,
+                            entities_1.RendicionGasto,
                         ],
                         synchronize: configService.get('NODE_ENV') !== 'production',
                         retryAttempts: 10,
@@ -113,6 +115,7 @@ exports.AppModule = AppModule = __decorate([
             planes_preventivos_module_1.PlanesPreventivosModule,
             audit_trail_module_1.AuditTrailModule,
             inventario_module_1.InventarioModule,
+            rendiciones_gastos_module_1.RendicionesGastosModule,
         ],
         controllers: [app_controller_1.AppController, debug_controller_1.DebugController],
         providers: [

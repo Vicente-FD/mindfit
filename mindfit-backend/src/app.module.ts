@@ -26,9 +26,11 @@ import {
   BodegaStock,
   OrdenTrabajoRepuesto,
   MovimientoInventario,
+  RendicionGasto,
   Sucursal,
   Usuario,
 } from './entities';
+import { RendicionesGastosModule } from './rendiciones-gastos/rendiciones-gastos.module';
 import { InventarioModule } from './inventario/inventario.module';
 import { AuditTrailModule } from './audit-trail/audit-trail.module';
 import { PlanesPreventivosModule } from './planes-preventivos/planes-preventivos.module';
@@ -90,6 +92,7 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
             BodegaStock,
             OrdenTrabajoRepuesto,
             MovimientoInventario,
+            RendicionGasto,
           ],
           synchronize: configService.get<string>('NODE_ENV') !== 'production',
           retryAttempts: 10,
@@ -121,6 +124,7 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
     PlanesPreventivosModule,
     AuditTrailModule,
     InventarioModule,
+    RendicionesGastosModule,
   ],
   controllers: [AppController, DebugController],
   providers: [

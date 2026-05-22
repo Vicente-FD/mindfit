@@ -12,3 +12,4 @@ export { Repuesto } from './repuesto.entity';
 export { BodegaStock } from './bodega-stock.entity';
 export { OrdenTrabajoRepuesto } from './orden-trabajo-repuesto.entity';
 export { MovimientoInventario } from './movimiento-inventario.entity';
+export { RendicionGasto } from './rendicion-gasto.entity';

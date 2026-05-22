@@ -21,6 +21,22 @@ import {
 } from '../../../core/models/work-order.model';
 import { CloseOtModalComponent } from '../../../layout/close-ot-modal/close-ot-modal.component';
 import { StartWorkModalComponent } from '../../../layout/start-work-modal/start-work-modal.component';
+import { RenderGastoModalComponent } from '../../../layout/render-gasto-modal/render-gasto-modal.component';
+import { GastosService } from '../../../core/services/gastos.service';
+import { GastosPdfReportService } from '../../../core/services/gastos-pdf-report.service';
+import {
+  EstadoRendicionGasto,
+  LIMITE_MENSUAL_GASTO,
+  ListaGastosResponse,
+  MiSaldoGastos,
+} from '../../../core/models/gastos.model';
+import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
+
+function mesActual(): string {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+}
 
 const ACTIVE_STATUSES: WorkOrderStatus[] = [
   'pendiente',
@@ -30,7 +46,13 @@ const ACTIVE_STATUSES: WorkOrderStatus[] = [
 
 @Component({
   selector: 'app-tecnico-dashboard',
-  imports: [CloseOtModalComponent, StartWorkModalComponent],
+  imports: [
+    CloseOtModalComponent,
+    StartWorkModalComponent,
+    RenderGastoModalComponent,
+    LucideAngularModule,
+    FormsModule,
+  ],
   templateUrl: './tecnico-dashboard.component.html',
   styleUrl: './tecnico-dashboard.component.css',
 })
@@ -43,6 +65,8 @@ export class TecnicoDashboardComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly agentDebug = inject(AgentDebugService);
+  private readonly gastos = inject(GastosService);
+  private readonly gastosPdf = inject(GastosPdfReportService);
   private scanHandled = false;
   private ordersRequestId = 0;
 
@@ -57,6 +81,26 @@ export class TecnicoDashboardComponent implements OnInit {
   readonly now = signal(Date.now());
 
   readonly highlightOrderId = this.tecnicoUi.highlightOrderId;
+
+  readonly saldoGastos = signal<MiSaldoGastos | null>(null);
+  readonly saldoGastosLoading = signal(true);
+  readonly showGastoModal = signal(false);
+  readonly limiteMensualGasto = LIMITE_MENSUAL_GASTO;
+  readonly mesGastos = signal(mesActual());
+  readonly listaGastos = signal<ListaGastosResponse | null>(null);
+  readonly listaGastosLoading = signal(false);
+  readonly exportingGastosPdf = signal(false);
+  readonly showListaGastos = signal(true);
+  readonly boletaPreviewUrl = signal<string | null>(null);
+
+  readonly saldoProgressPct = computed(() => {
+    const s = this.saldoGastos();
+    if (!s || s.limiteMensual <= 0) return 0;
+    return Math.min(
+      100,
+      (s.montoAprobadoMes / s.limiteMensual) * 100,
+    );
+  });
 
   readonly pendingCount = computed(
     () =>
@@ -93,6 +137,8 @@ export class TecnicoDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadOrders();
+    this.loadSaldoGastos();
+    this.loadListaGastos();
 
     interval(1000)
       .pipe(startWith(0), takeUntilDestroyed(this.destroyRef))
@@ -152,6 +198,115 @@ export class TecnicoDashboardComponent implements OnInit {
 
   logout(): void {
     this.auth.logout();
+  }
+
+  loadSaldoGastos(): void {
+    this.saldoGastosLoading.set(true);
+    this.gastos.getMiSaldo().subscribe({
+      next: (data) => {
+        this.saldoGastos.set(data);
+        this.saldoGastosLoading.set(false);
+      },
+      error: () => {
+        this.saldoGastosLoading.set(false);
+      },
+    });
+  }
+
+  openGastoModal(): void {
+    this.showGastoModal.set(true);
+  }
+
+  onGastoModalClosed(): void {
+    this.showGastoModal.set(false);
+  }
+
+  onGastoSubmitted(): void {
+    this.showGastoModal.set(false);
+    this.loadSaldoGastos();
+    this.loadListaGastos();
+  }
+
+  loadListaGastos(): void {
+    this.listaGastosLoading.set(true);
+    this.gastos.getLista({ mes: this.mesGastos() }).subscribe({
+      next: (data) => {
+        this.listaGastos.set(data);
+        this.listaGastosLoading.set(false);
+      },
+      error: () => {
+        this.listaGastosLoading.set(false);
+      },
+    });
+  }
+
+  onMesGastosChange(mes: string): void {
+    this.mesGastos.set(mes);
+    this.loadListaGastos();
+  }
+
+  async exportarGastosPdf(): Promise<void> {
+    const data = this.listaGastos();
+    if (!data?.items.length) {
+      this.toast.error('No hay gastos para exportar en este mes');
+      return;
+    }
+    this.exportingGastosPdf.set(true);
+    try {
+      await this.gastosPdf.downloadPdf(data.items, data.resumen, {
+        mes: data.mes,
+        mesLabel: this.gastosPdf.mesLabelFromKey(data.mes),
+        tecnicoLabel: this.user()?.nombre ?? 'Mi rendición',
+      });
+      this.toast.success('PDF generado');
+    } catch {
+      this.toast.error('No se pudo generar el PDF');
+    } finally {
+      this.exportingGastosPdf.set(false);
+    }
+  }
+
+  openBoletaPreview(url: string): void {
+    this.boletaPreviewUrl.set(url);
+  }
+
+  closeBoletaPreview(): void {
+    this.boletaPreviewUrl.set(null);
+  }
+
+  toggleListaGastos(): void {
+    this.showListaGastos.update((v) => !v);
+  }
+
+  estadoGastoLabel(estado: EstadoRendicionGasto): string {
+    const map: Record<EstadoRendicionGasto, string> = {
+      pendiente: 'Pendiente',
+      aprobado: 'Aprobado',
+      rechazado: 'Rechazado',
+    };
+    return map[estado];
+  }
+
+  estadoGastoClass(estado: EstadoRendicionGasto): string {
+    if (estado === 'aprobado') return 'estado-pill--ok';
+    if (estado === 'rechazado') return 'estado-pill--bad';
+    return 'estado-pill--pending';
+  }
+
+  formatClp(value: number): string {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
+
+  formatFechaGasto(fecha: string): string {
+    const d = new Date(fecha + 'T12:00:00');
+    return d.toLocaleDateString('es-CL', {
+      day: '2-digit',
+      month: 'short',
+    });
   }
 
   openStartModal(orden: WorkOrder): void {

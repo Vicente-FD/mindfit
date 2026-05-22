@@ -1,0 +1,101 @@
+.gasto-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.88);
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .gasto-modal-backdrop {
+    align-items: center;
+    padding: 1rem;
+  }
+}
+
+.gasto-modal {
+  width: 100%;
+  max-width: 28rem;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem 1rem 0 0;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: #1a1a1c;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .gasto-modal {
+    border-radius: 1rem;
+  }
+}
+
+.gasto-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.5rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.gasto-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.gasto-boleta-upload {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 120px;
+  border-radius: 0.75rem;
+  border: 2px dashed rgb(255 102 0 / 0.45);
+  background: rgb(255 102 0 / 0.06);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.gasto-boleta-upload:hover {
+  background: rgb(255 102 0 / 0.12);
+}
+
+.gasto-boleta-preview {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.gasto-boleta-preview img {
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  background: #000;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

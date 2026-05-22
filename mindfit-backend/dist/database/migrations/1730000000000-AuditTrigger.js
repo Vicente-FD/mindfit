@@ -59,8 +59,15 @@ class AuditTrigger1730000000000 {
       AFTER INSERT OR UPDATE OR DELETE ON ordenes_trabajo
       FOR EACH ROW EXECUTE FUNCTION fn_log_table_changes();
     `);
+        await queryRunner.query(`
+      DROP TRIGGER IF EXISTS trg_audit_rendiciones_gastos ON rendiciones_gastos;
+      CREATE TRIGGER trg_audit_rendiciones_gastos
+      AFTER INSERT OR UPDATE OR DELETE ON rendiciones_gastos
+      FOR EACH ROW EXECUTE FUNCTION fn_log_table_changes();
+    `);
     }
     async down(queryRunner) {
+        await queryRunner.query(`DROP TRIGGER IF EXISTS trg_audit_rendiciones_gastos ON rendiciones_gastos;`);
         await queryRunner.query(`DROP TRIGGER IF EXISTS trg_audit_ordenes_trabajo ON ordenes_trabajo;`);
         await queryRunner.query(`DROP TRIGGER IF EXISTS trg_audit_activos ON activos;`);
         await queryRunner.query(`DROP FUNCTION IF EXISTS fn_log_table_changes();`);

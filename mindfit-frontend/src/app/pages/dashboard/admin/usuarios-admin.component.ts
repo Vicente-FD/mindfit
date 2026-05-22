@@ -48,6 +48,7 @@ const PERMISO_LABELS: { key: keyof PermisosUi; label: string }[] = [
   { key: 'verAsignacionOts', label: 'Centro de Operaciones (Asignación)' },
   { key: 'verReportesSucursal', label: 'Reportar Falla' },
   { key: 'verControlBodega', label: 'Control de Bodega' },
+  { key: 'verRendicionGastos', label: 'Rendición de Gastos' },
 ];
 
 @Component({

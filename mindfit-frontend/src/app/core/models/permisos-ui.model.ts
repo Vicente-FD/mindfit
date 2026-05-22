@@ -8,6 +8,7 @@ export interface PermisosUi {
   verAsignacionOts?: boolean;
   verReportesSucursal?: boolean;
   verControlBodega?: boolean;
+  verRendicionGastos?: boolean;
 }
 
 export const PERMISOS_UI_KEYS: (keyof PermisosUi)[] = [
@@ -20,6 +21,7 @@ export const PERMISOS_UI_KEYS: (keyof PermisosUi)[] = [
   'verAsignacionOts',
   'verReportesSucursal',
   'verControlBodega',
+  'verRendicionGastos',
 ];
 
 export const PERMISOS_UI_DEFAULT: PermisosUi = {
@@ -32,6 +34,7 @@ export const PERMISOS_UI_DEFAULT: PermisosUi = {
   verAsignacionOts: false,
   verReportesSucursal: false,
   verControlBodega: false,
+  verRendicionGastos: false,
 };
 
 export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
@@ -45,6 +48,7 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
     verAsignacionOts: true,
     verReportesSucursal: true,
     verControlBodega: true,
+    verRendicionGastos: true,
   },
   jefe_operaciones: {
     verDashboardEjecutivo: true,
@@ -56,6 +60,7 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
     verAsignacionOts: true,
     verReportesSucursal: false,
     verControlBodega: true,
+    verRendicionGastos: true,
   },
   tecnico: {
     verDashboardEjecutivo: false,

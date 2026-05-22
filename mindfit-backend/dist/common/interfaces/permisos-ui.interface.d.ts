@@ -8,6 +8,7 @@ export interface PermisosUi {
     verAsignacionOts?: boolean;
     verReportesSucursal?: boolean;
     verControlBodega?: boolean;
+    verRendicionGastos?: boolean;
 }
 export declare const PERMISOS_UI_KEYS: (keyof PermisosUi)[];
 export declare const PERMISOS_UI_DEFAULT: PermisosUi;

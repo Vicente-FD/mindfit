@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
+exports.RendicionGasto = exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
 var categoria_entity_1 = require("./categoria.entity");
 Object.defineProperty(exports, "Categoria", { enumerable: true, get: function () { return categoria_entity_1.Categoria; } });
 var marca_entity_1 = require("./marca.entity");
@@ -29,4 +29,6 @@ var orden_trabajo_repuesto_entity_1 = require("./orden-trabajo-repuesto.entity")
 Object.defineProperty(exports, "OrdenTrabajoRepuesto", { enumerable: true, get: function () { return orden_trabajo_repuesto_entity_1.OrdenTrabajoRepuesto; } });
 var movimiento_inventario_entity_1 = require("./movimiento-inventario.entity");
 Object.defineProperty(exports, "MovimientoInventario", { enumerable: true, get: function () { return movimiento_inventario_entity_1.MovimientoInventario; } });
+var rendicion_gasto_entity_1 = require("./rendicion-gasto.entity");
+Object.defineProperty(exports, "RendicionGasto", { enumerable: true, get: function () { return rendicion_gasto_entity_1.RendicionGasto; } });
 //# sourceMappingURL=index.js.map

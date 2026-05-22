@@ -1,0 +1,99 @@
+<div class="gasto-modal-backdrop" (click)="close()">
+  <div
+    class="gasto-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="gasto-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="gasto-modal__head">
+      <h2 id="gasto-modal-title" class="text-lg font-semibold text-pure-white">
+        Reportar gasto
+      </h2>
+      <button type="button" class="btn-ghost p-1" aria-label="Cerrar" (click)="close()">
+        <lucide-icon name="x" [size]="20" />
+      </button>
+    </header>
+
+    <p class="px-5 text-xs text-slate-grey">
+      Saldo disponible: <strong class="text-orange-energy">{{ formatClp(saldoDisponible()) }}</strong>
+      de {{ formatClp(limiteMensual()) }}
+    </p>
+
+    <form class="gasto-modal__body space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+      <div>
+        <label class="field-label" for="gasto-monto">Monto del gasto ($) *</label>
+        <input
+          id="gasto-monto"
+          type="number"
+          class="field-input"
+          formControlName="monto"
+          min="1"
+          step="1"
+          placeholder="Ej: 15000"
+          (input)="onMontoInput()"
+        />
+        @if (excedeSaldo()) {
+          <p class="mt-2 text-xs font-semibold text-red-400">
+            El monto supera tu saldo disponible ({{ formatClp(saldoDisponible()) }}).
+          </p>
+        }
+      </div>
+
+      <div>
+        <label class="field-label" for="gasto-desc">Descripción / Qué compraste *</label>
+        <textarea
+          id="gasto-desc"
+          class="field-input min-h-[88px] resize-y"
+          formControlName="descripcion"
+          rows="3"
+          placeholder="Ej: Manguera hidráulica de emergencia"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="field-label">Fotografía de la boleta *</label>
+        @if (previewBoleta(); as preview) {
+          <button type="button" class="gasto-boleta-preview" (click)="fileInput.click()">
+            <img [src]="preview" alt="Vista previa boleta" />
+          </button>
+          <p class="mt-1 text-xs text-slate-grey">Toca la imagen para cambiar la foto</p>
+        } @else {
+          <button type="button" class="gasto-boleta-upload" (click)="fileInput.click()">
+            <lucide-icon name="camera" [size]="28" class="text-orange-energy" />
+            <span>Capturar o subir boleta</span>
+          </button>
+        }
+        <input
+          #fileInput
+          type="file"
+          accept="image/*"
+          capture="environment"
+          class="sr-only"
+          (change)="onBoletaSelected($event)"
+        />
+      </div>
+
+      @if (error(); as err) {
+        <p class="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+          {{ err }}
+        </p>
+      }
+
+      <footer class="flex gap-2 pt-1">
+        <button type="button" class="btn-ghost flex-1" (click)="close()">Cancelar</button>
+        <button
+          type="submit"
+          class="btn-primary flex-1"
+          [disabled]="!puedeEnviar()"
+        >
+          @if (loading()) {
+            Enviando...
+          } @else {
+            Enviar rendición
+          }
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>

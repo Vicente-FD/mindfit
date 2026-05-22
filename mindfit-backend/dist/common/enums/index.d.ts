@@ -61,3 +61,4 @@ export declare enum TipoMovimientoInventario {
     AJUSTE_MANUAL_NEGATIVO = "ajuste_manual_negativo",
     CONSUMO_OT = "consumo_ot"
 }
+export { EstadoRendicionGasto } from './estado-rendicion-gasto.enum';

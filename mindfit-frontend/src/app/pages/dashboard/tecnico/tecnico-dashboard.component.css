@@ -32,6 +32,168 @@
   color: var(--color-pure-white, #fff);
 }
 
+.saldo-gastos-card {
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  background: #1a1a1c;
+  padding: 1rem;
+}
+
+.saldo-gastos-card__label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.saldo-gastos-card__valor {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.35;
+}
+
+.btn-rendir-gasto {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 0.5rem;
+  background: #ff6600;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #000;
+}
+
+.btn-rendir-gasto:hover {
+  filter: brightness(1.1);
+}
+
+.saldo-progress-track {
+  height: 10px;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.08);
+  overflow: hidden;
+}
+
+.saldo-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #22c55e, #ff6600);
+  transition: width 0.35s ease;
+}
+
+.historial-gastos-card {
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  background: #1a1a1c;
+  padding: 0.75rem;
+}
+
+.historial-gastos-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.historial-gastos-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.historial-gastos-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.historial-mes-input {
+  width: 8.5rem;
+  font-size: 0.7rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.btn-export-gastos-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  color: #94a3b8;
+}
+
+.btn-export-gastos-mini:hover:not(:disabled) {
+  color: #ff6600;
+  border-color: rgb(255 102 0 / 0.4);
+}
+
+.historial-gastos-list {
+  margin-top: 0.65rem;
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.historial-gasto-item {
+  border-radius: 0.5rem;
+  border: 1px solid rgb(255 255 255 / 0.05);
+  background: rgb(0 0 0 / 0.25);
+  padding: 0.6rem 0.75rem;
+}
+
+.estado-pill {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.2rem;
+}
+
+.estado-pill--ok {
+  color: #86efac;
+  border: 1px solid rgb(134 239 172 / 0.35);
+}
+
+.estado-pill--pending {
+  color: #fde047;
+  border: 1px solid rgb(234 179 8 / 0.35);
+}
+
+.estado-pill--bad {
+  color: #fca5a5;
+  border: 1px solid rgb(239 68 68 / 0.35);
+}
+
+.boleta-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.9);
+  padding: 1rem;
+}
+
+.boleta-preview-img {
+  max-width: min(96vw, 480px);
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 0.5rem;
+}
+
 .rechazo-badge {
   border-radius: 0.5rem;
   border: 1px solid rgb(239 68 68 / 0.35);

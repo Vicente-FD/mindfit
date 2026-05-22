@@ -109,6 +109,17 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'operations/gastos',
+        canActivate: [
+          rolesGuard(['admin', 'jefe_operaciones']),
+          permisoGuard('verRendicionGastos'),
+        ],
+        loadComponent: () =>
+          import('./pages/dashboard/operations/gastos-ops.component').then(
+            (m) => m.GastosOpsComponent,
+          ),
+      },
+      {
         path: 'bodeguero',
         canActivate: [rolesGuard(['bodeguero', 'jefe_operaciones'])],
         loadComponent: () =>

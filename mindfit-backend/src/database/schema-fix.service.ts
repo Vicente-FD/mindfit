@@ -13,6 +13,7 @@ export class SchemaFixService implements OnModuleInit {
   constructor(private readonly dataSource: DataSource) {}
 
   async onModuleInit(): Promise<void> {
+    await this.ensureRendicionesGastos();
     await this.ensureOtSchema();
     await this.ensureMovimientosInventario();
     await this.ensureCatalogosSchema();
@@ -20,6 +21,44 @@ export class SchemaFixService implements OnModuleInit {
     await this.backfillCodigosInventario();
     await this.backfillSucursalSiglas();
     await this.backfillEstadoSesion();
+  }
+
+  private async ensureRendicionesGastos(): Promise<void> {
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS rendiciones_gastos (
+        id SERIAL PRIMARY KEY,
+        tecnico_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+        monto NUMERIC(12, 2) NOT NULL CHECK (monto > 0),
+        descripcion TEXT NOT NULL,
+        url_boleta TEXT NOT NULL,
+        estado VARCHAR(30) DEFAULT 'pendiente' CHECK (
+          estado IN ('pendiente', 'aprobado', 'rechazado')
+        ),
+        motivo_rechazo TEXT NULL,
+        fecha_gasto DATE NOT NULL DEFAULT CURRENT_DATE,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_gastos_tecnico_fecha
+      ON rendiciones_gastos (tecnico_id, fecha_gasto);
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_gastos_estado
+      ON rendiciones_gastos (estado);
+    `);
+    await this.dataSource.query(`
+      DROP TRIGGER IF EXISTS trg_audit_rendiciones_gastos ON rendiciones_gastos;
+      CREATE TRIGGER trg_audit_rendiciones_gastos
+      AFTER INSERT OR UPDATE OR DELETE ON rendiciones_gastos
+      FOR EACH ROW EXECUTE FUNCTION fn_log_table_changes();
+    `).catch(() => {
+      this.logger.warn(
+        'Trigger audit rendiciones_gastos omitido (ejecute migración AuditTrigger)',
+      );
+    });
+    this.logger.log('Rendiciones de gastos verificadas');
   }
 
   private async ensureOtSchema(): Promise<void> {

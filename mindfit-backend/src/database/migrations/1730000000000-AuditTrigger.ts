@@ -61,9 +61,19 @@ export class AuditTrigger1730000000000 implements MigrationInterface {
       AFTER INSERT OR UPDATE OR DELETE ON ordenes_trabajo
       FOR EACH ROW EXECUTE FUNCTION fn_log_table_changes();
     `);
+
+    await queryRunner.query(`
+      DROP TRIGGER IF EXISTS trg_audit_rendiciones_gastos ON rendiciones_gastos;
+      CREATE TRIGGER trg_audit_rendiciones_gastos
+      AFTER INSERT OR UPDATE OR DELETE ON rendiciones_gastos
+      FOR EACH ROW EXECUTE FUNCTION fn_log_table_changes();
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `DROP TRIGGER IF EXISTS trg_audit_rendiciones_gastos ON rendiciones_gastos;`,
+    );
     await queryRunner.query(
       `DROP TRIGGER IF EXISTS trg_audit_ordenes_trabajo ON ordenes_trabajo;`,
     );

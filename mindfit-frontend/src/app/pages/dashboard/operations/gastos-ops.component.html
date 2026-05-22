@@ -1,0 +1,297 @@
+<div class="gastos-ops-page space-y-6">
+  <header>
+    <p class="text-xs font-semibold uppercase tracking-wider text-orange-energy">
+      Finanzas de terreno
+    </p>
+    <h1 class="mt-1 text-2xl font-bold text-pure-white">Rendición de Gastos</h1>
+    <p class="mt-1 text-sm text-slate-grey">
+      Audite boletas de caja chica y controle el saldo mensual de $100.000 por técnico.
+    </p>
+  </header>
+
+  <section class="gastos-section gastos-section--lista">
+    <div class="gastos-lista-head">
+      <h2 class="gastos-section__title">
+        <lucide-icon name="scroll-text" [size]="18" />
+        Listado mensual de gastos
+      </h2>
+      <button
+        type="button"
+        class="btn-export-pdf"
+        [disabled]="exportingPdf() || listaLoading() || !(lista()?.items?.length)"
+        (click)="exportarPdf()"
+      >
+        @if (exportingPdf()) {
+          Generando PDF...
+        } @else {
+          <lucide-icon name="download" [size]="16" />
+          Exportar PDF
+        }
+      </button>
+    </div>
+
+    <div class="gastos-filtros">
+      <div>
+        <label class="field-label" for="filtro-mes">Mes</label>
+        <input
+          id="filtro-mes"
+          type="month"
+          class="field-input gastos-filtro-input"
+          [ngModel]="mesFiltro()"
+          (ngModelChange)="mesFiltro.set($event); onFiltrosChange()"
+        />
+      </div>
+      <div>
+        <label class="field-label" for="filtro-tecnico">Técnico</label>
+        <select
+          id="filtro-tecnico"
+          class="field-input gastos-filtro-input"
+          [ngModel]="tecnicoFiltro()"
+          (ngModelChange)="tecnicoFiltro.set($event); onFiltrosChange()"
+        >
+          <option [ngValue]="''">Todos</option>
+          @for (t of tecnicos(); track t.tecnicoId) {
+            <option [ngValue]="t.tecnicoId">{{ t.tecnicoNombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="filtro-estado">Estado</label>
+        <select
+          id="filtro-estado"
+          class="field-input gastos-filtro-input"
+          [ngModel]="estadoFiltro()"
+          (ngModelChange)="estadoFiltro.set($event); onFiltrosChange()"
+        >
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="aprobado">Aprobado</option>
+          <option value="rechazado">Rechazado</option>
+        </select>
+      </div>
+    </div>
+
+    @if (listaLoading()) {
+      <p class="text-sm text-slate-grey">Cargando listado...</p>
+    } @else if (lista(); as data) {
+      <div class="gastos-resumen-chips">
+        <span class="resumen-chip resumen-chip--ok">
+          Aprobado: {{ formatClp(data.resumen.totalAprobado) }}
+        </span>
+        <span class="resumen-chip resumen-chip--warn">
+          Pendiente: {{ formatClp(data.resumen.totalPendiente) }}
+        </span>
+        <span class="resumen-chip resumen-chip--bad">
+          Rechazado: {{ formatClp(data.resumen.totalRechazado) }}
+        </span>
+        <span class="resumen-chip">{{ data.resumen.cantidad }} registros · {{ mesLabel() }}</span>
+      </div>
+
+      @if (data.items.length === 0) {
+        <div class="page-card text-sm text-slate-grey">
+          No hay gastos registrados para los filtros seleccionados.
+        </div>
+      } @else {
+        <div class="gastos-lista-table-wrap">
+          <table class="gastos-lista-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Técnico</th>
+                <th>Descripción</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (g of data.items; track g.id) {
+                <tr>
+                  <td>{{ formatFecha(g.fechaGasto) }}</td>
+                  <td>{{ g.tecnicoNombre }}</td>
+                  <td class="gastos-lista-desc">{{ g.descripcion }}</td>
+                  <td class="gastos-lista-monto">{{ formatClp(g.monto) }}</td>
+                  <td>
+                    <span class="estado-gasto" [class]="estadoClass(g.estado)">
+                      {{ estadoLabel(g.estado) }}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="gasto-card__boleta-btn"
+                      (click)="openPreview(g.urlBoleta)"
+                    >
+                      Boleta
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </section>
+
+  @if (loading()) {
+    <p class="text-sm text-slate-grey">Cargando rendiciones...</p>
+  } @else {
+    <section class="gastos-section">
+      <h2 class="gastos-section__title">
+        <lucide-icon name="clock" [size]="18" />
+        Pendientes de aprobación
+        <span class="gastos-badge">{{ pendientes().length }}</span>
+      </h2>
+
+      @if (pendientes().length === 0) {
+        <div class="page-card text-sm text-slate-grey">
+          No hay rendiciones pendientes en este momento.
+        </div>
+      } @else {
+        <div class="gastos-pendientes-grid">
+          @for (g of pendientes(); track g.id) {
+            <article class="gasto-card">
+              <div class="gasto-card__top">
+                <span class="gasto-card__tecnico">{{ g.tecnicoNombre }}</span>
+                <span class="gasto-card__monto">{{ formatClp(g.monto) }}</span>
+              </div>
+              <p class="gasto-card__fecha">{{ formatFecha(g.fechaGasto) }}</p>
+              <p class="gasto-card__desc">{{ g.descripcion }}</p>
+              <button
+                type="button"
+                class="gasto-card__boleta-btn"
+                (click)="openPreview(g.urlBoleta)"
+              >
+                <lucide-icon name="eye" [size]="14" />
+                Ver boleta
+              </button>
+              <div class="gasto-card__actions">
+                <button
+                  type="button"
+                  class="btn-approve-gasto"
+                  [disabled]="decidingId() === g.id"
+                  (click)="aprobar(g)"
+                >
+                  @if (decidingId() === g.id) {
+                    ...
+                  } @else {
+                    <lucide-icon name="check" [size]="14" />
+                    Aprobar
+                  }
+                </button>
+                <button
+                  type="button"
+                  class="btn-reject-gasto"
+                  [disabled]="decidingId() === g.id"
+                  (click)="openReject(g)"
+                >
+                  <lucide-icon name="x-circle" [size]="14" />
+                  Rechazar
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="gastos-section">
+      <h2 class="gastos-section__title">
+        <lucide-icon name="users" [size]="18" />
+        Resumen de técnicos (control de saldos)
+      </h2>
+
+      <div class="gastos-tecnicos-table-wrap">
+        <table class="gastos-tecnicos-table">
+          <thead>
+            <tr>
+              <th>Técnico</th>
+              <th>Gastado (mes)</th>
+              <th>Disponible</th>
+              <th>Consumo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of tecnicos(); track t.tecnicoId) {
+              <tr [class.gastos-row--alert]="t.alertaSaldoBajo">
+                <td>
+                  <p class="font-semibold text-pure-white">{{ t.tecnicoNombre }}</p>
+                  <p class="text-xs text-slate-grey">{{ t.tecnicoEmail }}</p>
+                </td>
+                <td>{{ formatClp(t.montoAprobadoMes) }}</td>
+                <td [class.text-orange-energy]="t.alertaSaldoBajo">
+                  {{ formatClp(t.saldoDisponible) }}
+                </td>
+                <td>
+                  <div class="saldo-bar-wrap">
+                    <div
+                      class="saldo-bar-fill"
+                      [class.saldo-bar-fill--alert]="t.alertaSaldoBajo"
+                      [style.width]="barWidth(t.porcentajeConsumido)"
+                    ></div>
+                  </div>
+                  <p class="mt-1 text-xs text-slate-grey">
+                    {{ t.tecnicoNombre }} ha consumido el
+                    <strong [class.text-orange-energy]="t.alertaSaldoBajo">
+                      {{ t.porcentajeConsumido }}%
+                    </strong>
+                    de su saldo
+                    @if (t.alertaSaldoBajo) {
+                      <span class="saldo-alert-tag">Saldo bajo</span>
+                    }
+                  </p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>
+
+@if (previewUrl(); as url) {
+  <div class="evidencia-preview-backdrop" (click)="closePreview()">
+    <button
+      type="button"
+      class="evidencia-preview-close"
+      aria-label="Cerrar"
+      (click)="closePreview()"
+    >
+      <lucide-icon name="x" [size]="24" />
+    </button>
+    <img class="evidencia-preview-img" [src]="url" alt="Boleta ampliada" (click)="$event.stopPropagation()" />
+  </div>
+}
+
+@if (rejectTarget(); as g) {
+  <div class="reject-backdrop" (click)="closeReject()">
+    <div class="reject-panel" (click)="$event.stopPropagation()">
+      <h3 class="text-base font-semibold text-pure-white">Rechazar rendición</h3>
+      <p class="mt-1 text-sm text-slate-grey">
+        {{ g.tecnicoNombre }} — {{ formatClp(g.monto) }}
+      </p>
+      <label class="field-label mt-4" for="motivo-rechazo">Motivo de rechazo *</label>
+      <textarea
+        id="motivo-rechazo"
+        class="field-input min-h-[80px]"
+        rows="3"
+        [ngModel]="rejectMotivo()"
+        (ngModelChange)="rejectMotivo.set($event)"
+        placeholder="Indique por qué se rechaza este gasto"
+      ></textarea>
+      <div class="mt-4 flex justify-end gap-2">
+        <button type="button" class="btn-ghost" (click)="closeReject()">Cancelar</button>
+        <button
+          type="button"
+          class="btn-reject-gasto px-4 py-2"
+          [disabled]="decidingId() === g.id"
+          (click)="confirmReject()"
+        >
+          Confirmar rechazo
+        </button>
+      </div>
+    </div>
+  </div>
+}
