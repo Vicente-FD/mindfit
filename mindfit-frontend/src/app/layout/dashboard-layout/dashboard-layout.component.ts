@@ -70,6 +70,12 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
       permiso: 'verAsignacionOts',
     },
     {
+      label: 'Calendario OT',
+      route: '/dashboard/operations/calendario',
+      icon: 'calendar-days',
+      roles: ['admin', 'jefe_operaciones', 'gerente_bi'],
+    },
+    {
       label: 'Rendición de Gastos',
       route: '/dashboard/operations/gastos',
       icon: 'wallet',

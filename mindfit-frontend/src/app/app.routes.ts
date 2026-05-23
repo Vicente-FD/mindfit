@@ -120,6 +120,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'operations/calendario',
+        canActivate: [rolesGuard(['admin', 'jefe_operaciones', 'gerente_bi'])],
+        loadComponent: () =>
+          import('./pages/dashboard/shared/weekly-tracker-calendar.component').then(
+            (m) => m.WeeklyTrackerCalendarComponent,
+          ),
+      },
+      {
         path: 'bodeguero',
         canActivate: [rolesGuard(['bodeguero', 'jefe_operaciones'])],
         loadComponent: () =>

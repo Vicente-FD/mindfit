@@ -6,6 +6,10 @@
     </div>
     @if (isActivas()) {
       <div class="ops-header-actions">
+        <a routerLink="/dashboard/operations/calendario" class="btn-planner">
+          <lucide-icon name="calendar-days" [size]="16" />
+          Calendario mensual
+        </a>
         <a routerLink="/dashboard/operations/planner" class="btn-planner">
           <lucide-icon name="calendar" [size]="16" />
           Planificador Semanal

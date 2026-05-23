@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { unlink } from 'fs/promises';
-import { DataSource, EntityManager } from 'typeorm';
+import { Brackets, DataSource, EntityManager } from 'typeorm';
 import {
   ClasificacionOrden,
   EstadoOperacionalActivo,
@@ -33,6 +33,10 @@ import { InventarioService } from '../inventario/inventario.service';
 import { RepuestoConsumoItemDto } from '../inventario/dto/repuesto-consumo.dto';
 import { resolveEvidenciaDiskPath } from './storage/evidencias.storage';
 import { TipoReporteSucursal } from './dto/tipo-reporte-sucursal';
+import {
+  CalendarioOrdenesResponseDto,
+  OrdenTrabajoCalendarioItem,
+} from './dto/calendario-ordenes-response.dto';
 
 @Injectable()
 export class OrdenesTrabajoService {
@@ -269,6 +273,90 @@ export class OrdenesTrabajoService {
     const d = new Date(isoDate);
     d.setHours(0, 0, 0, 0);
     return d;
+  }
+
+  private boundsForMes(mes: string): {
+    mes: string;
+    desde: string;
+    hasta: string;
+  } {
+    const [y, m] = mes.split('-').map(Number);
+    const year = y;
+    const monthIndex = m - 1;
+    const mesKey = `${year}-${String(m).padStart(2, '0')}`;
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    const hasta = `${mesKey}-${String(lastDay).padStart(2, '0')}`;
+    return { mes: mesKey, desde: `${mesKey}-01`, hasta };
+  }
+
+  async findCalendario(
+    mes: string,
+    sucursalId?: number,
+  ): Promise<CalendarioOrdenesResponseDto> {
+    const { mes: mesKey, desde, hasta } = this.boundsForMes(mes);
+    const monthStart = this.startOfDay(desde);
+    const monthEnd = this.endOfDay(hasta);
+
+    const qb = this.ordenRepo()
+      .createQueryBuilder('ot')
+      .leftJoinAndSelect('ot.activo', 'activo')
+      .leftJoinAndSelect('ot.sucursal', 'sucursal')
+      .leftJoinAndSelect('ot.asignadoA', 'asignadoA')
+      .where('ot.deleted_at IS NULL');
+
+    if (sucursalId != null) {
+      qb.andWhere('ot.sucursal_id = :sucursalId', { sucursalId });
+    }
+
+    qb.andWhere(
+      new Brackets((sub) => {
+        sub
+          .where('ot.created_at BETWEEN :monthStart AND :monthEnd', {
+            monthStart,
+            monthEnd,
+          })
+          .orWhere('ot.fecha_inicio_real BETWEEN :monthStart AND :monthEnd', {
+            monthStart,
+            monthEnd,
+          })
+          .orWhere('ot.fecha_fin_real BETWEEN :monthStart AND :monthEnd', {
+            monthStart,
+            monthEnd,
+          })
+          .orWhere(
+            new Brackets((continua) => {
+              continua
+                .where('ot.fecha_inicio_real IS NOT NULL')
+                .andWhere('ot.fecha_inicio_real < :monthStart', { monthStart })
+                .andWhere('ot.estado IN (:...estadosContinuo)', {
+                  estadosContinuo: [
+                    EstadoOrdenTrabajo.EN_PROCESO,
+                    EstadoOrdenTrabajo.FINALIZADA,
+                  ],
+                })
+                .andWhere(
+                  new Brackets((fin) => {
+                    fin
+                      .where('ot.fecha_fin_real IS NULL')
+                      .orWhere('ot.fecha_fin_real >= :monthStart', {
+                        monthStart,
+                      });
+                  }),
+                );
+            }),
+          );
+      }),
+    );
+
+    qb.orderBy('ot.created_at', 'ASC');
+
+    const rows = await qb.getMany();
+    const ordenes: OrdenTrabajoCalendarioItem[] = rows.map((ot) => ({
+      ...ot,
+      tecnicoAsignado: ot.asignadoA,
+    }));
+
+    return { mes: mesKey, total: ordenes.length, ordenes };
   }
 
   private endOfDay(isoDate: string): Date {

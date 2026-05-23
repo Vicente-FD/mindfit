@@ -38,6 +38,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Wallet,
+  FileDown,
+  Table,
+  Zap,
+  Flag,
+  CheckCircle2,
+  CalendarDays,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -82,6 +88,12 @@ export const appConfig: ApplicationConfig = {
         ChevronLeft,
         ChevronRight,
         Wallet,
+        FileDown,
+        Table,
+        Zap,
+        Flag,
+        CheckCircle2,
+        CalendarDays,
       }),
     ),
     provideRouter(routes),

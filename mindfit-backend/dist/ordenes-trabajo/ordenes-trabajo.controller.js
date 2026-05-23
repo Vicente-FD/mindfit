@@ -29,6 +29,7 @@ const create_orden_trabajo_dto_1 = require("./dto/create-orden-trabajo.dto");
 const update_orden_trabajo_dto_1 = require("./dto/update-orden-trabajo.dto");
 const reportar_falla_dto_1 = require("./dto/reportar-falla.dto");
 const filter_ordenes_trabajo_dto_1 = require("./dto/filter-ordenes-trabajo.dto");
+const filter_calendario_ordenes_dto_1 = require("./dto/filter-calendario-ordenes.dto");
 const rechazar_orden_dto_1 = require("./dto/rechazar-orden.dto");
 const ordenes_trabajo_service_1 = require("./ordenes-trabajo.service");
 const evidencias_storage_1 = require("./storage/evidencias.storage");
@@ -99,6 +100,9 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
             titulo: dto.titulo,
             asignadoAId: dto.asignadoAId,
         }, user.id, sucursalId, fotoUrl);
+    }
+    findCalendario(query) {
+        return this.ordenesService.findCalendario(query.mes, query.sucursalId);
     }
     findOne(id) {
         return this.ordenesService.findOne(id);
@@ -236,6 +240,14 @@ __decorate([
         jwt_payload_interface_1.JwtPayload]),
     __metadata("design:returntype", void 0)
 ], OrdenesTrabajoController.prototype, "reportarFalla", null);
+__decorate([
+    (0, common_1.Get)('calendario'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.GERENTE_BI),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [filter_calendario_ordenes_dto_1.FilterCalendarioOrdenesDto]),
+    __metadata("design:returntype", void 0)
+], OrdenesTrabajoController.prototype, "findCalendario", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.TECNICO, enums_1.RolUsuario.JEFE_SUCURSAL, enums_1.RolUsuario.GERENTE_BI),

@@ -16,6 +16,7 @@ import { CerrarOrdenDto } from './dto/cerrar-orden.dto';
 import { InventarioService } from '../inventario/inventario.service';
 import { RepuestoConsumoItemDto } from '../inventario/dto/repuesto-consumo.dto';
 import { TipoReporteSucursal } from './dto/tipo-reporte-sucursal';
+import { CalendarioOrdenesResponseDto } from './dto/calendario-ordenes-response.dto';
 export declare class OrdenesTrabajoService {
     private readonly dataSource;
     private readonly transactionContext;
@@ -44,6 +45,8 @@ export declare class OrdenesTrabajoService {
         includeEvidencias?: boolean;
     }): Promise<OrdenTrabajo[]>;
     private startOfDay;
+    private boundsForMes;
+    findCalendario(mes: string, sucursalId?: number): Promise<CalendarioOrdenesResponseDto>;
     private endOfDay;
     findOne(id: number): Promise<OrdenTrabajo>;
     findBySucursal(sucursalId: number): Promise<OrdenTrabajo[]>;

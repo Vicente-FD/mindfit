@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  CalendarioOrdenesParams,
+  CalendarioOrdenesResponse,
   ClasificacionOt,
   CloseWorkOrderPayload,
   ListWorkOrdersParams,
@@ -95,6 +97,19 @@ export class WorkOrdersService {
       httpParams = httpParams.set('tecnicoId', String(params.tecnicoId));
     }
     return this.http.get<WorkOrder[]>(this.baseUrl, { params: httpParams });
+  }
+
+  getCalendario(
+    params: CalendarioOrdenesParams,
+  ): Observable<CalendarioOrdenesResponse> {
+    let httpParams = new HttpParams().set('mes', params.mes);
+    if (params.sucursalId != null) {
+      httpParams = httpParams.set('sucursalId', String(params.sucursalId));
+    }
+    return this.http.get<CalendarioOrdenesResponse>(
+      `${this.baseUrl}/calendario`,
+      { params: httpParams },
+    );
   }
 
   getMiSucursal(): Observable<WorkOrder[]> {

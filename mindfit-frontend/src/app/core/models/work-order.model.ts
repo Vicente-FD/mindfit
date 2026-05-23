@@ -99,6 +99,17 @@ export interface ListWorkOrdersParams {
   tecnicoId?: number;
 }
 
+export interface CalendarioOrdenesParams {
+  mes: string;
+  sucursalId?: number;
+}
+
+export interface CalendarioOrdenesResponse {
+  mes: string;
+  total: number;
+  ordenes: WorkOrder[];
+}
+
 export interface UpdateWorkOrderStatusPayload {
   estado: 'en_proceso';
 }

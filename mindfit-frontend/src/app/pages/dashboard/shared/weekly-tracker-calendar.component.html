@@ -1,0 +1,184 @@
+<div class="tracker-page space-y-6">
+  <header class="tracker-header">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-wider text-orange-energy">
+        Trazabilidad operacional
+      </p>
+      <h1 class="mt-1 text-2xl font-bold text-pure-white">
+        Calendario mensual de OTs
+      </h1>
+      <p class="mt-1 text-sm text-slate-grey">
+        Audite visualmente reportes, ejecución y cierre de casos por día del mes seleccionado.
+      </p>
+    </div>
+    <div class="tracker-export-actions calendar-no-print">
+      <button
+        type="button"
+        class="btn-export"
+        [disabled]="exportingPdf() || loading()"
+        (click)="exportarPdf()"
+      >
+        @if (exportingPdf()) {
+          Generando PDF...
+        } @else {
+          <lucide-icon name="file-down" [size]="16" />
+          Exportar Calendario PDF
+        }
+      </button>
+      <button
+        type="button"
+        class="btn-export btn-export--secondary"
+        [disabled]="exportingExcel() || loading() || !totalOrdenes()"
+        (click)="exportarExcel()"
+      >
+        @if (exportingExcel()) {
+          Exportando...
+        } @else {
+          <lucide-icon name="table" [size]="16" />
+          Exportar Planilla Excel
+        }
+      </button>
+    </div>
+  </header>
+
+  <section class="tracker-filters page-card calendar-no-print">
+    <div class="tracker-filters-grid">
+      <div>
+        <mindfit-date-picker
+          view="month"
+          mode="single"
+          label="Mes"
+          placeholder="Seleccionar mes"
+          [ngModel]="mesFiltro()"
+          (ngModelChange)="onMesChange($event)"
+        />
+      </div>
+      <div>
+        <label class="field-label" for="filtro-sucursal-cal">Sucursal</label>
+        <select
+          id="filtro-sucursal-cal"
+          class="field-input"
+          [ngModel]="sucursalFiltro()"
+          (ngModelChange)="onSucursalChange($event)"
+        >
+          <option [ngValue]="''">Todas</option>
+          @for (s of sucursales(); track s.id) {
+            <option [ngValue]="s.id">{{ s.nombre }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="tracker-legend page-card calendar-no-print">
+    <h2 class="legend-title">Leyenda</h2>
+    <div class="legend-items">
+      <span class="ot-badge ot-badge--reportado legend-badge">Reportado</span>
+      <span class="ot-badge ot-badge--reportado legend-badge">Reportado/Finalizado</span>
+      <span class="ot-badge ot-badge--trabajando legend-badge">Trabajando</span>
+      <span class="ot-badge ot-badge--finalizado legend-badge">Finalizado</span>
+    </div>
+    <p class="legend-meta">
+      {{ totalOrdenes() }} OT{{ totalOrdenes() === 1 ? '' : 's' }} con actividad en
+      {{ mesLabel() }}
+    </p>
+  </section>
+
+  <section
+    #calendarView
+    id="printable-calendar-view"
+    class="calendar-shell page-card"
+    [class.calendar-shell--loading]="loading()"
+  >
+    <div class="calendar-print-head">
+      <h2 class="calendar-month-title">{{ mesLabel() }}</h2>
+      @if (sucursalFiltro() !== '') {
+        <p class="calendar-sede-label">Sede: {{ sucursalLabel() }}</p>
+      } @else {
+        <p class="calendar-sede-label">{{ sucursalLabel() }}</p>
+      }
+    </div>
+
+    @if (loading()) {
+      <p class="calendar-loading">Cargando calendario...</p>
+    } @else {
+      <div class="calendar-weekdays">
+        @for (wd of weekdayLabels; track wd) {
+          <div class="calendar-weekday">{{ wd }}</div>
+        }
+      </div>
+
+      <div class="calendar-grid">
+        @for (cell of calendarCells(); track $index) {
+          <div
+            class="calendar-day"
+            [class.calendar-day--empty]="cell.day === null"
+            [class.calendar-day--today]="cell.isToday"
+          >
+            @if (cell.day !== null) {
+              <div class="calendar-day-num">{{ cell.day }}</div>
+              <div class="calendar-day-entries">
+                @for (entry of cell.entries; track entry.ot.id + entry.label) {
+                  <button
+                    type="button"
+                    [class]="badgeClass(entry.label) + ' ot-badge-entry'"
+                    (click)="openDetail(entry)"
+                  >
+                    <lucide-icon [name]="badgeIcon(entry.label)" [size]="11" />
+                    <span class="ot-badge-entry__code">{{ entry.ot.codigoOt }}</span>
+                    <span class="ot-badge-entry__label">{{ entry.labelText }}</span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+</div>
+
+@if (selectedEntry(); as entry) {
+  <div class="ot-detail-backdrop" (click)="closeDetail()">
+    <div
+      class="ot-detail-panel"
+      role="dialog"
+      aria-modal="true"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="ot-detail-head">
+        <div>
+          <p class="ot-detail-code">{{ entry.ot.codigoOt }}</p>
+          <h3 class="ot-detail-title">{{ entry.ot.titulo }}</h3>
+        </div>
+        <button type="button" class="btn-ghost ot-detail-close" (click)="closeDetail()">
+          <lucide-icon name="x" [size]="18" />
+        </button>
+      </div>
+
+      <div class="ot-detail-badges">
+        <span [class]="badgeClass(entry.label)">{{ entry.labelText }}</span>
+        <span [class]="prioridadClass(entry.ot)">{{ prioridadLabel(entry.ot) }}</span>
+      </div>
+
+      <dl class="ot-detail-list">
+        <div>
+          <dt>Técnico</dt>
+          <dd>{{ tecnicoLabel(entry.ot) }}</dd>
+        </div>
+        <div>
+          <dt>Activo / Infraestructura</dt>
+          <dd>{{ activoLabel(entry.ot) }}</dd>
+        </div>
+        <div>
+          <dt>Sucursal</dt>
+          <dd>{{ entry.ot.sucursal?.nombre ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt>Descripción</dt>
+          <dd>{{ entry.ot.descripcion?.trim() || 'Sin descripción registrada' }}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+}

@@ -34,6 +34,7 @@ import { UpdateOrdenTrabajoDto } from './dto/update-orden-trabajo.dto';
 import { UpdateEstadoOrdenDto } from './dto/update-estado-orden.dto';
 import { ReportarFallaDto } from './dto/reportar-falla.dto';
 import { FilterOrdenesTrabajoDto } from './dto/filter-ordenes-trabajo.dto';
+import { FilterCalendarioOrdenesDto } from './dto/filter-calendario-ordenes.dto';
 import { RechazarOrdenDto } from './dto/rechazar-orden.dto';
 import { OrdenesTrabajoService } from './ordenes-trabajo.service';
 import {
@@ -164,6 +165,16 @@ export class OrdenesTrabajoController {
       sucursalId,
       fotoUrl,
     );
+  }
+
+  @Get('calendario')
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.GERENTE_BI,
+  )
+  findCalendario(@Query() query: FilterCalendarioOrdenesDto) {
+    return this.ordenesService.findCalendario(query.mes, query.sucursalId);
   }
 
   @Get(':id')

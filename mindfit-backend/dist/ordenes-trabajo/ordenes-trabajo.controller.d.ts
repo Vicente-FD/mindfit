@@ -10,6 +10,7 @@ import { CreateOrdenTrabajoDto } from './dto/create-orden-trabajo.dto';
 import { UpdateOrdenTrabajoDto } from './dto/update-orden-trabajo.dto';
 import { ReportarFallaDto } from './dto/reportar-falla.dto';
 import { FilterOrdenesTrabajoDto } from './dto/filter-ordenes-trabajo.dto';
+import { FilterCalendarioOrdenesDto } from './dto/filter-calendario-ordenes.dto';
 import { RechazarOrdenDto } from './dto/rechazar-orden.dto';
 import { OrdenesTrabajoService } from './ordenes-trabajo.service';
 export declare class OrdenesTrabajoController {
@@ -22,6 +23,7 @@ export declare class OrdenesTrabajoController {
     reportarFalla(files: {
         foto_falla?: Express.Multer.File[];
     }, dto: ReportarFallaDto, user: JwtPayload): Promise<import("../entities").OrdenTrabajo>;
+    findCalendario(query: FilterCalendarioOrdenesDto): Promise<import("./dto/calendario-ordenes-response.dto").CalendarioOrdenesResponseDto>;
     findOne(id: number): Promise<import("../entities").OrdenTrabajo>;
     createBulk(dto: BulkCreateOrdenesTrabajoDto, user: JwtPayload): Promise<{
         created: import("../entities").OrdenTrabajo[];
