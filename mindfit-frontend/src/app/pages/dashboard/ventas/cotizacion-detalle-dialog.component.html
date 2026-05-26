@@ -1,0 +1,206 @@
+<div class="modal-backdrop" (click)="cerrar.emit()" role="presentation">
+  <div
+    class="modal-panel modal-panel--wide page-card"
+    role="dialog"
+    aria-labelledby="cotiz-detalle-title"
+    (click)="$event.stopPropagation()"
+  >
+    @if (loading()) {
+      <p class="text-sm text-slate-grey">Cargando detalle...</p>
+    } @else if (cotizacion(); as c) {
+      <header class="modal-head">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-orange-energy">{{ c.folio }}</p>
+          <h2 id="cotiz-detalle-title" class="page-title">{{ c.cliente?.razonSocial }}</h2>
+          <p class="page-desc">RUT {{ c.cliente?.rut }}</p>
+        </div>
+        <button type="button" class="btn-ghost" (click)="cerrar.emit()" aria-label="Cerrar">
+          <lucide-icon name="x" [size]="20" />
+        </button>
+      </header>
+
+      <nav class="modal-tabs" aria-label="Secciones del detalle">
+        <button
+          type="button"
+          class="modal-tab"
+          [class.modal-tab--active]="vista() === 'detalle'"
+          (click)="setVista('detalle')"
+        >
+          Detalle
+        </button>
+        <button
+          type="button"
+          class="modal-tab"
+          [class.modal-tab--active]="vista() === 'historial'"
+          (click)="setVista('historial')"
+        >
+          Historial ({{ historial().length }})
+        </button>
+        @if (puedeEditar()) {
+          <button
+            type="button"
+            class="modal-tab"
+            [class.modal-tab--active]="vista() === 'editar'"
+            (click)="setVista('editar')"
+          >
+            Editar
+          </button>
+        }
+      </nav>
+
+      <div class="modal-body">
+        <div class="modal-meta">
+          <span class="estado-badge" [class]="claseEstado(c.estado)">
+            {{ estadoLabel[c.estado] }}
+          </span>
+          <span class="text-xs text-slate-grey">{{ c.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span class="text-xs text-slate-grey">Por {{ c.creadoPor?.nombre ?? '—' }}</span>
+        </div>
+
+        @if (vista() === 'historial') {
+          <ul class="historial-list">
+            @for (h of historial(); track h.id) {
+              <li class="historial-item stat-card">
+                <div class="historial-item__head">
+                  <span class="historial-tipo">{{ tipoHistorialLabel[h.tipo] }}</span>
+                  <time class="text-xs text-slate-grey">{{ h.createdAt | date:'dd/MM/yy HH:mm' }}</time>
+                </div>
+                <p class="text-sm text-pure-white">{{ h.resumen }}</p>
+                <p class="text-xs text-slate-grey mt-1">
+                  {{ h.usuario?.nombre ?? 'Sistema' }}
+                </p>
+              </li>
+            } @empty {
+              <p class="text-sm text-slate-grey">Sin registros de historial.</p>
+            }
+          </ul>
+        } @else if (vista() === 'editar') {
+          <form class="edit-form" (ngSubmit)="guardar()">
+            <div class="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label class="field-label">Divisa</label>
+                <select class="field-input" [formControl]="form.controls.divisaCodigo">
+                  <option value="CLP">CLP (Peso chileno)</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="CAD">CAD</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label">Comentarios comerciales</label>
+                <textarea
+                  class="field-input min-h-[4rem]"
+                  [formControl]="form.controls.comentariosComerciales"
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="lineas-table">
+              <div class="lineas-head lineas-head--edit">
+                <span>SKU</span>
+                <span>Máquina</span>
+                <span>Cant.</span>
+                <span>Precio ({{ divisaCodigo() }})</span>
+                <span>Total</span>
+                <span></span>
+              </div>
+              @for (l of lineas(); track l.activoId; let i = $index) {
+                <div class="lineas-row lineas-row--edit">
+                  <span class="text-orange-energy text-xs font-bold">{{ l.sku }}</span>
+                  <span class="text-pure-white text-xs">{{ l.nombre }}</span>
+                  <span>1</span>
+                  <input
+                    type="number"
+                    class="lineas-input field-input"
+                    [value]="l.precioUnitarioPactado"
+                    min="0"
+                    step="0.01"
+                    (change)="actualizarPrecio(i, $any($event.target).value)"
+                  />
+                  <span>{{ divisaSymbol() }}{{ l.totalLineaNeto | number:'1.0-2' }}</span>
+                  <button
+                    type="button"
+                    class="btn-ghost text-red-400 !p-1"
+                    title="Quitar máquina"
+                    (click)="quitarLinea(i)"
+                  >
+                    <lucide-icon name="trash-2" [size]="14" />
+                  </button>
+                </div>
+              }
+            </div>
+
+            <div class="totales-box">
+              <div>Subtotal neto: <strong>{{ divisaSymbol() }}{{ subtotalNeto() | number:'1.0-2' }}</strong></div>
+              @if (divisaCodigo() === 'CLP') {
+                <div>IVA 19%: <strong>{{ montoIva() | currency:'CLP':'symbol-narrow':'1.0-0' }}</strong></div>
+              }
+              <div class="totales-bruto">
+                Total bruto: <strong>{{ divisaSymbol() }}{{ montoBruto() | number:'1.0-2' }}</strong>
+              </div>
+              <p class="mt-2 text-xs text-slate-grey">
+                Los cambios quedan registrados en el historial de la cotización.
+              </p>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-ghost" (click)="setVista('detalle')">Cancelar</button>
+              <button type="submit" class="btn-primary" [disabled]="saving()">
+                {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <div class="detalle-grid">
+            <div class="stat-card">
+              <span class="stat-label">Divisa</span>
+              <p class="stat-value text-base">{{ c.divisaCodigo }} · tasa {{ c.tasaCambioClp | number:'1.2-4' }}</p>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Totales</span>
+              <p class="stat-value text-base">
+                Neto {{ c.subtotalNeto | number:'1.0-0' }} · IVA {{ c.montoIva | number:'1.0-0' }} ·
+                Bruto <span class="text-orange-energy">{{ c.montoBruto | number:'1.0-0' }}</span>
+              </p>
+            </div>
+          </div>
+
+          @if (c.comentariosComerciales) {
+            <div class="comentarios-box stat-card">
+              <span class="stat-label">Comentarios</span>
+              <p class="mt-2 text-sm text-slate-grey whitespace-pre-wrap">{{ c.comentariosComerciales }}</p>
+            </div>
+          }
+
+          <div class="lineas-table">
+            <div class="lineas-head lineas-head--view">
+              <span>SKU</span>
+              <span>Máquina</span>
+              <span>Categoría</span>
+              <span>P. unit.</span>
+              <span>Total línea</span>
+            </div>
+            @for (d of c.detalles; track d.id) {
+              <div class="lineas-row lineas-row--view">
+                <span class="text-orange-energy text-xs font-bold">{{ d.skuEstatico }}</span>
+                <span class="text-pure-white text-xs">{{ d.nombreEstatico }}</span>
+                <span class="text-xs text-slate-grey">{{ d.categoriaEstatica ?? '—' }}</span>
+                <span class="text-xs">{{ d.precioUnitarioPactado | number:'1.0-2' }}</span>
+                <span class="text-xs font-semibold text-orange-energy">{{ d.totalLineaNeto | number:'1.0-2' }}</span>
+              </div>
+            }
+          </div>
+
+          @if (puedeEditar()) {
+            <div class="modal-actions">
+              <button type="button" class="btn-primary inline-flex items-center gap-2" (click)="setVista('editar')">
+                <lucide-icon name="pencil" [size]="14" /> Modificar cotización
+              </button>
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+</div>

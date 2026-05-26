@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const cotizacion_venta_entity_1 = require("../entities/cotizacion-venta.entity");
 const cotizacion_ventas_detalle_entity_1 = require("../entities/cotizacion-ventas-detalle.entity");
+const cotizacion_venta_historial_entity_1 = require("../entities/cotizacion-venta-historial.entity");
 const clientes_module_1 = require("../clientes/clientes.module");
 const divisas_module_1 = require("../divisas/divisas.module");
 const cotizaciones_ventas_controller_1 = require("./cotizaciones-ventas.controller");
@@ -21,7 +22,11 @@ exports.CotizacionesVentasModule = CotizacionesVentasModule;
 exports.CotizacionesVentasModule = CotizacionesVentasModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([cotizacion_venta_entity_1.CotizacionVenta, cotizacion_ventas_detalle_entity_1.CotizacionVentasDetalle]),
+            typeorm_1.TypeOrmModule.forFeature([
+                cotizacion_venta_entity_1.CotizacionVenta,
+                cotizacion_ventas_detalle_entity_1.CotizacionVentasDetalle,
+                cotizacion_venta_historial_entity_1.CotizacionVentaHistorial,
+            ]),
             clientes_module_1.ClientesModule,
             divisas_module_1.DivisasModule,
         ],

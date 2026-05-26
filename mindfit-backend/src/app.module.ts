@@ -33,6 +33,7 @@ import {
   Oportunidad,
   CotizacionVenta,
   CotizacionVentasDetalle,
+  CotizacionVentaHistorial,
   Vehiculo,
   LicenciaTecnico,
 } from './entities';
@@ -110,6 +111,7 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
             Oportunidad,
             CotizacionVenta,
             CotizacionVentasDetalle,
+            CotizacionVentaHistorial,
             Vehiculo,
             LicenciaTecnico,
           ],

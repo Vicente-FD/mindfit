@@ -35,6 +35,9 @@
           <span>{{ (c.detalles?.length ?? 0) }} máquina(s)</span>
         </div>
         <div class="cotiz-card__actions">
+          <button type="button" class="btn-ghost text-xs" (click)="verDetalle(c)">
+            <lucide-icon name="eye" [size]="14" /> Ver detalle
+          </button>
           <button type="button" class="btn-ghost text-xs" (click)="exportarPdf(c)">
             <lucide-icon name="file-text" [size]="14" /> PDF
           </button>
@@ -65,4 +68,12 @@
       <p class="text-sm text-slate-grey">No hay cotizaciones registradas.</p>
     }
   </div>
+}
+
+@if (detalleId(); as id) {
+  <app-cotizacion-detalle-dialog
+    [cotizacionId]="id"
+    (cerrar)="cerrarDetalle()"
+    (actualizada)="onCotizacionActualizada($event)"
+  />
 }

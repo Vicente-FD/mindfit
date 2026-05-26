@@ -102,6 +102,38 @@ export interface CotizacionDetallePayload {
   totalLineaNeto: number;
 }
 
+export interface UpdateCotizacionPayload {
+  divisaCodigo?: DivisaCodigo;
+  tasaCambioClp?: number;
+  subtotalNeto?: number;
+  montoIva?: number;
+  montoBruto?: number;
+  comentariosComerciales?: string;
+  detalles?: CotizacionDetallePayload[];
+}
+
+export type TipoHistorialCotizacion =
+  | 'creacion'
+  | 'edicion'
+  | 'cambio_estado';
+
+export interface CotizacionHistorialEntry {
+  id: number;
+  cotizacionId: number;
+  usuarioId: number | null;
+  tipo: TipoHistorialCotizacion;
+  resumen: string;
+  cambios: Record<string, unknown> | null;
+  createdAt: string;
+  usuario?: { id: number; nombre: string };
+}
+
+export const TIPO_HISTORIAL_COTIZ_LABEL: Record<TipoHistorialCotizacion, string> = {
+  creacion: 'Creación',
+  edicion: 'Edición',
+  cambio_estado: 'Cambio de estado',
+};
+
 export interface CreateCotizacionPayload {
   clienteId: number;
   oportunidadId?: number;
@@ -132,12 +164,15 @@ export interface CotizacionVenta {
   creadoPor?: { id: number; nombre: string; rol?: string };
   detalles?: {
     id: number;
+    activoId?: number | null;
     skuEstatico: string;
     nombreEstatico: string;
     categoriaEstatica: string | null;
     cantidad: number;
     precioUnitarioPactado: string | number;
     totalLineaNeto: string | number;
+    costoHistoricoClp?: string | number;
+    activo?: { id: number; nombre: string };
   }[];
 }
 

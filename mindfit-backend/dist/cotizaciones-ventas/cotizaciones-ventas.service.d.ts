@@ -1,9 +1,11 @@
 import { DataSource } from 'typeorm';
 import { CotizacionVenta } from '../entities/cotizacion-venta.entity';
+import { CotizacionVentaHistorial } from '../entities/cotizacion-venta-historial.entity';
 import { ClientesService } from '../clientes/clientes.service';
 import { DivisasService } from '../divisas/divisas.service';
 import { CreateCotizacionVentaDto } from './dto/create-cotizacion-venta.dto';
 import { UpdateEstadoCotizacionDto } from './dto/update-estado-cotizacion.dto';
+import { UpdateCotizacionVentaDto } from './dto/update-cotizacion-venta.dto';
 export declare class CotizacionesVentasService {
     private readonly dataSource;
     private readonly clientesService;
@@ -12,9 +14,17 @@ export declare class CotizacionesVentasService {
     private repo;
     findAll(): Promise<CotizacionVenta[]>;
     findOne(id: number): Promise<CotizacionVenta>;
+    getHistorial(cotizacionId: number): Promise<CotizacionVentaHistorial[]>;
     create(dto: CreateCotizacionVentaDto, creadoPorId: number): Promise<CotizacionVenta>;
-    actualizarEstado(id: number, dto: UpdateEstadoCotizacionDto): Promise<CotizacionVenta>;
+    update(id: number, dto: UpdateCotizacionVentaDto, usuarioId: number): Promise<CotizacionVenta>;
+    actualizarEstado(id: number, dto: UpdateEstadoCotizacionDto, usuarioId?: number): Promise<CotizacionVenta>;
     private generarFolio;
     private procesarDetallesActivos;
     private procesarLineaActivo;
+    private findOneInTransaction;
+    private actualizarDetalles;
+    private liberarActivoReserva;
+    private registrarHistorial;
+    private snapshotCotizacion;
+    private diffCotizacion;
 }

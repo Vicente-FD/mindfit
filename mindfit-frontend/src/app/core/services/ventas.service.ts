@@ -6,8 +6,10 @@ import {
   CatalogoVentaItem,
   Cliente,
   CotizacionVenta,
+  CotizacionHistorialEntry,
   CreateClientePayload,
   CreateCotizacionPayload,
+  UpdateCotizacionPayload,
   CreateOportunidadPayload,
   Oportunidad,
   TasasDivisa,
@@ -104,6 +106,26 @@ export class VentasService {
 
   listCotizaciones(): Observable<CotizacionVenta[]> {
     return this.http.get<CotizacionVenta[]>(this.cotizacionesUrl);
+  }
+
+  getCotizacion(id: number): Observable<CotizacionVenta> {
+    return this.http.get<CotizacionVenta>(`${this.cotizacionesUrl}/${id}`);
+  }
+
+  getCotizacionHistorial(id: number): Observable<CotizacionHistorialEntry[]> {
+    return this.http.get<CotizacionHistorialEntry[]>(
+      `${this.cotizacionesUrl}/${id}/historial`,
+    );
+  }
+
+  updateCotizacion(
+    id: number,
+    payload: UpdateCotizacionPayload,
+  ): Observable<CotizacionVenta> {
+    return this.http.patch<CotizacionVenta>(
+      `${this.cotizacionesUrl}/${id}`,
+      payload,
+    );
   }
 
   createCotizacion(

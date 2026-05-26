@@ -21,6 +21,7 @@ const jwt_payload_interface_1 = require("../common/interfaces/jwt-payload.interf
 const cotizaciones_ventas_service_1 = require("./cotizaciones-ventas.service");
 const create_cotizacion_venta_dto_1 = require("./dto/create-cotizacion-venta.dto");
 const update_estado_cotizacion_dto_1 = require("./dto/update-estado-cotizacion.dto");
+const update_cotizacion_venta_dto_1 = require("./dto/update-cotizacion-venta.dto");
 let CotizacionesVentasController = class CotizacionesVentasController {
     cotizacionesService;
     constructor(cotizacionesService) {
@@ -29,14 +30,20 @@ let CotizacionesVentasController = class CotizacionesVentasController {
     findAll() {
         return this.cotizacionesService.findAll();
     }
+    getHistorial(id) {
+        return this.cotizacionesService.getHistorial(id);
+    }
     findOne(id) {
         return this.cotizacionesService.findOne(id);
     }
     create(dto, user) {
         return this.cotizacionesService.create(dto, user.id);
     }
-    actualizarEstado(id, dto) {
-        return this.cotizacionesService.actualizarEstado(id, dto);
+    update(id, dto, user) {
+        return this.cotizacionesService.update(id, dto, user.id);
+    }
+    actualizarEstado(id, dto, user) {
+        return this.cotizacionesService.actualizarEstado(id, dto, user.id);
     }
 };
 exports.CotizacionesVentasController = CotizacionesVentasController;
@@ -47,6 +54,14 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], CotizacionesVentasController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)(':id/historial'),
+    (0, roles_decorator_1.Roles)(...roles_ventas_1.ROLES_VENTAS_LECTURA),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], CotizacionesVentasController.prototype, "getHistorial", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, roles_decorator_1.Roles)(...roles_ventas_1.ROLES_VENTAS_LECTURA),
@@ -66,12 +81,25 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], CotizacionesVentasController.prototype, "create", null);
 __decorate([
+    (0, common_1.Patch)(':id'),
+    (0, roles_decorator_1.Roles)(...roles_ventas_1.ROLES_VENTAS_ESCRITURA),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, update_cotizacion_venta_dto_1.UpdateCotizacionVentaDto,
+        jwt_payload_interface_1.JwtPayload]),
+    __metadata("design:returntype", void 0)
+], CotizacionesVentasController.prototype, "update", null);
+__decorate([
     (0, common_1.Patch)(':id/estado'),
     (0, roles_decorator_1.Roles)(...roles_ventas_1.ROLES_VENTAS_APROBACION),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, update_estado_cotizacion_dto_1.UpdateEstadoCotizacionDto]),
+    __metadata("design:paramtypes", [Number, update_estado_cotizacion_dto_1.UpdateEstadoCotizacionDto,
+        jwt_payload_interface_1.JwtPayload]),
     __metadata("design:returntype", void 0)
 ], CotizacionesVentasController.prototype, "actualizarEstado", null);
 exports.CotizacionesVentasController = CotizacionesVentasController = __decorate([

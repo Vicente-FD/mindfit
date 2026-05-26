@@ -14,6 +14,7 @@ export class SchemaFixService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     await this.ensureFlotaLicencias();
+    await this.ensureCotizacionHistorial();
     await this.ensureRendicionesGastos();
     await this.ensureOtSchema();
     await this.ensureMovimientosInventario();
@@ -66,6 +67,25 @@ export class SchemaFixService implements OnModuleInit {
       ON licencias_tecnicos (fecha_vencimiento);
     `);
     this.logger.log('Flota y licencias verificadas');
+  }
+
+  private async ensureCotizacionHistorial(): Promise<void> {
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS cotizacion_ventas_historial (
+        id SERIAL PRIMARY KEY,
+        cotizacion_id INT NOT NULL REFERENCES cotizaciones_ventas(id) ON DELETE CASCADE,
+        usuario_id INT NULL REFERENCES usuarios(id) ON DELETE SET NULL,
+        tipo VARCHAR(30) NOT NULL CHECK (tipo IN ('creacion', 'edicion', 'cambio_estado')),
+        resumen TEXT NOT NULL,
+        cambios JSONB NULL,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_cotiz_historial_cotizacion
+      ON cotizacion_ventas_historial (cotizacion_id, created_at DESC);
+    `);
+    this.logger.log('Historial de cotizaciones verificado');
   }
 
   private async ensureRendicionesGastos(): Promise<void> {

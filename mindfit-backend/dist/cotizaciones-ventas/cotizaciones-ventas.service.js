@@ -17,6 +17,7 @@ const activo_entity_1 = require("../entities/activo.entity");
 const categoria_entity_1 = require("../entities/categoria.entity");
 const cotizacion_venta_entity_1 = require("../entities/cotizacion-venta.entity");
 const cotizacion_ventas_detalle_entity_1 = require("../entities/cotizacion-ventas-detalle.entity");
+const cotizacion_venta_historial_entity_1 = require("../entities/cotizacion-venta-historial.entity");
 const oportunidad_entity_1 = require("../entities/oportunidad.entity");
 const clientes_service_1 = require("../clientes/clientes.service");
 const divisas_service_1 = require("../divisas/divisas.service");
@@ -57,6 +58,14 @@ let CotizacionesVentasService = class CotizacionesVentasService {
             throw new common_1.NotFoundException(`Cotización ${id} no encontrada`);
         }
         return c;
+    }
+    async getHistorial(cotizacionId) {
+        await this.findOne(cotizacionId);
+        return this.dataSource.getRepository(cotizacion_venta_historial_entity_1.CotizacionVentaHistorial).find({
+            where: { cotizacionId },
+            relations: { usuario: true },
+            order: { createdAt: 'DESC' },
+        });
     }
     async create(dto, creadoPorId) {
         if (!dto.detalles?.length) {
@@ -103,6 +112,7 @@ let CotizacionesVentasService = class CotizacionesVentasService {
                 detalles: lineas,
             });
             const saved = await manager.getRepository(cotizacion_venta_entity_1.CotizacionVenta).save(cotizacion);
+            await this.registrarHistorial(manager, saved.id, creadoPorId, 'creacion', `Cotización ${folio} creada con ${lineas.length} máquina(s)`, { folio, detalles: lineas.length });
             await queryRunner.commitTransaction();
             return this.findOne(saved.id);
         }
@@ -114,7 +124,84 @@ let CotizacionesVentasService = class CotizacionesVentasService {
             await queryRunner.release();
         }
     }
-    async actualizarEstado(id, dto) {
+    async update(id, dto, usuarioId) {
+        const cotizacion = await this.findOne(id);
+        if (cotizacion.estado !== enums_1.EstadoCotizacionVenta.PENDIENTE_APROBACION) {
+            throw new common_1.BadRequestException('Solo se pueden editar cotizaciones pendientes de aprobación');
+        }
+        const antes = this.snapshotCotizacion(cotizacion);
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            const manager = queryRunner.manager;
+            const repo = manager.getRepository(cotizacion_venta_entity_1.CotizacionVenta);
+            let divisaCodigo = cotizacion.divisaCodigo;
+            let tasaCambio = Number(cotizacion.tasaCambioClp);
+            let subtotal = Number(cotizacion.subtotalNeto);
+            let montoIva = Number(cotizacion.montoIva);
+            let montoBruto = Number(cotizacion.montoBruto);
+            let comentarios = cotizacion.comentariosComerciales;
+            if (dto.divisaCodigo != null) {
+                divisaCodigo = dto.divisaCodigo;
+            }
+            if (dto.tasaCambioClp != null) {
+                tasaCambio = dto.tasaCambioClp;
+            }
+            else if (dto.divisaCodigo != null) {
+                const tasas = await this.divisasService.getTasas();
+                tasaCambio = this.divisasService.tasaParaDivisa(tasas, divisaCodigo);
+            }
+            if (dto.comentariosComerciales !== undefined) {
+                comentarios = dto.comentariosComerciales?.trim() ?? null;
+            }
+            if (dto.detalles != null) {
+                if (!dto.detalles.length) {
+                    throw new common_1.BadRequestException('Debe incluir al menos una máquina');
+                }
+                for (const item of dto.detalles) {
+                    if (item.repuestoId != null) {
+                        throw new common_1.BadRequestException('Las cotizaciones comerciales solo admiten máquinas de Bodega Central');
+                    }
+                    if (item.activoId == null) {
+                        throw new common_1.BadRequestException('Cada línea debe referenciar un activo');
+                    }
+                }
+                await this.actualizarDetalles(manager, cotizacion, dto.detalles);
+            }
+            const refreshed = await this.findOneInTransaction(manager, id);
+            subtotal =
+                dto.subtotalNeto ??
+                    refreshed.detalles.reduce((s, l) => s + Number(l.totalLineaNeto), 0);
+            montoIva =
+                dto.montoIva ??
+                    (divisaCodigo === enums_1.DivisaCodigo.CLP
+                        ? Math.round(subtotal * 0.19 * 100) / 100
+                        : 0);
+            montoBruto = dto.montoBruto ?? subtotal + montoIva;
+            await repo.update(id, {
+                divisaCodigo,
+                tasaCambioClp: String(tasaCambio),
+                subtotalNeto: String(Math.round(subtotal * 100) / 100),
+                montoIva: String(Math.round(montoIva * 100) / 100),
+                montoBruto: String(Math.round(montoBruto * 100) / 100),
+                comentariosComerciales: comentarios,
+            });
+            const despues = await this.findOneInTransaction(manager, id);
+            const { resumen, cambios } = this.diffCotizacion(antes, this.snapshotCotizacion(despues));
+            await this.registrarHistorial(manager, id, usuarioId, 'edicion', resumen, cambios);
+            await queryRunner.commitTransaction();
+            return this.findOne(id);
+        }
+        catch (err) {
+            await queryRunner.rollbackTransaction();
+            throw err;
+        }
+        finally {
+            await queryRunner.release();
+        }
+    }
+    async actualizarEstado(id, dto, usuarioId) {
         const cotizacion = await this.findOne(id);
         if (cotizacion.estado !== enums_1.EstadoCotizacionVenta.PENDIENTE_APROBACION) {
             throw new common_1.BadRequestException('Solo se pueden aprobar o rechazar cotizaciones pendientes de aprobación');
@@ -162,6 +249,8 @@ let CotizacionesVentasService = class CotizacionesVentasService {
             await manager.getRepository(cotizacion_venta_entity_1.CotizacionVenta).update(id, {
                 estado: dto.estado,
             });
+            const etiqueta = dto.estado === enums_1.EstadoCotizacionVenta.APROBADA ? 'aprobada' : 'rechazada';
+            await this.registrarHistorial(manager, id, usuarioId ?? null, 'cambio_estado', `Estado cambiado a «${etiqueta}»`, { estadoAnterior: cotizacion.estado, estadoNuevo: dto.estado });
             await queryRunner.commitTransaction();
             return this.findOne(id);
         }
@@ -251,6 +340,113 @@ let CotizacionesVentasService = class CotizacionesVentasService {
             totalLineaNeto: String(Math.round(totalLinea * 100) / 100),
             costoHistoricoClp: String(costoHistorico),
         });
+    }
+    async findOneInTransaction(manager, id) {
+        const c = await manager.getRepository(cotizacion_venta_entity_1.CotizacionVenta).findOne({
+            where: { id },
+            relations: { detalles: { activo: true } },
+        });
+        if (!c) {
+            throw new common_1.NotFoundException(`Cotización ${id} no encontrada`);
+        }
+        return c;
+    }
+    async actualizarDetalles(manager, cotizacion, items) {
+        const detalleRepo = manager.getRepository(cotizacion_ventas_detalle_entity_1.CotizacionVentasDetalle);
+        const oldDetails = [...(cotizacion.detalles ?? [])];
+        const newActivoIds = new Set(items.map((i) => i.activoId));
+        for (const d of oldDetails) {
+            if (d.activoId != null && !newActivoIds.has(d.activoId)) {
+                await this.liberarActivoReserva(manager, d.activoId);
+                await detalleRepo.delete(d.id);
+            }
+        }
+        const vistos = new Set();
+        for (const item of items) {
+            const activoId = item.activoId;
+            if (vistos.has(activoId)) {
+                throw new common_1.BadRequestException(`La máquina ${activoId} está duplicada en la cotización`);
+            }
+            vistos.add(activoId);
+            const existing = oldDetails.find((d) => d.activoId === activoId);
+            if (existing) {
+                const totalLinea = item.totalLineaNeto ??
+                    item.cantidad * item.precioUnitarioPactado;
+                existing.precioUnitarioPactado = String(item.precioUnitarioPactado);
+                existing.totalLineaNeto = String(Math.round(totalLinea * 100) / 100);
+                await detalleRepo.save(existing);
+            }
+            else {
+                const linea = await this.procesarLineaActivo(manager, item, activoId);
+                linea.cotizacionId = cotizacion.id;
+                await detalleRepo.save(linea);
+            }
+        }
+    }
+    async liberarActivoReserva(manager, activoId) {
+        const activoRepo = manager.getRepository(activo_entity_1.Activo);
+        const activo = await activoRepo.findOne({
+            where: { id: activoId, deletedAt: (0, typeorm_1.IsNull)() },
+        });
+        if (!activo)
+            return;
+        if (activo.estadoOperacional !== enums_1.EstadoOperacionalActivo.RESERVADO_VENTA) {
+            return;
+        }
+        activo.estadoOperacional = enums_1.EstadoOperacionalActivo.OPERATIVO;
+        await activoRepo.save(activo);
+    }
+    async registrarHistorial(manager, cotizacionId, usuarioId, tipo, resumen, cambios) {
+        await manager.getRepository(cotizacion_venta_historial_entity_1.CotizacionVentaHistorial).save({
+            cotizacionId,
+            usuarioId,
+            tipo,
+            resumen,
+            cambios,
+        });
+    }
+    snapshotCotizacion(c) {
+        return {
+            divisaCodigo: c.divisaCodigo,
+            tasaCambioClp: Number(c.tasaCambioClp),
+            subtotalNeto: Number(c.subtotalNeto),
+            montoIva: Number(c.montoIva),
+            montoBruto: Number(c.montoBruto),
+            comentariosComerciales: c.comentariosComerciales,
+            detalles: (c.detalles ?? []).map((d) => ({
+                activoId: d.activoId,
+                sku: d.skuEstatico,
+                nombre: d.nombreEstatico,
+                precioUnitarioPactado: Number(d.precioUnitarioPactado),
+                totalLineaNeto: Number(d.totalLineaNeto),
+            })),
+        };
+    }
+    diffCotizacion(antes, despues) {
+        const partes = [];
+        const cambios = { antes, despues };
+        const campos = [
+            { key: 'divisaCodigo', label: 'divisa' },
+            { key: 'tasaCambioClp', label: 'tasa de cambio' },
+            { key: 'subtotalNeto', label: 'subtotal neto' },
+            { key: 'montoIva', label: 'IVA' },
+            { key: 'montoBruto', label: 'monto bruto' },
+            { key: 'comentariosComerciales', label: 'comentarios' },
+        ];
+        for (const { key, label } of campos) {
+            if (antes[key] !== despues[key]) {
+                partes.push(`${label}: ${antes[key]} → ${despues[key]}`);
+            }
+        }
+        const detAntes = JSON.stringify(antes.detalles ?? []);
+        const detDespues = JSON.stringify(despues.detalles ?? []);
+        if (detAntes !== detDespues) {
+            partes.push('líneas de detalle actualizadas');
+        }
+        const resumen = partes.length > 0
+            ? `Modificación: ${partes.join('; ')}`
+            : 'Modificación sin cambios detectados en campos principales';
+        return { resumen, cambios };
     }
 };
 exports.CotizacionesVentasService = CotizacionesVentasService;

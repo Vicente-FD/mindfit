@@ -95,6 +95,7 @@ exports.AppModule = AppModule = __decorate([
                             entities_1.Oportunidad,
                             entities_1.CotizacionVenta,
                             entities_1.CotizacionVentasDetalle,
+                            entities_1.CotizacionVentaHistorial,
                             entities_1.Vehiculo,
                             entities_1.LicenciaTecnico,
                         ],

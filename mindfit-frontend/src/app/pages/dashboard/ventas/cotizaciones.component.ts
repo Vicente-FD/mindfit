@@ -12,10 +12,17 @@ import {
   ESTADO_COTIZACION_LABEL,
   EstadoCotizacionVenta,
 } from '../../../core/models/ventas.model';
+import { CotizacionDetalleDialogComponent } from './cotizacion-detalle-dialog.component';
 
 @Component({
   selector: 'app-cotizaciones-ventas',
-  imports: [RouterLink, LucideAngularModule, CurrencyPipe, DatePipe],
+  imports: [
+    RouterLink,
+    LucideAngularModule,
+    CurrencyPipe,
+    DatePipe,
+    CotizacionDetalleDialogComponent,
+  ],
   templateUrl: './cotizaciones.component.html',
   styleUrl: './cotizaciones.component.css',
 })
@@ -32,6 +39,7 @@ export class CotizacionesVentasComponent implements OnInit {
   readonly estadoLabel = ESTADO_COTIZACION_LABEL;
 
   readonly puedeAprobar = signal(false);
+  readonly detalleId = signal<number | null>(null);
 
   ngOnInit(): void {
     const rol = this.auth.user()?.rol;
@@ -82,6 +90,20 @@ export class CotizacionesVentasComponent implements OnInit {
         this.toast.error(typeof msg === 'string' ? msg : 'Error al actualizar estado');
       },
     });
+  }
+
+  verDetalle(c: CotizacionVenta): void {
+    this.detalleId.set(c.id);
+  }
+
+  cerrarDetalle(): void {
+    this.detalleId.set(null);
+  }
+
+  onCotizacionActualizada(c: CotizacionVenta): void {
+    this.cotizaciones.update((list) =>
+      list.map((item) => (item.id === c.id ? { ...item, ...c } : item)),
+    );
   }
 
   exportarPdf(c: CotizacionVenta): void {
