@@ -17,6 +17,9 @@ import { ActivosService } from './activos.service';
 import { CreateActivoDto } from './dto/create-activo.dto';
 import { FilterActivosDto } from './dto/filter-activos.dto';
 import { UpdateActivoDto } from './dto/update-activo.dto';
+import { TrasladoActivoDto } from './dto/traslado-activo.dto';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 
 @Controller('activos')
 export class ActivosController {
@@ -84,6 +87,20 @@ export class ActivosController {
   @Roles(RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES)
   create(@Body() dto: CreateActivoDto) {
     return this.activosService.create(dto);
+  }
+
+  @Post(':id/traslado')
+  @Roles(RolUsuario.ADMIN, RolUsuario.JEFE_OPERACIONES)
+  traslado(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: TrasladoActivoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.activosService.traslado(
+      id,
+      dto.nuevaSucursalId ?? null,
+      user.id,
+    );
   }
 
   @Patch(':id')

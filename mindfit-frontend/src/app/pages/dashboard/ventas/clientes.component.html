@@ -1,0 +1,105 @@
+<header class="ventas-page-head">
+  <div>
+    <h1 class="text-xl font-semibold text-pure-white">Clientes CRM</h1>
+    <p class="mt-1 text-sm text-slate-grey">Catálogo de clientes con RUT como identificador principal.</p>
+  </div>
+  <button type="button" class="btn-primary" (click)="toggleForm()">
+    {{ showForm() ? 'Ocultar formulario' : '+ Nuevo cliente' }}
+  </button>
+</header>
+
+@if (showForm()) {
+  <form
+    class="page-card grid gap-3 sm:grid-cols-2"
+    [formGroup]="form"
+    novalidate
+    (ngSubmit)="submit()"
+  >
+    <div>
+      <label class="field-label" for="cli-rut">RUT *</label>
+      <input id="cli-rut" class="field-input" formControlName="rut" autocomplete="off" />
+      @if (invalidCtrl('rut')) {
+        <p class="field-error">{{ errorText(form.controls.rut) }}</p>
+      }
+    </div>
+    <div>
+      <label class="field-label" for="cli-razon">Razón social *</label>
+      <input id="cli-razon" class="field-input" formControlName="razonSocial" />
+      @if (invalidCtrl('razonSocial')) {
+        <p class="field-error">{{ errorText(form.controls.razonSocial) }}</p>
+      }
+    </div>
+    <div>
+      <label class="field-label" for="cli-email">Email *</label>
+      <input id="cli-email" type="email" class="field-input" formControlName="email" />
+      @if (invalidCtrl('email')) {
+        <p class="field-error">{{ errorText(form.controls.email) }}</p>
+      }
+    </div>
+    <div>
+      <label class="field-label" for="cli-tel">Teléfono</label>
+      <input id="cli-tel" type="tel" class="field-input" formControlName="telefono" />
+    </div>
+    <div class="sm:col-span-2">
+      <label class="field-label" for="cli-dir">Dirección *</label>
+      <input id="cli-dir" class="field-input" formControlName="direccion" />
+      @if (invalidCtrl('direccion')) {
+        <p class="field-error">{{ errorText(form.controls.direccion) }}</p>
+      }
+    </div>
+    <div>
+      <label class="field-label" for="cli-comuna">Comuna *</label>
+      <input id="cli-comuna" class="field-input" formControlName="comuna" />
+      @if (invalidCtrl('comuna')) {
+        <p class="field-error">{{ errorText(form.controls.comuna) }}</p>
+      }
+    </div>
+    <div>
+      <label class="field-label" for="cli-ciudad">Ciudad *</label>
+      <input id="cli-ciudad" class="field-input" formControlName="ciudad" />
+      @if (invalidCtrl('ciudad')) {
+        <p class="field-error">{{ errorText(form.controls.ciudad) }}</p>
+      }
+    </div>
+    <div class="sm:col-span-2 flex gap-2">
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="saving()"
+      >
+        {{ saving() ? 'Guardando...' : (editId() ? 'Actualizar' : 'Registrar') }}
+      </button>
+      @if (editId()) {
+        <button type="button" class="btn-ghost" (click)="cancelEdit()">Cancelar</button>
+      }
+    </div>
+  </form>
+}
+
+<section class="page-card">
+  @if (loading()) {
+    <p class="text-sm text-slate-grey">Cargando...</p>
+  } @else if (!lista().length) {
+    <p class="text-sm text-slate-grey">Sin clientes registrados.</p>
+  } @else {
+    <div class="clientes-table">
+      @for (c of lista(); track c.id) {
+        <div class="cliente-row">
+          <div>
+            <p class="cliente-rut">{{ c.rut }}</p>
+            <p class="cliente-nombre">{{ c.razonSocial }}</p>
+            <p class="text-xs text-slate-grey">{{ c.email }} · {{ c.comuna }}</p>
+          </div>
+          <div class="cliente-actions">
+            <button type="button" class="btn-ghost" (click)="startEdit(c)">
+              <lucide-icon name="pencil" [size]="16" />
+            </button>
+            <button type="button" class="btn-ghost text-red-400" (click)="remove(c)">
+              <lucide-icon name="trash-2" [size]="16" />
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>

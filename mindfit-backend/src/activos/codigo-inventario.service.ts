@@ -11,16 +11,22 @@ export class CodigoInventarioService {
 
   async generarCodigo(
     manager: EntityManager,
-    sucursalId: number,
+    sucursalId: number | null | undefined,
     marcaId: number,
     categoriaId: number,
     fechaCompra?: string | null,
   ): Promise<string> {
-    const sucursal = await manager.findOne(Sucursal, {
-      where: { id: sucursalId },
-    });
-    if (!sucursal?.sigla) {
-      throw new BadRequestException('La sucursal no tiene sigla configurada');
+    let siglaSede: string;
+    if (sucursalId == null) {
+      siglaSede = 'BC';
+    } else {
+      const sucursal = await manager.findOne(Sucursal, {
+        where: { id: sucursalId },
+      });
+      if (!sucursal?.sigla) {
+        throw new BadRequestException('La sucursal no tiene sigla configurada');
+      }
+      siglaSede = sucursal.sigla;
     }
 
     const marca = await manager.findOne(Marca, { where: { id: marcaId } });
@@ -36,7 +42,7 @@ export class CodigoInventarioService {
     }
 
     const year = this.resolveYear(fechaCompra);
-    const prefix = `${sucursal.sigla}-${marca.sigla}-${year}-${categoria.sigla}-`;
+    const prefix = `${siglaSede}-${marca.sigla}-${year}-${categoria.sigla}-`;
 
     const rows = await manager
       .createQueryBuilder(Activo, 'a')

@@ -130,6 +130,12 @@ export class SeedService implements OnModuleInit {
         rol: RolUsuario.BODEGUERO,
         sucursalKey: null,
       },
+      {
+        email: 'ventas@mindfit.cl',
+        nombre: 'Ejecutivo Comercial',
+        rol: RolUsuario.EJECUTIVO_VENTAS,
+        sucursalKey: null,
+      },
     ];
 
     const savedUsers: Record<string, Usuario> = {};

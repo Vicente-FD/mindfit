@@ -26,6 +26,7 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: 'jefe_sucursal', label: 'Jefe Sucursal' },
   { value: 'gerente_bi', label: 'Gerente / BI' },
   { value: 'bodeguero', label: 'Bodeguero' },
+  { value: 'ejecutivo_ventas', label: 'Ejecutivo de Ventas' },
 ];
 
 const ROLE_TABS: { value: UserRole | 'todos'; label: string }[] = [
@@ -49,6 +50,7 @@ const PERMISO_LABELS: { key: keyof PermisosUi; label: string }[] = [
   { key: 'verReportesSucursal', label: 'Reportar Falla' },
   { key: 'verControlBodega', label: 'Control de Bodega' },
   { key: 'verRendicionGastos', label: 'Rendición de Gastos' },
+  { key: 'verGestionVentas', label: 'Centro Comercial (CRM)' },
 ];
 
 @Component({

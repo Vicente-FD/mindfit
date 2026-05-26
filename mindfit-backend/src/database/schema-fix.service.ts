@@ -283,6 +283,20 @@ export class SchemaFixService implements OnModuleInit {
         ) THEN
           ALTER TYPE "${typeName}" ADD VALUE 'en_reparacion';
         END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_enum e
+          JOIN pg_type t ON t.oid = e.enumtypid
+          WHERE t.typname = '${typeName}' AND e.enumlabel = 'reservado_venta'
+        ) THEN
+          ALTER TYPE "${typeName}" ADD VALUE 'reservado_venta';
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_enum e
+          JOIN pg_type t ON t.oid = e.enumtypid
+          WHERE t.typname = '${typeName}' AND e.enumlabel = 'vendido'
+        ) THEN
+          ALTER TYPE "${typeName}" ADD VALUE 'vendido';
+        END IF;
       END $$;
     `).catch((err) => {
       this.logger.warn(`Enum estado operacional: ${String(err)}`);

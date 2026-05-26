@@ -30,6 +30,18 @@ export interface BodegaKpis {
   alertasReorden: number;
 }
 
+export interface BodegaMaquina {
+  id: number;
+  codigoInventario: string;
+  nombre: string;
+  marca: string;
+  modelo: string | null;
+  categoria: string;
+  estadoOperacional: string;
+  aptoParaVenta: boolean;
+  precioVentaClp: number;
+}
+
 export interface RepuestoCierreItem {
   repuestoId: number;
   cantidad: number;

@@ -6,4 +6,5 @@ export declare class FilterActivosDto {
     categoria?: CategoriaActivo;
     anioCompra?: number;
     busqueda?: string;
+    soloBodegaCentral?: boolean;
 }

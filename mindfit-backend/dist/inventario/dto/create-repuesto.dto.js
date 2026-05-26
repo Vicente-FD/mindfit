@@ -16,6 +16,8 @@ class CreateRepuestoDto {
     nombre;
     descripcion;
     costoUnitario;
+    aptoParaVenta;
+    precioVentaClp;
 }
 exports.CreateRepuestoDto = CreateRepuestoDto;
 __decorate([
@@ -38,4 +40,15 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateRepuestoDto.prototype, "costoUnitario", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateRepuestoDto.prototype, "aptoParaVenta", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)({ maxDecimalPlaces: 2 }),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], CreateRepuestoDto.prototype, "precioVentaClp", void 0);
 //# sourceMappingURL=create-repuesto.dto.js.map

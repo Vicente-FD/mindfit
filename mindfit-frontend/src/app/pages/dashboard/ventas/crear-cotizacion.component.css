@@ -1,0 +1,91 @@
+@import './cotizaciones.component.css';
+
+.selector-bodega {
+  position: relative;
+}
+
+.selector-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.selector-trigger {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgb(255 102 0 / 0.35);
+  background: rgb(0 0 0 / 0.45);
+  color: var(--color-pure-white, #fff);
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.selector-trigger:hover {
+  border-color: var(--color-orange-energy, #ff6600);
+}
+
+.selector-filtros {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.chip {
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(0 0 0 / 0.25);
+  color: var(--color-slate-grey, #94a3b8);
+}
+
+.chip--active {
+  border-color: var(--color-orange-energy, #ff6600);
+  color: var(--color-orange-energy, #ff6600);
+  background: rgb(255 102 0 / 0.12);
+}
+
+.selector-panel {
+  margin-top: 0.5rem;
+  padding: 0.65rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgb(255 102 0 / 0.25);
+  background: #1a1a1c;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.45);
+}
+
+.catalogo-results {
+  max-height: 280px;
+}
+
+.catalogo-item__precio {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  color: var(--color-status-green, #4ade80);
+}
+
+.catalogo-item--disabled {
+  opacity: 0.65;
+  border-style: dashed;
+}
+
+.catalogo-item__badge {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fbbf24;
+  text-transform: uppercase;
+}
+
+.lineas-head,
+.lineas-row {
+  grid-template-columns: 1fr 2fr 1.2fr 90px 80px 36px;
+}

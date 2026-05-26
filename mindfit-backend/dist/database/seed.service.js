@@ -136,6 +136,12 @@ let SeedService = SeedService_1 = class SeedService {
                 rol: enums_1.RolUsuario.BODEGUERO,
                 sucursalKey: null,
             },
+            {
+                email: 'ventas@mindfit.cl',
+                nombre: 'Ejecutivo Comercial',
+                rol: enums_1.RolUsuario.EJECUTIVO_VENTAS,
+                sucursalKey: null,
+            },
         ];
         const savedUsers = {};
         for (const u of users) {

@@ -5,21 +5,34 @@
   flex-shrink: 0;
 }
 
-.marca-logo-thumb {
+.marca-inicial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
   flex-shrink: 0;
   border-radius: 0.5rem;
-  object-fit: contain;
-  background: rgb(255 255 255 / 0.04);
-  border: 1px solid rgb(255 255 255 / 0.08);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-orange-energy, #ff6600);
+  background: rgb(255 102 0 / 0.12);
+  border: 1px solid rgb(255 102 0 / 0.25);
 }
 
 .activo-main {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
+  flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
+}
+
+.activo-info {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .health-dot-wrap {
@@ -59,9 +72,8 @@
 
 .activo-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   border-radius: 0.75rem;
   border: 1px solid rgb(255 255 255 / 0.06);
   background: var(--color-obsidian-grey, #1a1a1c);
@@ -70,9 +82,118 @@
 
 .activo-actions {
   display: flex;
-  flex-shrink: 0;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+@media (min-width: 1100px) {
+  .activo-row {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .activo-main {
+    flex: 1 1 0;
+    min-width: 12rem;
+  }
+
+  .activo-actions {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+    padding-top: 0;
+    border-top: none;
+    justify-content: flex-end;
+    margin-left: 0;
+  }
+}
+
+.activos-list-loading {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--color-slate-grey, #94a3b8);
+  font-size: 0.85rem;
+}
+
+.activos-list-meta {
+  font-size: 0.75rem;
+  color: var(--color-slate-grey, #94a3b8);
+  margin-bottom: 0.35rem;
+}
+
+.btn-traslado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(0 0 0 / 0.35);
+  color: var(--color-pure-white, #fff);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.btn-traslado:hover:not(:disabled) {
+  border-color: var(--color-orange-energy, #ff6600);
+  background: rgb(255 102 0 / 0.1);
+}
+
+.btn-traslado:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-traslado--bodega {
+  border-color: rgb(56 189 248 / 0.35);
+  color: #7dd3fc;
+}
+
+.btn-traslado--bodega:hover:not(:disabled) {
+  border-color: #38bdf8;
+  background: rgb(56 189 248 / 0.12);
+}
+
+.traslado-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 0.65);
+}
+
+.traslado-modal {
+  position: fixed;
+  z-index: 51;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 2rem));
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: var(--color-obsidian-grey, #1a1a1c);
+  box-shadow: 0 24px 48px rgb(0 0 0 / 0.5);
+}
+
+.traslado-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.traslado-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
 }
 
 .btn-qr {

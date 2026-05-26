@@ -5,11 +5,13 @@ export declare class UpdateActivoDto {
     modelo?: string;
     numeroSerie?: string;
     categoriaId?: number;
-    sucursalId?: number;
+    sucursalId?: number | null;
     pisoAsignado?: number | null;
     fechaCompra?: string;
     fechaVencimientoGarantia?: string;
     costoAdquisicion?: number;
     documentacionUrls?: string[];
     estadoOperacional?: EstadoOperacionalActivo;
+    aptoParaVenta?: boolean;
+    precioVentaClp?: number;
 }

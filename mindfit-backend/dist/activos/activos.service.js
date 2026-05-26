@@ -13,6 +13,7 @@ exports.ActivosService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("typeorm");
 const enums_1 = require("../common/enums");
+const audit_trail_entity_1 = require("../entities/audit-trail.entity");
 const orden_trabajo_entity_1 = require("../entities/orden-trabajo.entity");
 const activo_entity_1 = require("../entities/activo.entity");
 const categoria_entity_1 = require("../entities/categoria.entity");
@@ -40,7 +41,10 @@ let ActivosService = class ActivosService {
             .leftJoinAndSelect('a.marcaRelacion', 'marca')
             .leftJoinAndSelect('a.categoriaRelacion', 'categoriaRelacion')
             .orderBy('a.nombre', 'ASC');
-        if (filters.sucursalId != null) {
+        if (filters.soloBodegaCentral) {
+            qb.andWhere('a.sucursal_id IS NULL');
+        }
+        else if (filters.sucursalId != null) {
             qb.andWhere('a.sucursal_id = :sucursalId', {
                 sucursalId: filters.sucursalId,
             });
@@ -79,6 +83,9 @@ let ActivosService = class ActivosService {
         return activo;
     }
     async resolvePisoAsignado(manager, sucursalId, pisoAsignado) {
+        if (sucursalId == null) {
+            return null;
+        }
         const sucursal = await manager.findOne(sucursal_entity_1.Sucursal, { where: { id: sucursalId } });
         if (!sucursal) {
             throw new common_1.BadRequestException('Sucursal no encontrada');
@@ -229,8 +236,9 @@ let ActivosService = class ActivosService {
         if (!categoria) {
             throw new common_1.BadRequestException('Categoría no encontrada');
         }
-        const pisoAsignado = await this.resolvePisoAsignado(manager, dto.sucursalId, dto.pisoAsignado);
-        const codigo = await this.codigoInventario.generarCodigo(manager, dto.sucursalId, dto.marcaId, dto.categoriaId, dto.fechaCompra);
+        const sucursalId = dto.sucursalId ?? null;
+        const pisoAsignado = await this.resolvePisoAsignado(manager, sucursalId, dto.pisoAsignado);
+        const codigo = await this.codigoInventario.generarCodigo(manager, sucursalId, dto.marcaId, dto.categoriaId, dto.fechaCompra);
         const activo = manager.create(activo_entity_1.Activo, {
             nombre: dto.nombre,
             marcaId: dto.marcaId,
@@ -240,14 +248,14 @@ let ActivosService = class ActivosService {
             categoriaId: categoria.id,
             categoria: (0, categoria_legacy_util_1.categoriaEnumFromSigla)(categoria.sigla),
             pisoAsignado,
-            sucursalId: dto.sucursalId,
+            sucursalId,
             fechaCompra: dto.fechaCompra ?? null,
             fechaVencimientoGarantia: dto.fechaVencimientoGarantia ?? null,
             costoAdquisicion: dto.costoAdquisicion != null ? String(dto.costoAdquisicion) : null,
             documentacionUrls: dto.documentacionUrls ?? [],
             estadoOperacional: dto.estadoOperacional,
             codigoInventario: codigo,
-            codigoQrToken: codigo,
+            codigoQrToken: sucursalId != null ? codigo : null,
         });
         return manager.save(activo);
     }
@@ -289,7 +297,7 @@ let ActivosService = class ActivosService {
             activo.categoria = (0, categoria_legacy_util_1.categoriaEnumFromSigla)(categoria.sigla);
         }
         const sucursalId = dto.sucursalId ?? activo.sucursalId;
-        if (dto.sucursalId != null)
+        if (dto.sucursalId !== undefined)
             activo.sucursalId = dto.sucursalId;
         if (dto.pisoAsignado !== undefined || dto.sucursalId != null) {
             activo.pisoAsignado = await this.resolvePisoAsignado(this.transactionContext.getManager(this.dataSource), sucursalId, dto.pisoAsignado !== undefined ? dto.pisoAsignado : activo.pisoAsignado);
@@ -309,6 +317,12 @@ let ActivosService = class ActivosService {
         }
         if (dto.estadoOperacional != null) {
             activo.estadoOperacional = dto.estadoOperacional;
+        }
+        if (dto.aptoParaVenta != null) {
+            activo.aptoParaVenta = dto.aptoParaVenta;
+        }
+        if (dto.precioVentaClp != null) {
+            activo.precioVentaClp = String(dto.precioVentaClp);
         }
         await this.repo().save(activo);
         return this.findOne(id);
@@ -331,7 +345,48 @@ let ActivosService = class ActivosService {
                 createdAt: 'DESC',
             },
         });
-        return ordenes.map((o) => this.mapHistorialItem(o));
+        const eventosOt = ordenes.map((o) => {
+            const orden = this.mapHistorialItem(o);
+            const fecha = orden.fechaResolucion ?? o.createdAt.toISOString();
+            return {
+                tipo: 'orden_trabajo',
+                id: `ot-${o.id}`,
+                fecha,
+                titulo: orden.titulo,
+                descripcion: orden.descripcion,
+                usuarioNombre: orden.asignadoA?.nombre ?? orden.creadoPor.nombre,
+                orden,
+            };
+        });
+        const audits = await this.dataSource.getRepository(audit_trail_entity_1.AuditTrail).find({
+            where: { tableName: 'activos', rowPk: String(activoId) },
+            relations: { usuario: true },
+            order: { timeStamp: 'DESC' },
+        });
+        const eventosTraslado = audits
+            .filter((a) => {
+            const nd = a.newData;
+            return nd?.destino != null || nd?.sucursalId !== undefined;
+        })
+            .map((a) => {
+            const oldData = (a.oldData ?? {});
+            const newData = (a.newData ?? {});
+            const destino = String(newData.destino ?? 'Ubicación actualizada');
+            return {
+                tipo: 'traslado',
+                id: `tra-${a.id}`,
+                fecha: a.timeStamp.toISOString(),
+                titulo: 'Traslado físico',
+                descripcion: destino,
+                usuarioNombre: a.usuario?.nombre ?? null,
+                traslado: {
+                    destino,
+                    sucursalIdAnterior: oldData.sucursalId ?? null,
+                    sucursalIdNuevo: newData.sucursalId ?? null,
+                },
+            };
+        });
+        return [...eventosOt, ...eventosTraslado].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
     }
     mapHistorialItem(orden) {
         const fechaResolucion = orden.fechaFinReal ?? orden.updatedAt;
@@ -404,6 +459,59 @@ let ActivosService = class ActivosService {
             throw new common_1.NotFoundException(`Activo ${id} no encontrado`);
         }
         return { deleted: true };
+    }
+    async traslado(id, nuevaSucursalId, userId) {
+        const activo = await this.findOne(id);
+        const oldData = {
+            sucursalId: activo.sucursalId,
+            codigoQrToken: activo.codigoQrToken,
+        };
+        const repo = this.repo();
+        let nuevoQr = activo.codigoQrToken;
+        let destinoLabel;
+        if (nuevaSucursalId == null) {
+            destinoLabel = 'Bodega Central';
+            nuevoQr = null;
+            await repo.update(id, {
+                sucursalId: null,
+                pisoAsignado: null,
+                codigoQrToken: null,
+            });
+        }
+        else {
+            const sucursal = await this.dataSource
+                .getRepository(sucursal_entity_1.Sucursal)
+                .findOne({ where: { id: nuevaSucursalId } });
+            if (!sucursal) {
+                throw new common_1.BadRequestException('Sucursal destino no encontrada');
+            }
+            destinoLabel = sucursal.nombre;
+            if (!activo.codigoQrToken?.trim()) {
+                if (activo.marcaId == null || activo.categoriaId == null) {
+                    throw new common_1.BadRequestException('El activo debe tener marca y categoría para generar QR');
+                }
+                nuevoQr =
+                    activo.codigoInventario?.trim() ||
+                        (await this.codigoInventario.generarCodigo(this.transactionContext.getManager(this.dataSource), nuevaSucursalId, activo.marcaId, activo.categoriaId, activo.fechaCompra));
+            }
+            await repo.update(id, {
+                sucursalId: nuevaSucursalId,
+                codigoQrToken: nuevoQr,
+            });
+        }
+        await this.dataSource.getRepository(audit_trail_entity_1.AuditTrail).save({
+            tableName: 'activos',
+            rowPk: String(id),
+            operation: enums_1.OperacionAuditoria.UPDATE,
+            userId,
+            oldData,
+            newData: {
+                sucursalId: nuevaSucursalId,
+                codigoQrToken: nuevoQr,
+                destino: destinoLabel,
+            },
+        });
+        return this.findOne(id);
     }
 };
 exports.ActivosService = ActivosService;

@@ -1,0 +1,70 @@
+<header class="ventas-page-head">
+  <div>
+    <h1 class="text-xl font-semibold text-pure-white">Pipeline de oportunidades</h1>
+    <p class="mt-1 text-sm text-slate-grey">Tablero Kanban por etapa comercial.</p>
+  </div>
+  <button type="button" class="btn-primary" (click)="toggleForm()">+ Nueva oportunidad</button>
+</header>
+
+@if (showForm()) {
+  <form class="page-card grid gap-3 sm:grid-cols-2" [formGroup]="form" (ngSubmit)="crear()">
+    <div>
+      <label class="field-label">Cliente *</label>
+      <select class="field-input" formControlName="clienteId">
+        <option [ngValue]="0">Seleccione</option>
+        @for (c of clientes(); track c.id) {
+          <option [ngValue]="c.id">{{ c.razonSocial }} ({{ c.rut }})</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="field-label">Título *</label>
+      <input class="field-input" formControlName="titulo" />
+    </div>
+    <div>
+      <label class="field-label">Monto estimado (CLP)</label>
+      <input type="number" class="field-input" formControlName="montoEstimado" min="0" />
+    </div>
+    <div class="sm:col-span-2">
+      <label class="field-label">Notas</label>
+      <textarea class="field-input min-h-20" formControlName="notas"></textarea>
+    </div>
+    <div class="sm:col-span-2">
+      <button type="submit" class="btn-primary">Crear oportunidad</button>
+    </div>
+  </form>
+}
+
+@if (loading()) {
+  <p class="text-sm text-slate-grey">Cargando tablero...</p>
+} @else {
+  <div class="kanban-board">
+    @for (col of etapas; track col.id) {
+      <div class="kanban-col">
+        <h3 class="kanban-col__title">{{ col.label }}</h3>
+        <div class="kanban-col__cards">
+          @for (o of porEtapa().get(col.id) ?? []; track o.id) {
+            <article class="kanban-card">
+              <p class="kanban-card__cliente">{{ o.cliente?.razonSocial ?? 'Cliente' }}</p>
+              <h4 class="kanban-card__titulo">{{ o.titulo }}</h4>
+              <p class="kanban-card__monto">{{ o.montoEstimado | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+              <div class="kanban-card__actions">
+                @if (etapaAnterior(col.id); as prev) {
+                  <button type="button" class="btn-ghost text-xs" (click)="moverEtapa(o, prev)">←</button>
+                }
+                @if (etapaSiguiente(col.id); as next) {
+                  <button type="button" class="btn-ghost text-xs" (click)="moverEtapa(o, next)">→</button>
+                }
+              </div>
+              @if (puedeConvertir(col.id)) {
+                <button type="button" class="btn-primary w-full mt-2 text-xs py-2" (click)="convertirCotizacion(o)">
+                  Convertir en cotización
+                </button>
+              }
+            </article>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}

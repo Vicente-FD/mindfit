@@ -1,0 +1,54 @@
+<header class="ventas-page-head">
+  <div>
+    <h1 class="text-xl font-semibold text-pure-white">Reportería comercial</h1>
+    <p class="mt-1 text-sm text-slate-grey">Gráficos de embudo y exportación de cotizaciones.</p>
+  </div>
+  <button type="button" class="btn-primary" [disabled]="!cotizaciones().length" (click)="exportarCsv()">
+    <lucide-icon name="download" [size]="16" />
+    Exportar planilla
+  </button>
+</header>
+
+@if (dashboard(); as d) {
+  <section class="page-card chart-embudo">
+    <h2 class="text-sm font-semibold text-pure-white">Embudo por etapa</h2>
+    <div class="chart-bars">
+      @for (step of d.embudo; track step.etapa) {
+        <div class="chart-bar-row">
+          <span class="chart-bar-label">{{ labelEtapa(step.etapa) }}</span>
+          <div class="chart-bar-track">
+            <div
+              class="chart-bar-fill"
+              [style.width.%]="d.oportunidadesTotal ? (step.cantidad / d.oportunidadesTotal) * 100 : 0"
+            ></div>
+          </div>
+          <span class="chart-bar-value">{{ step.cantidad }}</span>
+        </div>
+      }
+    </div>
+  </section>
+}
+
+<section class="page-card">
+  <h2 class="text-sm font-semibold text-pure-white mb-3">Historial de cotizaciones</h2>
+  @if (loading()) {
+    <p class="text-sm text-slate-grey">Cargando...</p>
+  } @else if (!cotizaciones().length) {
+    <p class="text-sm text-slate-grey">Sin cotizaciones registradas.</p>
+  } @else {
+    <div class="rep-list">
+      @for (c of cotizaciones(); track c.id) {
+        <div class="rep-row">
+          <div>
+            <p class="rep-folio">{{ c.folio }}</p>
+            <p class="text-sm text-pure-white">{{ c.cliente?.razonSocial ?? '—' }}</p>
+          </div>
+          <div class="text-right">
+            <p class="rep-monto">{{ c.montoBruto | currency:c.divisaCodigo:'symbol-narrow':'1.0-2' }}</p>
+            <p class="text-xs text-slate-grey">{{ c.divisaCodigo }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>

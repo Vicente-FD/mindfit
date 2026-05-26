@@ -7,6 +7,17 @@ import { UpdateRepuestoDto } from './dto/update-repuesto.dto';
 import { FilterBodegaDto } from './dto/filter-bodega.dto';
 import { RepuestoConsumoItemDto } from './dto/repuesto-consumo.dto';
 import { BodegaAjusteDto } from './dto/bodega-ajuste.dto';
+export interface BodegaMaquinaDto {
+    id: number;
+    codigoInventario: string;
+    nombre: string;
+    marca: string;
+    modelo: string | null;
+    categoria: string;
+    estadoOperacional: string;
+    aptoParaVenta: boolean;
+    precioVentaClp: number;
+}
 export interface RepuestoDisponibleDto {
     repuestoId: number;
     stockId: number;
@@ -49,6 +60,8 @@ export declare class InventarioService {
         valorizacionInventario: number;
         alertasReorden: number;
     }>;
+    updateMaquinaVentaComercial(activoId: number, aptoParaVenta: boolean, precioVentaClp?: number): Promise<BodegaMaquinaDto>;
+    listMaquinasBodega(busqueda?: string): Promise<BodegaMaquinaDto[]>;
     listRepuestosDisponibles(): Promise<RepuestoDisponibleDto[]>;
     asegurarStock(repuestoId: number): Promise<BodegaStock>;
     registrarAjuste(dto: BodegaAjusteDto, usuarioId: number): Promise<BodegaStock>;

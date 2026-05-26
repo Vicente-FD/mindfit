@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
   BodegaAjustePayload,
   BodegaKpis,
+  BodegaMaquina,
   BodegaStockRow,
   CreateRepuestoPayload,
   MovimientoTrazabilidad,
@@ -37,6 +38,26 @@ export class InventarioService {
 
   getKpis(): Observable<BodegaKpis> {
     return this.http.get<BodegaKpis>(`${this.api}/bodega/kpis`);
+  }
+
+  updateMaquinaVentaComercial(
+    activoId: number,
+    payload: { aptoParaVenta: boolean; precioVentaClp?: number },
+  ): Observable<BodegaMaquina> {
+    return this.http.patch<BodegaMaquina>(
+      `${this.api}/bodega/maquinas/${activoId}/venta-comercial`,
+      payload,
+    );
+  }
+
+  listMaquinasBodega(busqueda?: string): Observable<BodegaMaquina[]> {
+    let params = new HttpParams();
+    if (busqueda?.trim()) {
+      params = params.set('busqueda', busqueda.trim());
+    }
+    return this.http.get<BodegaMaquina[]>(`${this.api}/bodega/maquinas`, {
+      params,
+    });
   }
 
   listRepuestos(): Observable<Repuesto[]> {

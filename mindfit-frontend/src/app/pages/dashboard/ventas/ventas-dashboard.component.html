@@ -1,0 +1,141 @@
+<header class="ventas-page-head">
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-wider text-orange-energy">Mindfit Ops</p>
+    @if (esVendedor()) {
+      <h1 class="mt-1 text-2xl font-bold text-pure-white">Centro de control comercial</h1>
+      <p class="mt-1 text-sm text-slate-grey">
+        Cotizaciones, pipeline de oportunidades e inventario vendible en Bodega Central.
+      </p>
+    } @else {
+      <h1 class="mt-1 text-2xl font-bold text-pure-white">
+        Dashboard ejecutivo de operaciones y ventas
+      </h1>
+      <p class="mt-1 text-sm text-slate-grey">
+        Vista consolidada: mantenimiento, efectividad de sedes, pipeline comercial e inventario crítico.
+      </p>
+    }
+  </div>
+</header>
+
+@if (loading()) {
+  <p class="text-sm text-slate-grey">Cargando métricas...</p>
+} @else {
+  @if (!esVendedor() && dataOps(); as d) {
+    <div class="exec-grid exec-grid--ops">
+      <div class="exec-card">
+        <p class="exec-label">Gasto mantenimiento acumulado</p>
+        <p class="exec-value">{{ d.gastoAcumuladoMantenimiento | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+      </div>
+      <div class="exec-card">
+        <p class="exec-label">Efectividad sedes (PE)</p>
+        <p class="exec-value text-status-green">{{ d.efectividadPe }}%</p>
+        <p class="exec-hint">
+          MTTR {{ d.mttrHoras | number:'1.1-1' }} h · MTBF
+          {{ d.mtbfHoras != null ? (d.mtbfHoras | number:'1.0-0') + ' h' : 'N/D' }}
+        </p>
+      </div>
+      <div class="exec-card">
+        <p class="exec-label">Ingresos cotizaciones aprobadas</p>
+        <p class="exec-value">{{ d.ingresosCotizacionesAprobadas | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+        <p class="exec-hint">{{ d.cotizacionesAprobadasMes }} aprobadas este mes</p>
+      </div>
+      <div class="exec-card">
+        <p class="exec-label">Conversión pipeline Kanban</p>
+        <p class="exec-value text-status-green">{{ d.tasaConversionPct }}%</p>
+        <p class="exec-hint">
+          Pipeline abierto {{ d.montoPipelineAbierto | currency:'CLP':'symbol-narrow':'1.0-0' }}
+        </p>
+      </div>
+      <div class="exec-card">
+        <p class="exec-label">Stock crítico repuestos (bodega)</p>
+        <p class="exec-value" [class.text-red-400]="d.stockCriticoRepuestos > 0">
+          {{ d.stockCriticoRepuestos }}
+        </p>
+        <p class="exec-hint">SKU bajo mínimo de alerta</p>
+      </div>
+      <div class="exec-card">
+        <p class="exec-label">Máquinas en Bodega (venta)</p>
+        <p class="exec-value">{{ d.maquinasEnBodegaVenta }}</p>
+        <p class="exec-hint">{{ d.cotizacionesMesActual }} cotizaciones del mes</p>
+      </div>
+    </div>
+  }
+
+  @if (esVendedor() && dataComercial(); as c) {
+    <div class="exec-grid exec-grid--commercial">
+      <div class="exec-card exec-card--highlight">
+        <div class="exec-card__icon">
+          <lucide-icon name="wallet" [size]="18" />
+        </div>
+        <p class="exec-label">Ingresos de ventas (mes)</p>
+        <p class="exec-value">
+          {{ c.ingresosCotizacionesAprobadasMes | currency:'CLP':'symbol-narrow':'1.0-0' }}
+        </p>
+        <p class="exec-hint">
+          {{ c.cotizacionesAprobadasMes }} cotización(es) aprobada(s) · Acumulado año
+          {{ c.ingresosCotizacionesAprobadasAnio | currency:'CLP':'symbol-narrow':'1.0-0' }}
+        </p>
+      </div>
+
+      <div class="exec-card">
+        <div class="exec-card__icon">
+          <lucide-icon name="bar-chart-3" [size]="18" />
+        </div>
+        <p class="exec-label">Conversión de pipeline</p>
+        <p class="exec-value text-status-green">{{ c.tasaConversionPct }}%</p>
+        <p class="exec-hint">
+          Embudo abierto
+          {{ c.montoPipelineAbierto | currency:'CLP':'symbol-narrow':'1.0-0' }}
+          · {{ c.oportunidadesGanadas }}/{{ c.oportunidadesTotal }} oportunidades ganadas
+        </p>
+      </div>
+
+      <div class="exec-card">
+        <div class="exec-card__icon">
+          <lucide-icon name="warehouse" [size]="18" />
+        </div>
+        <p class="exec-label">Máquinas en bodega para venta</p>
+        <p class="exec-value">{{ c.maquinasEnBodegaVenta }}</p>
+        <p class="exec-hint">
+          Activos en Bodega Central con venta habilitada y estado operativo
+        </p>
+      </div>
+
+      <div class="exec-card">
+        <div class="exec-card__icon">
+          <lucide-icon name="package" [size]="18" />
+        </div>
+        <p class="exec-label">Valorización bodega comercial</p>
+        <p class="exec-value text-orange-energy">
+          {{ c.valorizacionBodegaComercial | currency:'CLP':'symbol-narrow':'1.0-0' }}
+        </p>
+        <p class="exec-hint">Suma de precios de referencia CLP en inventario vendible</p>
+      </div>
+    </div>
+  }
+
+  @if (embudo().length) {
+    <section class="page-card ventas-funnel">
+      <h2 class="text-sm font-semibold text-pure-white">Embudo comercial (Kanban)</h2>
+      <p class="funnel-subtitle">
+        Oportunidades por etapa · montos estimados en pesos chilenos
+      </p>
+      <div class="funnel-grid">
+        @for (step of embudo(); track step.etapa) {
+          <div class="funnel-step">
+            <div class="funnel-step__head">
+              <span>{{ labelEtapa(step.etapa) }}</span>
+              <span class="text-slate-grey">{{ step.cantidad }}</span>
+            </div>
+            <div class="funnel-bar">
+              <div class="funnel-bar__fill" [style.width.%]="barPct(step.cantidad)"></div>
+            </div>
+            <p class="funnel-step__monto">
+              {{ step.monto | currency:'CLP':'symbol-narrow':'1.0-0' }}
+            </p>
+          </div>
+        }
+      </div>
+    </section>
+  }
+}

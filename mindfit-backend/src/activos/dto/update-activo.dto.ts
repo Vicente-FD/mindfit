@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsInt,
@@ -8,6 +9,7 @@ import {
   IsString,
   IsUrl,
   MaxLength,
+  Min,
 } from 'class-validator';
 import { EstadoOperacionalActivo } from '../../common/enums';
 
@@ -38,7 +40,7 @@ export class UpdateActivoDto {
 
   @IsOptional()
   @IsInt()
-  sucursalId?: number;
+  sucursalId?: number | null;
 
   @IsOptional()
   @IsInt()
@@ -64,4 +66,13 @@ export class UpdateActivoDto {
   @IsOptional()
   @IsEnum(EstadoOperacionalActivo)
   estadoOperacional?: EstadoOperacionalActivo;
+
+  @IsOptional()
+  @IsBoolean()
+  aptoParaVenta?: boolean;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  precioVentaClp?: number;
 }

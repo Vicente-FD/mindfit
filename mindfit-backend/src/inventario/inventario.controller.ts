@@ -20,6 +20,7 @@ import { FilterBodegaDto } from './dto/filter-bodega.dto';
 import { AjustarStockDto } from './dto/ajustar-stock.dto';
 import { IngresoStockDto } from './dto/ingreso-stock.dto';
 import { BodegaAjusteDto } from './dto/bodega-ajuste.dto';
+import { UpdateMaquinaVentaDto } from './dto/update-maquina-venta.dto';
 
 @Controller()
 export class InventarioController {
@@ -111,6 +112,33 @@ export class InventarioController {
   )
   getKpis() {
     return this.inventario.getKpis();
+  }
+
+  @Get('bodega/maquinas')
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.BODEGUERO,
+  )
+  listMaquinasBodega(@Query('busqueda') busqueda?: string) {
+    return this.inventario.listMaquinasBodega(busqueda);
+  }
+
+  @Patch('bodega/maquinas/:id/venta-comercial')
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.BODEGUERO,
+  )
+  updateMaquinaVentaComercial(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMaquinaVentaDto,
+  ) {
+    return this.inventario.updateMaquinaVentaComercial(
+      id,
+      dto.aptoParaVenta,
+      dto.precioVentaClp,
+    );
   }
 
   @Post('bodega/stock/:id/ajustar')

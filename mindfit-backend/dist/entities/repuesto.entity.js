@@ -20,6 +20,8 @@ let Repuesto = class Repuesto {
     nombre;
     descripcion;
     costoUnitario;
+    aptoParaVenta;
+    precioVentaClp;
     createdAt;
     updatedAt;
     deletedAt;
@@ -54,6 +56,20 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], Repuesto.prototype, "costoUnitario", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'apto_para_venta', type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], Repuesto.prototype, "aptoParaVenta", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        name: 'precio_venta_clp',
+        type: 'decimal',
+        precision: 12,
+        scale: 2,
+        default: 0,
+    }),
+    __metadata("design:type", String)
+], Repuesto.prototype, "precioVentaClp", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)

@@ -115,5 +115,17 @@ exports.PERMISOS_BY_ROL = {
         verReportesSucursal: false,
         verControlBodega: true,
     },
+    ejecutivo_ventas: {
+        verDashboardEjecutivo: true,
+        verCentroMonitoreo: false,
+        verAsignacionOts: false,
+        verGestionActivos: false,
+        verGestionUsuarios: false,
+        verGestionSucursales: false,
+        verParametrosSistema: false,
+        verReportesSucursal: false,
+        verControlBodega: false,
+        verRendicionGastos: false,
+    },
 };
 //# sourceMappingURL=permisos-ui.interface.js.map

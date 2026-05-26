@@ -34,8 +34,10 @@ export class CreateActivoDto {
   @MaxLength(100)
   numeroSerie?: string;
 
+  /** Omitir o null = Bodega Central (sin QR hasta traslado a sucursal). */
+  @IsOptional()
   @IsInt()
-  sucursalId: number;
+  sucursalId?: number | null;
 
   @IsOptional()
   @IsInt()

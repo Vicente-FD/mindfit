@@ -16,7 +16,7 @@ export interface CategoriaRef {
 export interface PublicAsset {
   id: number;
   uuidActivo: string;
-  codigoQrToken: string;
+  codigoQrToken: string | null;
   codigoInventario: string;
   nombre: string;
   marca: string | null;
@@ -28,7 +28,9 @@ export interface PublicAsset {
   categoriaId?: number | null;
   categoriaRelacion?: CategoriaRef | null;
   pisoAsignado?: number | null;
-  sucursalId: number;
+  sucursalId: number | null;
   estadoOperacional: string;
+  aptoParaVenta?: boolean;
+  precioVentaClp?: string | number;
   sucursal?: WorkOrderSucursal & { sigla?: string };
 }

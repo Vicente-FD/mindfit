@@ -25,6 +25,7 @@ const filter_bodega_dto_1 = require("./dto/filter-bodega.dto");
 const ajustar_stock_dto_1 = require("./dto/ajustar-stock.dto");
 const ingreso_stock_dto_1 = require("./dto/ingreso-stock.dto");
 const bodega_ajuste_dto_1 = require("./dto/bodega-ajuste.dto");
+const update_maquina_venta_dto_1 = require("./dto/update-maquina-venta.dto");
 let InventarioController = class InventarioController {
     inventario;
     constructor(inventario) {
@@ -59,6 +60,12 @@ let InventarioController = class InventarioController {
     }
     getKpis() {
         return this.inventario.getKpis();
+    }
+    listMaquinasBodega(busqueda) {
+        return this.inventario.listMaquinasBodega(busqueda);
+    }
+    updateMaquinaVentaComercial(id, dto) {
+        return this.inventario.updateMaquinaVentaComercial(id, dto.aptoParaVenta, dto.precioVentaClp);
     }
     ajustarStock(id, dto) {
         return this.inventario.ajustarStock(id, dto.cantidadActual);
@@ -144,6 +151,23 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], InventarioController.prototype, "getKpis", null);
+__decorate([
+    (0, common_1.Get)('bodega/maquinas'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO),
+    __param(0, (0, common_1.Query)('busqueda')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], InventarioController.prototype, "listMaquinasBodega", null);
+__decorate([
+    (0, common_1.Patch)('bodega/maquinas/:id/venta-comercial'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, update_maquina_venta_dto_1.UpdateMaquinaVentaDto]),
+    __metadata("design:returntype", void 0)
+], InventarioController.prototype, "updateMaquinaVentaComercial", null);
 __decorate([
     (0, common_1.Post)('bodega/stock/:id/ajustar'),
     (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO),

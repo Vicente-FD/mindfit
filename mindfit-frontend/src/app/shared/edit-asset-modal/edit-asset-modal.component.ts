@@ -20,6 +20,8 @@ const ESTADOS_OPERACIONAL = [
   { value: 'fuera_servicio', label: 'Fuera de servicio' },
   { value: 'mantenimiento_preventivo', label: 'Mantenimiento preventivo' },
   { value: 'en_reparacion', label: 'En reparación' },
+  { value: 'reservado_venta', label: 'Reservada (venta)' },
+  { value: 'vendido', label: 'Vendida' },
 ] as const;
 
 @Component({
@@ -54,13 +56,17 @@ export class EditAssetModalComponent {
     modelo: [''],
     numeroSerie: [''],
     categoriaId: ['', Validators.required],
-    sucursalId: ['', Validators.required],
+    sucursalId: [''],
     pisoAsignado: [null as number | string | null],
     fechaCompra: [''],
     fechaVencimientoGarantia: [''],
     costoAdquisicion: [null as number | null],
     estadoOperacional: ['operativo', Validators.required],
+    aptoParaVenta: [false],
+    precioVentaClp: [0],
   });
+
+  readonly enBodega = signal(false);
 
   constructor() {
     this.marcasService.list().subscribe({ next: (m) => this.marcas.set(m) });
@@ -68,7 +74,9 @@ export class EditAssetModalComponent {
     this.categoriasService.list().subscribe({ next: (c) => this.categorias.set(c) });
 
     this.form.get('sucursalId')?.valueChanges.subscribe((id) => {
-      this.applyPisoRules(id ? Number(id) : null);
+      const sid = id ? Number(id) : null;
+      this.enBodega.set(!sid);
+      this.applyPisoRules(sid);
     });
 
     effect(() => {
@@ -81,7 +89,7 @@ export class EditAssetModalComponent {
         modelo: a.modelo ?? '',
         numeroSerie: a.numeroSerie ?? '',
         categoriaId: String(categoriaId),
-        sucursalId: String(a.sucursalId),
+        sucursalId: a.sucursalId != null ? String(a.sucursalId) : '',
         pisoAsignado: a.pisoAsignado ?? null,
         fechaCompra: a.fechaCompra?.slice(0, 10) ?? '',
         fechaVencimientoGarantia: a.fechaVencimientoGarantia?.slice(0, 10) ?? '',
@@ -89,7 +97,10 @@ export class EditAssetModalComponent {
           ? Number(a.costoAdquisicion)
           : null,
         estadoOperacional: a.estadoOperacional || 'operativo',
+        aptoParaVenta: a.aptoParaVenta ?? false,
+        precioVentaClp: Number(a.precioVentaClp ?? 0),
       });
+      this.enBodega.set(a.sucursalId == null);
       this.applyPisoRules(a.sucursalId);
     });
   }
@@ -143,13 +154,18 @@ export class EditAssetModalComponent {
       modelo: v.modelo || undefined,
       numeroSerie: v.numeroSerie || undefined,
       categoriaId: Number(v.categoriaId),
-      sucursalId: Number(v.sucursalId),
+      sucursalId: v.sucursalId ? Number(v.sucursalId) : null,
       pisoAsignado,
       fechaCompra: v.fechaCompra || undefined,
       fechaVencimientoGarantia: v.fechaVencimientoGarantia || undefined,
       costoAdquisicion: v.costoAdquisicion ?? undefined,
       estadoOperacional: v.estadoOperacional!,
     };
+
+    if (this.enBodega() || !v.sucursalId) {
+      payload.aptoParaVenta = !!v.aptoParaVenta;
+      payload.precioVentaClp = Number(v.precioVentaClp) || 0;
+    }
 
     this.saving.set(true);
     this.activosService.update(this.activo().id, payload).subscribe({

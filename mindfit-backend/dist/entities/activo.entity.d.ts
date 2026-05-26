@@ -18,12 +18,14 @@ export declare class Activo {
     categoriaId: number | null;
     categoriaRelacion: Categoria | null;
     pisoAsignado: number | null;
-    sucursalId: number;
-    sucursal: Sucursal;
+    sucursalId: number | null;
+    sucursal: Sucursal | null;
     fechaCompra: string | null;
     fechaVencimientoGarantia: string | null;
     costoAdquisicion: string | null;
     documentacionUrls: string[];
+    aptoParaVenta: boolean;
+    precioVentaClp: string;
     estadoOperacional: EstadoOperacionalActivo;
     createdAt: Date;
     updatedAt: Date;

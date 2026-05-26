@@ -1,0 +1,21 @@
+<div class="ventas-shell space-y-4">
+  <nav class="ventas-subnav" aria-label="Módulo comercial">
+    <a routerLink="/dashboard/ventas" routerLinkActive="ventas-subnav__link--active" [routerLinkActiveOptions]="{ exact: true }" class="ventas-subnav__link">
+      <lucide-icon name="layout-dashboard" [size]="16" />
+      Dashboard ejecutivo
+    </a>
+    <a routerLink="/dashboard/ventas/clientes" routerLinkActive="ventas-subnav__link--active" class="ventas-subnav__link">
+      <lucide-icon name="users" [size]="16" />
+      Clientes
+    </a>
+    <a routerLink="/dashboard/ventas/oportunidades" routerLinkActive="ventas-subnav__link--active" class="ventas-subnav__link">
+      <lucide-icon name="kanban" [size]="16" />
+      Oportunidades
+    </a>
+    <a routerLink="/dashboard/ventas/cotizaciones" routerLinkActive="ventas-subnav__link--active" class="ventas-subnav__link">
+      <lucide-icon name="file-text" [size]="16" />
+      Cotizaciones
+    </a>
+  </nav>
+  <router-outlet />
+</div>

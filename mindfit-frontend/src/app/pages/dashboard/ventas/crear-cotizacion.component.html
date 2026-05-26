@@ -1,0 +1,166 @@
+<header class="ventas-page-head">
+  <div>
+    <a routerLink="/dashboard/ventas/cotizaciones" class="text-xs text-orange-energy hover:underline">← Cotizaciones</a>
+    <h1 class="mt-2 text-xl font-semibold text-pure-white">Nueva cotización comercial</h1>
+    <p class="mt-1 text-sm text-slate-grey">
+      Solo máquinas en Bodega Central. Al confirmar quedan reservadas hasta aprobación.
+    </p>
+  </div>
+</header>
+
+<section class="page-card cotiz-form">
+  <div class="grid gap-3 sm:grid-cols-3">
+    <div>
+      <label class="field-label">Cliente *</label>
+      <select class="field-input" [formControl]="form.controls.clienteId">
+        <option [ngValue]="0">Seleccione</option>
+        @for (c of clientes(); track c.id) {
+          <option [ngValue]="c.id">{{ c.razonSocial }}</option>
+        }
+      </select>
+      @if (clienteSeleccionado(); as cl) {
+        <p class="mt-1 text-xs text-slate-grey">
+          Razón Social (Empresa): <strong class="text-pure-white">{{ cl.razonSocial }}</strong>
+          · RUT {{ cl.rut }}
+        </p>
+      }
+    </div>
+    <div>
+      <label class="field-label">Divisa</label>
+      <select class="field-input" [formControl]="form.controls.divisaCodigo">
+        <option value="CLP">CLP (Peso chileno)</option>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="CAD">CAD</option>
+      </select>
+      @if (tasas(); as t) {
+        <p class="mt-1 text-xs text-slate-grey">
+          Tipo de cambio CLP: {{ tasaActual() | number:'1.2-2' }} · {{ t.fuente }}
+        </p>
+      }
+    </div>
+    <div>
+      <label class="field-label">ID oportunidad (opcional)</label>
+      <input type="number" class="field-input" [formControl]="form.controls.oportunidadId" min="0" />
+    </div>
+  </div>
+
+  <div class="selector-bodega">
+    <label class="field-label">Selector de máquinas — Bodega Central</label>
+    <p class="text-xs text-slate-grey mb-2">
+      Busque por modelo, nombre, categoría (Cardio, Fuerza) o marca. No requiere tipear el SKU.
+    </p>
+    <div class="selector-toolbar">
+      <button type="button" class="selector-trigger" (click)="toggleSelector()">
+        <lucide-icon name="search" [size]="16" />
+        <span>{{ filtroBusqueda() || 'Buscar y seleccionar máquina...' }}</span>
+        <lucide-icon [name]="selectorAbierto() ? 'chevron-up' : 'chevron-down'" [size]="16" />
+      </button>
+      <div class="selector-filtros">
+        <button type="button" class="chip" [class.chip--active]="!filtroCategoria()" (click)="setFiltroCategoria(null)">Todas</button>
+        <button type="button" class="chip" [class.chip--active]="filtroCategoria() === 'cardio'" (click)="setFiltroCategoria('cardio')">Cardio</button>
+        <button type="button" class="chip" [class.chip--active]="filtroCategoria() === 'fuerza'" (click)="setFiltroCategoria('fuerza')">Fuerza</button>
+      </div>
+    </div>
+
+    @if (selectorAbierto()) {
+      <div class="selector-panel">
+        <input
+          class="field-input"
+          placeholder="Filtrar por modelo, nombre, marca..."
+          [value]="filtroBusqueda()"
+          (input)="onFiltroChange($any($event.target).value)"
+          autofocus
+        />
+        <div class="catalogo-results">
+          @if (catalogoLoading()) {
+            <p class="p-3 text-sm text-slate-grey">Cargando catálogo de Bodega Central...</p>
+          } @else if (catalogoError(); as err) {
+            <p class="p-3 text-sm text-orange-energy">{{ err }}</p>
+          } @else {
+          @for (item of catalogoFiltrado(); track item.id) {
+            <button
+              type="button"
+              class="catalogo-item"
+              (click)="agregarItem(item)"
+            >
+              <span class="catalogo-item__sku">{{ item.sku }}</span>
+              <span class="catalogo-item__nombre">{{ item.nombre }}</span>
+              <span class="text-xs text-slate-grey">
+                {{ item.marca }} · {{ item.modelo || 'Sin modelo' }} · {{ item.categoria }}
+              </span>
+              <span class="catalogo-item__precio">${{ item.precioVentaClp | number:'1.0-0' }} CLP ref.</span>
+            </button>
+          } @empty {
+            <p class="p-3 text-sm text-slate-grey">
+              No hay máquinas habilitadas para venta en Bodega Central. En Bodega central → pestaña «Máquinas en bodega», use «Habilitar venta» y asigne precio.
+            </p>
+          }
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (lineas().length) {
+    <div class="lineas-table">
+      <div class="lineas-head">
+        <span>SKU</span>
+        <span>Máquina</span>
+        <span>Marca / Cat.</span>
+        <span>P. unit.</span>
+        <span>Total</span>
+        <span></span>
+      </div>
+      @for (l of lineas(); track trackLinea(l); let i = $index) {
+        <div class="lineas-row">
+          <span class="text-xs text-orange-energy">{{ l.sku }}</span>
+          <span>{{ l.nombre }} @if (l.modelo) { <span class="text-slate-grey">({{ l.modelo }})</span> }</span>
+          <span class="text-xs text-slate-grey">{{ l.marca }} · {{ l.categoria }}</span>
+          <input
+            type="number"
+            class="field-input lineas-input"
+            [value]="l.precioUnitarioPactado"
+            min="0"
+            step="0.01"
+            [attr.aria-label]="'Precio unitario en ' + divisaCodigo()"
+            (input)="actualizarPrecio(i, $any($event.target).value)"
+          />
+          <span>{{ divisaSymbol() }}{{ l.totalLineaNeto | number:'1.0-2' }}</span>
+          <button type="button" class="btn-ghost" (click)="quitarLinea(i)">
+            <lucide-icon name="x" [size]="16" />
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <div>
+    <label class="field-label">Comentarios y notas comerciales</label>
+    <textarea
+      class="field-input min-h-24"
+      [formControl]="form.controls.comentariosComerciales"
+      placeholder="Validez de la oferta, plazos de entrega, condiciones de pago..."
+    ></textarea>
+  </div>
+
+  <div class="totales-box">
+    <p>Subtotal neto: <strong>{{ divisaSymbol() }}{{ subtotalNeto() | number:'1.0-2' }}</strong></p>
+    <p>IVA (19%): <strong>{{ divisaSymbol() }}{{ montoIva() | number:'1.0-2' }}</strong></p>
+    <p class="totales-bruto">Total bruto: <strong>{{ divisaSymbol() }}{{ montoBruto() | number:'1.0-2' }}</strong></p>
+  </div>
+
+  <button
+    type="button"
+    class="btn-primary w-full sm:w-auto"
+    [disabled]="saving()"
+    (click)="registrarYExportar()"
+  >
+    @if (saving()) {
+      Registrando...
+    } @else {
+      <lucide-icon name="file-check" [size]="16" />
+      Confirmar cotización y descargar PDF + Excel
+    }
+  </button>
+</section>

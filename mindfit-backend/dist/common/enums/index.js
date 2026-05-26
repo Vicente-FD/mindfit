@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EstadoRendicionGasto = exports.TipoMovimientoInventario = exports.OperacionAuditoria = exports.TipoEvidencia = exports.ClasificacionOrden = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.RolUsuario = void 0;
+exports.EstadoRendicionGasto = exports.TipoMovimientoInventario = exports.OperacionAuditoria = exports.TipoEvidencia = exports.ClasificacionOrden = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoCotizacionVenta = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.DivisaCodigo = exports.EtapaOportunidad = exports.RolUsuario = void 0;
 var RolUsuario;
 (function (RolUsuario) {
     RolUsuario["ADMIN"] = "admin";
@@ -9,7 +9,23 @@ var RolUsuario;
     RolUsuario["JEFE_SUCURSAL"] = "jefe_sucursal";
     RolUsuario["GERENTE_BI"] = "gerente_bi";
     RolUsuario["BODEGUERO"] = "bodeguero";
+    RolUsuario["EJECUTIVO_VENTAS"] = "ejecutivo_ventas";
 })(RolUsuario || (exports.RolUsuario = RolUsuario = {}));
+var EtapaOportunidad;
+(function (EtapaOportunidad) {
+    EtapaOportunidad["PROSPECCION"] = "prospeccion";
+    EtapaOportunidad["CALIFICACION"] = "calificacion";
+    EtapaOportunidad["PROPUESTA"] = "propuesta";
+    EtapaOportunidad["GANADA"] = "ganada";
+    EtapaOportunidad["PERDIDA"] = "perdida";
+})(EtapaOportunidad || (exports.EtapaOportunidad = EtapaOportunidad = {}));
+var DivisaCodigo;
+(function (DivisaCodigo) {
+    DivisaCodigo["CLP"] = "CLP";
+    DivisaCodigo["USD"] = "USD";
+    DivisaCodigo["EUR"] = "EUR";
+    DivisaCodigo["CAD"] = "CAD";
+})(DivisaCodigo || (exports.DivisaCodigo = DivisaCodigo = {}));
 var EstadoSesionUsuario;
 (function (EstadoSesionUsuario) {
     EstadoSesionUsuario["CONECTADO"] = "conectado";
@@ -30,7 +46,15 @@ var EstadoOperacionalActivo;
     EstadoOperacionalActivo["FUERA_SERVICIO"] = "fuera_servicio";
     EstadoOperacionalActivo["MANTENIMIENTO_PREVENTIVO"] = "mantenimiento_preventivo";
     EstadoOperacionalActivo["EN_REPARACION"] = "en_reparacion";
+    EstadoOperacionalActivo["RESERVADO_VENTA"] = "reservado_venta";
+    EstadoOperacionalActivo["VENDIDO"] = "vendido";
 })(EstadoOperacionalActivo || (exports.EstadoOperacionalActivo = EstadoOperacionalActivo = {}));
+var EstadoCotizacionVenta;
+(function (EstadoCotizacionVenta) {
+    EstadoCotizacionVenta["PENDIENTE_APROBACION"] = "pendiente_aprobacion";
+    EstadoCotizacionVenta["APROBADA"] = "aprobada";
+    EstadoCotizacionVenta["RECHAZADA"] = "rechazada";
+})(EstadoCotizacionVenta || (exports.EstadoCotizacionVenta = EstadoCotizacionVenta = {}));
 var PrioridadOrden;
 (function (PrioridadOrden) {
     PrioridadOrden["BAJA"] = "baja";
@@ -74,6 +98,7 @@ var TipoMovimientoInventario;
     TipoMovimientoInventario["AJUSTE_MANUAL_POSITIVO"] = "ajuste_manual_positivo";
     TipoMovimientoInventario["AJUSTE_MANUAL_NEGATIVO"] = "ajuste_manual_negativo";
     TipoMovimientoInventario["CONSUMO_OT"] = "consumo_ot";
+    TipoMovimientoInventario["VENTA_COTIZACION"] = "venta_cotizacion";
 })(TipoMovimientoInventario || (exports.TipoMovimientoInventario = TipoMovimientoInventario = {}));
 var estado_rendicion_gasto_enum_1 = require("./estado-rendicion-gasto.enum");
 Object.defineProperty(exports, "EstadoRendicionGasto", { enumerable: true, get: function () { return estado_rendicion_gasto_enum_1.EstadoRendicionGasto; } });

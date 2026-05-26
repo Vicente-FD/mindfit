@@ -95,14 +95,15 @@ export class Activo {
   @Column({ name: 'piso_asignado', type: 'int', nullable: true })
   pisoAsignado: number | null;
 
-  @Column({ name: 'sucursal_id', type: 'int' })
-  sucursalId: number;
+  @Column({ name: 'sucursal_id', type: 'int', nullable: true })
+  sucursalId: number | null;
 
   @ManyToOne(() => Sucursal, (sucursal) => sucursal.activos, {
+    nullable: true,
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'sucursal_id' })
-  sucursal: Sucursal;
+  sucursal: Sucursal | null;
 
   @Column({ name: 'fecha_compra', type: 'date', nullable: true })
   fechaCompra: string | null;
@@ -121,6 +122,18 @@ export class Activo {
 
   @Column({ name: 'documentacion_urls', type: 'jsonb', default: () => "'[]'" })
   documentacionUrls: string[];
+
+  @Column({ name: 'apto_para_venta', type: 'boolean', default: false })
+  aptoParaVenta: boolean;
+
+  @Column({
+    name: 'precio_venta_clp',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+  })
+  precioVentaClp: string;
 
   @Column({
     name: 'estado_operacional',

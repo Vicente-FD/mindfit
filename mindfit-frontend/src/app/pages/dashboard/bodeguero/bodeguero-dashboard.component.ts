@@ -12,6 +12,7 @@ import { SucursalesService } from '../../../core/services/sucursales.service';
 import { ToastService } from '../../../core/services/toast.service';
 import {
   BodegaKpis,
+  BodegaMaquina,
   BodegaStockRow,
   MovimientoTrazabilidad,
   TipoMovimientoInventario,
@@ -20,6 +21,7 @@ import { Sucursal } from '../../../core/models/sucursal.model';
 
 type StockModalMode = 'ajustar' | 'ingreso';
 type PanelMode = 'create' | 'edit' | 'stock' | 'trazabilidad' | null;
+type VistaBodega = 'repuestos' | 'maquinas';
 
 @Component({
   selector: 'app-bodeguero-dashboard',
@@ -35,7 +37,11 @@ export class BodegueroDashboardComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private readonly busqueda$ = new Subject<string>();
 
+  readonly vista = signal<VistaBodega>('repuestos');
   readonly stock = signal<BodegaStockRow[]>([]);
+  readonly maquinas = signal<BodegaMaquina[]>([]);
+  readonly maquinasLoading = signal(false);
+  readonly maquinaVentaSavingId = signal<number | null>(null);
   readonly sedes = signal<Sucursal[]>([]);
   readonly kpis = signal<BodegaKpis | null>(null);
   readonly loading = signal(false);
@@ -47,6 +53,17 @@ export class BodegueroDashboardComponent implements OnInit, OnDestroy {
   readonly trazabilidadLoading = signal(false);
   readonly filtroBusqueda = signal('');
   readonly trazabilidadSedeId = signal<number | null>(null);
+
+  readonly maquinasFiltradas = computed(() => {
+    const rows = this.maquinas();
+    const q = this.filtroBusqueda().trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((m) => {
+      const cod = m.codigoInventario?.toLowerCase() ?? '';
+      const nombre = m.nombre?.toLowerCase() ?? '';
+      return cod.includes(q) || nombre.includes(q);
+    });
+  });
 
   readonly stockFiltrado = computed(() => {
     const rows = this.stock();
@@ -91,7 +108,11 @@ export class BodegueroDashboardComponent implements OnInit, OnDestroy {
       .pipe(debounceTime(250), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe((q) => {
         this.filtroBusqueda.set(q);
-        this.reloadStock();
+        if (this.vista() === 'repuestos') {
+          this.reloadStock();
+        } else {
+          this.reloadMaquinas();
+        }
       });
 
     this.sucursalesService.list().subscribe({
@@ -114,6 +135,110 @@ export class BodegueroDashboardComponent implements OnInit, OnDestroy {
   reloadAll(): void {
     this.reloadKpis();
     this.reloadStock();
+    this.reloadMaquinas();
+  }
+
+  setVista(v: VistaBodega): void {
+    this.vista.set(v);
+    this.filtroBusqueda.set('');
+    if (v === 'repuestos') {
+      this.reloadStock();
+    } else {
+      this.reloadMaquinas();
+    }
+  }
+
+  private reloadMaquinas(): void {
+    this.maquinasLoading.set(true);
+    this.inventario
+      .listMaquinasBodega(this.filtroBusqueda() || undefined)
+      .subscribe({
+        next: (rows) => {
+          this.maquinas.set(rows);
+          this.maquinasLoading.set(false);
+        },
+        error: () => {
+          this.maquinas.set([]);
+          this.maquinasLoading.set(false);
+          this.toast.error('Error al cargar máquinas en bodega');
+        },
+      });
+  }
+
+  toggleVentaMaquina(m: BodegaMaquina): void {
+    const nuevo = !m.aptoParaVenta;
+    this.guardarVentaMaquina(m, nuevo, m.precioVentaClp);
+  }
+
+  onPrecioMaquinaChange(m: BodegaMaquina, raw: string): void {
+    const precio = Math.max(0, Number(raw) || 0);
+    this.maquinas.update((list) =>
+      list.map((row) => (row.id === m.id ? { ...row, precioVentaClp: precio } : row)),
+    );
+  }
+
+  guardarPrecioMaquina(m: BodegaMaquina): void {
+    this.guardarVentaMaquina(m, m.aptoParaVenta, m.precioVentaClp);
+  }
+
+  private guardarVentaMaquina(
+    m: BodegaMaquina,
+    aptoParaVenta: boolean,
+    precioVentaClp: number,
+  ): void {
+    if (aptoParaVenta && precioVentaClp <= 0) {
+      this.toast.error('Indique un precio de venta mayor a 0 para habilitar');
+      return;
+    }
+
+    this.maquinaVentaSavingId.set(m.id);
+    this.inventario
+      .updateMaquinaVentaComercial(m.id, {
+        aptoParaVenta,
+        precioVentaClp,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.maquinaVentaSavingId.set(null);
+          this.maquinas.update((list) =>
+            list.map((row) => (row.id === updated.id ? updated : row)),
+          );
+          this.toast.success(
+            aptoParaVenta
+              ? `${updated.nombre} habilitada para venta`
+              : `${updated.nombre} ya no está a la venta`,
+          );
+        },
+        error: (err) => {
+          this.maquinaVentaSavingId.set(null);
+          const msg = err?.error?.message;
+          this.toast.error(
+            typeof msg === 'string'
+              ? msg
+              : Array.isArray(msg)
+                ? msg[0]
+                : 'No se pudo actualizar la venta',
+          );
+          this.reloadMaquinas();
+        },
+      });
+  }
+
+  puedeEditarVenta(m: BodegaMaquina): boolean {
+    return (
+      m.estadoOperacional !== 'reservado_venta' &&
+      m.estadoOperacional !== 'vendido'
+    );
+  }
+
+  estadoMaquinaLabel(estado: string): string {
+    const map: Record<string, string> = {
+      operativo: 'Operativo',
+      reservado_venta: 'Reservada venta',
+      fuera_servicio: 'Fuera de servicio',
+      vendido: 'Vendida',
+    };
+    return map[estado] ?? estado;
   }
 
   private reloadKpis(): void {

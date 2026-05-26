@@ -3,4 +3,6 @@ export declare class CreateRepuestoDto {
     nombre: string;
     descripcion?: string;
     costoUnitario: number;
+    aptoParaVenta?: boolean;
+    precioVentaClp?: number;
 }

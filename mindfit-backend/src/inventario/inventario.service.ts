@@ -10,12 +10,25 @@ import { MovimientoInventario } from '../entities/movimiento-inventario.entity';
 import { Repuesto } from '../entities/repuesto.entity';
 import { BodegaStock } from '../entities/bodega-stock.entity';
 import { OrdenTrabajoRepuesto } from '../entities/orden-trabajo-repuesto.entity';
+import { Activo } from '../entities/activo.entity';
 import { Sucursal } from '../entities/sucursal.entity';
 import { CreateRepuestoDto } from './dto/create-repuesto.dto';
 import { UpdateRepuestoDto } from './dto/update-repuesto.dto';
 import { FilterBodegaDto } from './dto/filter-bodega.dto';
 import { RepuestoConsumoItemDto } from './dto/repuesto-consumo.dto';
 import { BodegaAjusteDto } from './dto/bodega-ajuste.dto';
+
+export interface BodegaMaquinaDto {
+  id: number;
+  codigoInventario: string;
+  nombre: string;
+  marca: string;
+  modelo: string | null;
+  categoria: string;
+  estadoOperacional: string;
+  aptoParaVenta: boolean;
+  precioVentaClp: number;
+}
 
 export interface RepuestoDisponibleDto {
   repuestoId: number;
@@ -76,6 +89,8 @@ export class InventarioService {
       nombre: dto.nombre.trim(),
       descripcion: dto.descripcion?.trim() ?? null,
       costoUnitario: String(dto.costoUnitario),
+      aptoParaVenta: dto.aptoParaVenta ?? false,
+      precioVentaClp: String(dto.precioVentaClp ?? 0),
     });
     const saved = await this.dataSource.getRepository(Repuesto).save(repuesto);
     await this.asegurarStock(saved.id);
@@ -100,6 +115,12 @@ export class InventarioService {
     }
     if (dto.costoUnitario != null) {
       repuesto.costoUnitario = String(dto.costoUnitario);
+    }
+    if (dto.aptoParaVenta != null) {
+      repuesto.aptoParaVenta = dto.aptoParaVenta;
+    }
+    if (dto.precioVentaClp != null) {
+      repuesto.precioVentaClp = String(dto.precioVentaClp);
     }
     return this.dataSource.getRepository(Repuesto).save(repuesto);
   }
@@ -151,6 +172,92 @@ export class InventarioService {
       valorizacionInventario: Number(rows?.valorizacion ?? 0),
       alertasReorden: rows?.alertas_reorden ?? 0,
     };
+  }
+
+  async updateMaquinaVentaComercial(
+    activoId: number,
+    aptoParaVenta: boolean,
+    precioVentaClp?: number,
+  ): Promise<BodegaMaquinaDto> {
+    const repo = this.dataSource.getRepository(Activo);
+    const activo = await repo.findOne({
+      where: { id: activoId, deletedAt: IsNull() },
+      relations: { categoriaRelacion: true },
+    });
+
+    if (!activo) {
+      throw new NotFoundException(`Máquina ${activoId} no encontrada`);
+    }
+    if (activo.sucursalId != null) {
+      throw new BadRequestException(
+        'Solo se puede habilitar venta de máquinas en Bodega Central',
+      );
+    }
+    if (activo.estadoOperacional === 'reservado_venta') {
+      throw new BadRequestException(
+        'No se puede modificar: máquina reservada en cotización pendiente',
+      );
+    }
+    if (activo.estadoOperacional === 'vendido') {
+      throw new BadRequestException('No se puede modificar: máquina vendida');
+    }
+
+    const patch: Partial<Activo> = { aptoParaVenta };
+    if (precioVentaClp != null) {
+      patch.precioVentaClp = String(precioVentaClp);
+    }
+    await repo.update(activoId, patch);
+    const saved = await repo.findOne({
+      where: { id: activoId },
+      relations: { categoriaRelacion: true },
+    });
+    if (!saved) {
+      throw new NotFoundException(`Máquina ${activoId} no encontrada`);
+    }
+
+    return {
+      id: saved.id,
+      codigoInventario: saved.codigoInventario ?? `ACT-${saved.id}`,
+      nombre: saved.nombre,
+      marca: saved.marca ?? '—',
+      modelo: saved.modelo,
+      categoria:
+        saved.categoriaRelacion?.nombre ?? saved.categoria ?? 'Equipo',
+      estadoOperacional: saved.estadoOperacional,
+      aptoParaVenta: saved.aptoParaVenta,
+      precioVentaClp: Number(saved.precioVentaClp ?? 0),
+    };
+  }
+
+  async listMaquinasBodega(busqueda?: string): Promise<BodegaMaquinaDto[]> {
+    const q = busqueda?.trim().toLowerCase();
+    const qb = this.dataSource
+      .getRepository(Activo)
+      .createQueryBuilder('a')
+      .leftJoinAndSelect('a.categoriaRelacion', 'cat')
+      .where('a.deleted_at IS NULL')
+      .andWhere('a.sucursal_id IS NULL');
+
+    if (q) {
+      qb.andWhere(
+        `(LOWER(a.nombre) LIKE :q OR LOWER(a.codigo_inventario) LIKE :q OR LOWER(a.marca) LIKE :q)`,
+        { q: `%${q}%` },
+      );
+    }
+
+    const rows = await qb.orderBy('a.nombre', 'ASC').take(200).getMany();
+
+    return rows.map((a) => ({
+      id: a.id,
+      codigoInventario: a.codigoInventario ?? `ACT-${a.id}`,
+      nombre: a.nombre,
+      marca: a.marca ?? '—',
+      modelo: a.modelo,
+      categoria: a.categoriaRelacion?.nombre ?? a.categoria ?? 'Equipo',
+      estadoOperacional: a.estadoOperacional,
+      aptoParaVenta: a.aptoParaVenta,
+      precioVentaClp: Number(a.precioVentaClp ?? 0),
+    }));
   }
 
   listRepuestosDisponibles(): Promise<RepuestoDisponibleDto[]> {

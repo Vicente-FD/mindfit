@@ -70,6 +70,13 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
       permiso: 'verAsignacionOts',
     },
     {
+      label: 'Centro Comercial',
+      route: '/dashboard/ventas',
+      icon: 'shopping-cart',
+      roles: ['admin', 'jefe_operaciones', 'ejecutivo_ventas', 'gerente_bi'],
+      permiso: 'verGestionVentas',
+    },
+    {
       label: 'Calendario OT',
       route: '/dashboard/operations/calendario',
       icon: 'calendar-days',
@@ -196,4 +203,4 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
     this.auth.logout();
   }
 }
-
+

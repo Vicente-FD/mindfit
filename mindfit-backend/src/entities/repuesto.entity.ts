@@ -34,6 +34,18 @@ export class Repuesto {
   })
   costoUnitario: string;
 
+  @Column({ name: 'apto_para_venta', type: 'boolean', default: false })
+  aptoParaVenta: boolean;
+
+  @Column({
+    name: 'precio_venta_clp',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+  })
+  precioVentaClp: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

@@ -1,0 +1,36 @@
+.ventas-shell {
+  max-width: 88rem;
+  margin: 0 auto;
+}
+
+.ventas-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  background: var(--color-obsidian-grey, #1a1a1c);
+}
+
+.ventas-subnav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-slate-grey, #94a3b8);
+  transition: background 0.15s, color 0.15s;
+}
+
+.ventas-subnav__link:hover {
+  color: var(--color-pure-white, #fff);
+  background: rgb(255 255 255 / 0.05);
+}
+
+.ventas-subnav__link--active {
+  color: var(--color-deep-black, #000);
+  background: var(--color-orange-energy, #ff6600);
+}

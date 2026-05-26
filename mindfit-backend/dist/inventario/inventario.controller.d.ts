@@ -6,6 +6,7 @@ import { FilterBodegaDto } from './dto/filter-bodega.dto';
 import { AjustarStockDto } from './dto/ajustar-stock.dto';
 import { IngresoStockDto } from './dto/ingreso-stock.dto';
 import { BodegaAjusteDto } from './dto/bodega-ajuste.dto';
+import { UpdateMaquinaVentaDto } from './dto/update-maquina-venta.dto';
 export declare class InventarioController {
     private readonly inventario;
     constructor(inventario: InventarioService);
@@ -24,6 +25,8 @@ export declare class InventarioController {
         valorizacionInventario: number;
         alertasReorden: number;
     }>;
+    listMaquinasBodega(busqueda?: string): Promise<import("./inventario.service").BodegaMaquinaDto[]>;
+    updateMaquinaVentaComercial(id: number, dto: UpdateMaquinaVentaDto): Promise<import("./inventario.service").BodegaMaquinaDto>;
     ajustarStock(id: number, dto: AjustarStockDto): Promise<import("../entities").BodegaStock>;
     registrarIngreso(id: number, dto: IngresoStockDto): Promise<import("../entities").BodegaStock>;
     asegurarFilaStock(repuestoId: number): Promise<import("../entities").BodegaStock>;

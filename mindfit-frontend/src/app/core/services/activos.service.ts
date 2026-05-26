@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PublicAsset } from '../models/asset.model';
 import { AssetCategory } from '../models/analytics.model';
-import { ActivoHistorialItem } from '../models/activo-historial.model';
+import { ActivoHistorialEvento } from '../models/activo-historial.model';
 
 export interface Activo extends PublicAsset {
   fechaCompra: string | null;
@@ -15,6 +15,7 @@ export interface Activo extends PublicAsset {
 
 export interface ActivosFilter {
   sucursalId?: number;
+  soloBodegaCentral?: boolean;
   marcaId?: number;
   categoriaId?: number;
   categoria?: AssetCategory;
@@ -28,7 +29,7 @@ export interface CreateActivoPayload {
   modelo?: string;
   numeroSerie?: string;
   categoriaId: number;
-  sucursalId: number;
+  sucursalId?: number | null;
   pisoAsignado?: number | null;
   fechaCompra?: string;
   fechaVencimientoGarantia?: string;
@@ -48,12 +49,14 @@ export interface UpdateActivoPayload {
   modelo?: string;
   numeroSerie?: string;
   categoriaId?: number;
-  sucursalId?: number;
+  sucursalId?: number | null;
   pisoAsignado?: number | null;
   fechaCompra?: string;
   fechaVencimientoGarantia?: string;
   costoAdquisicion?: number;
   estadoOperacional?: string;
+  aptoParaVenta?: boolean;
+  precioVentaClp?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -64,7 +67,9 @@ export class ActivosService {
 
   list(filters: ActivosFilter = {}): Observable<Activo[]> {
     let params = new HttpParams();
-    if (filters.sucursalId != null) {
+    if (filters.soloBodegaCentral) {
+      params = params.set('soloBodegaCentral', 'true');
+    } else if (filters.sucursalId != null) {
       params = params.set('sucursalId', String(filters.sucursalId));
     }
     if (filters.marcaId != null) {
@@ -98,9 +103,18 @@ export class ActivosService {
     return this.http.patch<Activo>(`${this.baseUrl}/${id}`, payload);
   }
 
-  getHistorial(id: number): Observable<ActivoHistorialItem[]> {
-    return this.http.get<ActivoHistorialItem[]>(
+  getHistorial(id: number): Observable<ActivoHistorialEvento[]> {
+    return this.http.get<ActivoHistorialEvento[]>(
       `${this.baseUrl}/${id}/historial`,
     );
+  }
+
+  traslado(
+    id: number,
+    nuevaSucursalId: number | null,
+  ): Observable<Activo> {
+    return this.http.post<Activo>(`${this.baseUrl}/${id}/traslado`, {
+      nuevaSucursalId,
+    });
   }
 }

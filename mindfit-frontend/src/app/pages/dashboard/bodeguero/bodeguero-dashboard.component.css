@@ -2,6 +2,54 @@
   max-width: 72rem;
 }
 
+.bodega-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bodega-tab {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(0 0 0 / 0.25);
+  color: var(--color-slate-grey, #94a3b8);
+}
+
+.bodega-tab--active {
+  border-color: var(--color-orange-energy, #ff6600);
+  color: var(--color-orange-energy, #ff6600);
+  background: rgb(255 102 0 / 0.12);
+}
+
+.badge-ok {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #4ade80;
+  text-transform: uppercase;
+}
+
+.badge-warn {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fbbf24;
+  text-transform: uppercase;
+}
+
+.maquina-precio-input {
+  max-width: 8.5rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.maquina-venta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -29,8 +29,17 @@ import {
   RendicionGasto,
   Sucursal,
   Usuario,
+  Cliente,
+  Oportunidad,
+  CotizacionVenta,
+  CotizacionVentasDetalle,
 } from './entities';
 import { RendicionesGastosModule } from './rendiciones-gastos/rendiciones-gastos.module';
+import { DivisasModule } from './divisas/divisas.module';
+import { ClientesModule } from './clientes/clientes.module';
+import { OportunidadesModule } from './oportunidades/oportunidades.module';
+import { CotizacionesVentasModule } from './cotizaciones-ventas/cotizaciones-ventas.module';
+import { VentasModule } from './ventas/ventas.module';
 import { InventarioModule } from './inventario/inventario.module';
 import { AuditTrailModule } from './audit-trail/audit-trail.module';
 import { PlanesPreventivosModule } from './planes-preventivos/planes-preventivos.module';
@@ -93,6 +102,10 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
             OrdenTrabajoRepuesto,
             MovimientoInventario,
             RendicionGasto,
+            Cliente,
+            Oportunidad,
+            CotizacionVenta,
+            CotizacionVentasDetalle,
           ],
           synchronize: configService.get<string>('NODE_ENV') !== 'production',
           retryAttempts: 10,
@@ -125,6 +138,11 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
     AuditTrailModule,
     InventarioModule,
     RendicionesGastosModule,
+    DivisasModule,
+    ClientesModule,
+    OportunidadesModule,
+    CotizacionesVentasModule,
+    VentasModule,
   ],
   controllers: [AppController, DebugController],
   providers: [

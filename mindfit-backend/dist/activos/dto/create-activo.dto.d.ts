@@ -5,7 +5,7 @@ export declare class CreateActivoDto {
     categoriaId: number;
     modelo?: string;
     numeroSerie?: string;
-    sucursalId: number;
+    sucursalId?: number | null;
     pisoAsignado?: number | null;
     fechaCompra?: string;
     fechaVencimientoGarantia?: string;

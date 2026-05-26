@@ -22,6 +22,9 @@ const activos_service_1 = require("./activos.service");
 const create_activo_dto_1 = require("./dto/create-activo.dto");
 const filter_activos_dto_1 = require("./dto/filter-activos.dto");
 const update_activo_dto_1 = require("./dto/update-activo.dto");
+const traslado_activo_dto_1 = require("./dto/traslado-activo.dto");
+const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
+const jwt_payload_interface_1 = require("../common/interfaces/jwt-payload.interface");
 let ActivosController = class ActivosController {
     activosService;
     inventarioService;
@@ -49,6 +52,9 @@ let ActivosController = class ActivosController {
     }
     create(dto) {
         return this.activosService.create(dto);
+    }
+    traslado(id, dto, user) {
+        return this.activosService.traslado(id, dto.nuevaSucursalId ?? null, user.id);
     }
     update(id, dto) {
         return this.activosService.update(id, dto);
@@ -113,6 +119,17 @@ __decorate([
     __metadata("design:paramtypes", [create_activo_dto_1.CreateActivoDto]),
     __metadata("design:returntype", void 0)
 ], ActivosController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)(':id/traslado'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, traslado_activo_dto_1.TrasladoActivoDto,
+        jwt_payload_interface_1.JwtPayload]),
+    __metadata("design:returntype", void 0)
+], ActivosController.prototype, "traslado", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.JEFE_SUCURSAL),

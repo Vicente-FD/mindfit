@@ -35,3 +35,20 @@ export interface ActivoHistorialItem {
   evidencias: HistorialEvidencia[];
   comentarios: HistorialComentario[];
 }
+
+export interface ActivoHistorialTraslado {
+  destino: string;
+  sucursalIdAnterior: number | null;
+  sucursalIdNuevo: number | null;
+}
+
+export interface ActivoHistorialEvento {
+  tipo: 'orden_trabajo' | 'traslado';
+  id: string;
+  fecha: string;
+  titulo: string;
+  descripcion: string | null;
+  usuarioNombre: string | null;
+  orden?: ActivoHistorialItem;
+  traslado?: ActivoHistorialTraslado;
+}

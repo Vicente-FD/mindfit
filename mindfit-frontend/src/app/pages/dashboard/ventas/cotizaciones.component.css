@@ -1,0 +1,150 @@
+.cotiz-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cotiz-card__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.cotiz-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-slate-grey, #94a3b8);
+}
+
+.cotiz-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.estado-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.estado--pending {
+  background: rgb(251 191 36 / 0.15);
+  color: #fbbf24;
+}
+
+.estado--ok {
+  background: rgb(74 222 128 / 0.15);
+  color: #4ade80;
+}
+
+.estado--bad {
+  background: rgb(248 113 113 / 0.15);
+  color: #f87171;
+}
+
+.cotiz-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.catalogo-block {
+  margin-top: 0.5rem;
+}
+
+.catalogo-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.catalogo-item {
+  text-align: left;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: rgb(0 0 0 / 0.3);
+  transition: border-color 0.15s;
+}
+
+.catalogo-item:hover {
+  border-color: var(--color-orange-energy, #ff6600);
+}
+
+.catalogo-item__sku {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-orange-energy, #ff6600);
+}
+
+.catalogo-item__nombre {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-pure-white, #fff);
+}
+
+.lineas-table {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 0.65rem;
+  overflow: hidden;
+}
+
+.lineas-head,
+.lineas-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 70px 90px 80px 36px;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.78rem;
+}
+
+.lineas-head {
+  background: rgb(255 255 255 / 0.04);
+  font-weight: 700;
+  color: var(--color-slate-grey, #94a3b8);
+}
+
+.lineas-row {
+  border-top: 1px solid rgb(255 255 255 / 0.05);
+}
+
+.lineas-input {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.totales-box {
+  padding: 0.75rem;
+  border-radius: 0.65rem;
+  background: rgb(0 0 0 / 0.35);
+  border: 1px solid rgb(255 255 255 / 0.06);
+  font-size: 0.9rem;
+  color: var(--color-slate-grey, #94a3b8);
+}
+
+.totales-box strong {
+  color: var(--color-pure-white, #fff);
+}
+
+.totales-bruto {
+  margin-top: 0.35rem;
+  font-size: 1rem;
+  color: var(--color-orange-energy, #ff6600);
+}

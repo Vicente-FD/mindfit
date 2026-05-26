@@ -134,4 +134,16 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
     verReportesSucursal: false,
     verControlBodega: true,
   },
+  ejecutivo_ventas: {
+    verDashboardEjecutivo: true,
+    verCentroMonitoreo: false,
+    verAsignacionOts: false,
+    verGestionActivos: false,
+    verGestionUsuarios: false,
+    verGestionSucursales: false,
+    verParametrosSistema: false,
+    verReportesSucursal: false,
+    verControlBodega: false,
+    verRendicionGastos: false,
+  },
 };

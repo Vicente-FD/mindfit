@@ -13,3 +13,7 @@ export { BodegaStock } from './bodega-stock.entity';
 export { OrdenTrabajoRepuesto } from './orden-trabajo-repuesto.entity';
 export { MovimientoInventario } from './movimiento-inventario.entity';
 export { RendicionGasto } from './rendicion-gasto.entity';
+export { Cliente } from './cliente.entity';
+export { Oportunidad } from './oportunidad.entity';
+export { CotizacionVenta } from './cotizacion-venta.entity';
+export { CotizacionVentasDetalle } from './cotizacion-ventas-detalle.entity';

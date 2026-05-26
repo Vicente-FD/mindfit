@@ -25,6 +25,8 @@ class UpdateActivoDto {
     costoAdquisicion;
     documentacionUrls;
     estadoOperacional;
+    aptoParaVenta;
+    precioVentaClp;
 }
 exports.UpdateActivoDto = UpdateActivoDto;
 __decorate([
@@ -58,7 +60,7 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
-    __metadata("design:type", Number)
+    __metadata("design:type", Object)
 ], UpdateActivoDto.prototype, "sucursalId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
@@ -91,4 +93,15 @@ __decorate([
     (0, class_validator_1.IsEnum)(enums_1.EstadoOperacionalActivo),
     __metadata("design:type", String)
 ], UpdateActivoDto.prototype, "estadoOperacional", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateActivoDto.prototype, "aptoParaVenta", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)({ maxDecimalPlaces: 2 }),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], UpdateActivoDto.prototype, "precioVentaClp", void 0);
 //# sourceMappingURL=update-activo.dto.js.map

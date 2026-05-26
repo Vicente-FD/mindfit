@@ -4,7 +4,21 @@ export declare enum RolUsuario {
     TECNICO = "tecnico",
     JEFE_SUCURSAL = "jefe_sucursal",
     GERENTE_BI = "gerente_bi",
-    BODEGUERO = "bodeguero"
+    BODEGUERO = "bodeguero",
+    EJECUTIVO_VENTAS = "ejecutivo_ventas"
+}
+export declare enum EtapaOportunidad {
+    PROSPECCION = "prospeccion",
+    CALIFICACION = "calificacion",
+    PROPUESTA = "propuesta",
+    GANADA = "ganada",
+    PERDIDA = "perdida"
+}
+export declare enum DivisaCodigo {
+    CLP = "CLP",
+    USD = "USD",
+    EUR = "EUR",
+    CAD = "CAD"
 }
 export declare enum EstadoSesionUsuario {
     CONECTADO = "conectado",
@@ -22,7 +36,14 @@ export declare enum EstadoOperacionalActivo {
     OPERATIVO = "operativo",
     FUERA_SERVICIO = "fuera_servicio",
     MANTENIMIENTO_PREVENTIVO = "mantenimiento_preventivo",
-    EN_REPARACION = "en_reparacion"
+    EN_REPARACION = "en_reparacion",
+    RESERVADO_VENTA = "reservado_venta",
+    VENDIDO = "vendido"
+}
+export declare enum EstadoCotizacionVenta {
+    PENDIENTE_APROBACION = "pendiente_aprobacion",
+    APROBADA = "aprobada",
+    RECHAZADA = "rechazada"
 }
 export declare enum PrioridadOrden {
     BAJA = "baja",
@@ -59,6 +80,7 @@ export declare enum TipoMovimientoInventario {
     INGRESO_COMPRA = "ingreso_compra",
     AJUSTE_MANUAL_POSITIVO = "ajuste_manual_positivo",
     AJUSTE_MANUAL_NEGATIVO = "ajuste_manual_negativo",
-    CONSUMO_OT = "consumo_ot"
+    CONSUMO_OT = "consumo_ot",
+    VENTA_COTIZACION = "venta_cotizacion"
 }
 export { EstadoRendicionGasto } from './estado-rendicion-gasto.enum';

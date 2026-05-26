@@ -38,6 +38,8 @@ let Activo = class Activo {
     fechaVencimientoGarantia;
     costoAdquisicion;
     documentacionUrls;
+    aptoParaVenta;
+    precioVentaClp;
     estadoOperacional;
     createdAt;
     updatedAt;
@@ -137,15 +139,16 @@ __decorate([
     __metadata("design:type", Object)
 ], Activo.prototype, "pisoAsignado", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'sucursal_id', type: 'int' }),
-    __metadata("design:type", Number)
+    (0, typeorm_1.Column)({ name: 'sucursal_id', type: 'int', nullable: true }),
+    __metadata("design:type", Object)
 ], Activo.prototype, "sucursalId", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => sucursal_entity_1.Sucursal, (sucursal) => sucursal.activos, {
+        nullable: true,
         onDelete: 'RESTRICT',
     }),
     (0, typeorm_1.JoinColumn)({ name: 'sucursal_id' }),
-    __metadata("design:type", sucursal_entity_1.Sucursal)
+    __metadata("design:type", Object)
 ], Activo.prototype, "sucursal", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'fecha_compra', type: 'date', nullable: true }),
@@ -169,6 +172,20 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'documentacion_urls', type: 'jsonb', default: () => "'[]'" }),
     __metadata("design:type", Array)
 ], Activo.prototype, "documentacionUrls", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'apto_para_venta', type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], Activo.prototype, "aptoParaVenta", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        name: 'precio_venta_clp',
+        type: 'decimal',
+        precision: 12,
+        scale: 2,
+        default: 0,
+    }),
+    __metadata("design:type", String)
+], Activo.prototype, "precioVentaClp", void 0);
 __decorate([
     (0, typeorm_1.Column)({
         name: 'estado_operacional',

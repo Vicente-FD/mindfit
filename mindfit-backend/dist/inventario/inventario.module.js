@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventarioModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
+const activo_entity_1 = require("../entities/activo.entity");
 const repuesto_entity_1 = require("../entities/repuesto.entity");
 const bodega_stock_entity_1 = require("../entities/bodega-stock.entity");
 const movimiento_inventario_entity_1 = require("../entities/movimiento-inventario.entity");
@@ -22,6 +23,7 @@ exports.InventarioModule = InventarioModule = __decorate([
     (0, common_1.Module)({
         imports: [
             typeorm_1.TypeOrmModule.forFeature([
+                activo_entity_1.Activo,
                 repuesto_entity_1.Repuesto,
                 bodega_stock_entity_1.BodegaStock,
                 movimiento_inventario_entity_1.MovimientoInventario,

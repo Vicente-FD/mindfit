@@ -17,6 +17,7 @@ const movimiento_inventario_entity_1 = require("../entities/movimiento-inventari
 const repuesto_entity_1 = require("../entities/repuesto.entity");
 const bodega_stock_entity_1 = require("../entities/bodega-stock.entity");
 const orden_trabajo_repuesto_entity_1 = require("../entities/orden-trabajo-repuesto.entity");
+const activo_entity_1 = require("../entities/activo.entity");
 const sucursal_entity_1 = require("../entities/sucursal.entity");
 let InventarioService = class InventarioService {
     dataSource;
@@ -49,6 +50,8 @@ let InventarioService = class InventarioService {
             nombre: dto.nombre.trim(),
             descripcion: dto.descripcion?.trim() ?? null,
             costoUnitario: String(dto.costoUnitario),
+            aptoParaVenta: dto.aptoParaVenta ?? false,
+            precioVentaClp: String(dto.precioVentaClp ?? 0),
         });
         const saved = await this.dataSource.getRepository(repuesto_entity_1.Repuesto).save(repuesto);
         await this.asegurarStock(saved.id);
@@ -73,6 +76,12 @@ let InventarioService = class InventarioService {
         }
         if (dto.costoUnitario != null) {
             repuesto.costoUnitario = String(dto.costoUnitario);
+        }
+        if (dto.aptoParaVenta != null) {
+            repuesto.aptoParaVenta = dto.aptoParaVenta;
+        }
+        if (dto.precioVentaClp != null) {
+            repuesto.precioVentaClp = String(dto.precioVentaClp);
         }
         return this.dataSource.getRepository(repuesto_entity_1.Repuesto).save(repuesto);
     }
@@ -111,6 +120,72 @@ let InventarioService = class InventarioService {
             valorizacionInventario: Number(rows?.valorizacion ?? 0),
             alertasReorden: rows?.alertas_reorden ?? 0,
         };
+    }
+    async updateMaquinaVentaComercial(activoId, aptoParaVenta, precioVentaClp) {
+        const repo = this.dataSource.getRepository(activo_entity_1.Activo);
+        const activo = await repo.findOne({
+            where: { id: activoId, deletedAt: (0, typeorm_1.IsNull)() },
+            relations: { categoriaRelacion: true },
+        });
+        if (!activo) {
+            throw new common_1.NotFoundException(`Máquina ${activoId} no encontrada`);
+        }
+        if (activo.sucursalId != null) {
+            throw new common_1.BadRequestException('Solo se puede habilitar venta de máquinas en Bodega Central');
+        }
+        if (activo.estadoOperacional === 'reservado_venta') {
+            throw new common_1.BadRequestException('No se puede modificar: máquina reservada en cotización pendiente');
+        }
+        if (activo.estadoOperacional === 'vendido') {
+            throw new common_1.BadRequestException('No se puede modificar: máquina vendida');
+        }
+        const patch = { aptoParaVenta };
+        if (precioVentaClp != null) {
+            patch.precioVentaClp = String(precioVentaClp);
+        }
+        await repo.update(activoId, patch);
+        const saved = await repo.findOne({
+            where: { id: activoId },
+            relations: { categoriaRelacion: true },
+        });
+        if (!saved) {
+            throw new common_1.NotFoundException(`Máquina ${activoId} no encontrada`);
+        }
+        return {
+            id: saved.id,
+            codigoInventario: saved.codigoInventario ?? `ACT-${saved.id}`,
+            nombre: saved.nombre,
+            marca: saved.marca ?? '—',
+            modelo: saved.modelo,
+            categoria: saved.categoriaRelacion?.nombre ?? saved.categoria ?? 'Equipo',
+            estadoOperacional: saved.estadoOperacional,
+            aptoParaVenta: saved.aptoParaVenta,
+            precioVentaClp: Number(saved.precioVentaClp ?? 0),
+        };
+    }
+    async listMaquinasBodega(busqueda) {
+        const q = busqueda?.trim().toLowerCase();
+        const qb = this.dataSource
+            .getRepository(activo_entity_1.Activo)
+            .createQueryBuilder('a')
+            .leftJoinAndSelect('a.categoriaRelacion', 'cat')
+            .where('a.deleted_at IS NULL')
+            .andWhere('a.sucursal_id IS NULL');
+        if (q) {
+            qb.andWhere(`(LOWER(a.nombre) LIKE :q OR LOWER(a.codigo_inventario) LIKE :q OR LOWER(a.marca) LIKE :q)`, { q: `%${q}%` });
+        }
+        const rows = await qb.orderBy('a.nombre', 'ASC').take(200).getMany();
+        return rows.map((a) => ({
+            id: a.id,
+            codigoInventario: a.codigoInventario ?? `ACT-${a.id}`,
+            nombre: a.nombre,
+            marca: a.marca ?? '—',
+            modelo: a.modelo,
+            categoria: a.categoriaRelacion?.nombre ?? a.categoria ?? 'Equipo',
+            estadoOperacional: a.estadoOperacional,
+            aptoParaVenta: a.aptoParaVenta,
+            precioVentaClp: Number(a.precioVentaClp ?? 0),
+        }));
     }
     listRepuestosDisponibles() {
         return this.dataSource

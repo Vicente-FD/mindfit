@@ -43,14 +43,27 @@
           </select>
         </div>
         <div>
-          <label class="field-label">Sucursal *</label>
+          <label class="field-label">Ubicación</label>
           <select class="field-input" formControlName="sucursalId">
-            <option value="">Seleccione sede</option>
+            <option value="">Bodega Central</option>
             @for (s of sucursales(); track s.id) {
               <option [value]="s.id">{{ s.nombre }}</option>
             }
           </select>
+          <p class="mt-1 text-xs text-slate-grey">Use traslado en el listado para mover entre bodega y sedes.</p>
         </div>
+        @if (enBodega() || !form.controls.sucursalId.value) {
+          <div>
+            <label class="field-label flex items-center gap-2">
+              <input type="checkbox" formControlName="aptoParaVenta" />
+              Apto para venta (Bodega)
+            </label>
+          </div>
+          <div>
+            <label class="field-label">Precio venta referencia (CLP)</label>
+            <input type="number" class="field-input" formControlName="precioVentaClp" min="0" step="1" />
+          </div>
+        }
         @if (showPiso()) {
           <div>
             <label class="field-label">Piso asignado *</label>

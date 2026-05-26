@@ -7,6 +7,8 @@ export declare class Repuesto {
     nombre: string;
     descripcion: string | null;
     costoUnitario: string;
+    aptoParaVenta: boolean;
+    precioVentaClp: string;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;

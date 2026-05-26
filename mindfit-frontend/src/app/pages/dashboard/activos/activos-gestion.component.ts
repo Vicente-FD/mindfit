@@ -1,6 +1,17 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  map,
+  merge,
+  of,
+  startWith,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { ActivosService, Activo } from '../../../core/services/activos.service';
 import { CategoriasService } from '../../../core/services/categorias.service';
 import { MarcasService } from '../../../core/services/marcas.service';
@@ -15,6 +26,7 @@ import { EditAssetModalComponent } from '../../../shared/edit-asset-modal/edit-a
 import { AssetHistoryModalComponent } from '../../../shared/asset-history-modal/asset-history-modal.component';
 import { environment } from '../../../../environments/environment';
 import { MindfitDatePickerComponent } from '../../../common/components/date-picker/date-picker.component';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-activos-gestion',
@@ -31,16 +43,18 @@ import { MindfitDatePickerComponent } from '../../../common/components/date-pick
 })
 export class ActivosGestionComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly activosService = inject(ActivosService);
   private readonly categoriasService = inject(CategoriasService);
   private readonly marcasService = inject(MarcasService);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly toast = inject(ToastService);
+  private readonly auth = inject(AuthService);
 
   readonly categorias = signal<Categoria[]>([]);
   readonly sucursales = signal<Sucursal[]>([]);
   readonly marcas = signal<Marca[]>([]);
-  readonly activos = signal<Activo[]>([]);
+  readonly listLoading = signal(false);
   readonly showForm = signal(false);
   readonly saving = signal(false);
   readonly qrActivo = signal<Activo | null>(null);
@@ -48,6 +62,14 @@ export class ActivosGestionComponent implements OnInit {
   readonly historyActivo = signal<Activo | null>(null);
   readonly showPiso = signal(false);
   readonly pisosOpciones = signal<number[]>([]);
+  readonly trasladoActivo = signal<Activo | null>(null);
+  readonly trasladoSucursalId = signal('');
+  readonly trasladoLoading = signal(false);
+
+  readonly puedeTrasladar = computed(() => {
+    const rol = this.auth.user()?.rol;
+    return rol === 'admin' || rol === 'jefe_operaciones';
+  });
 
   readonly filterForm = this.fb.nonNullable.group({
     sucursalId: [''],
@@ -62,7 +84,7 @@ export class ActivosGestionComponent implements OnInit {
     marcaId: ['', Validators.required],
     modelo: [''],
     categoriaId: ['', Validators.required],
-    sucursalId: ['', Validators.required],
+    sucursalId: [''],
     pisoAsignado: [null as number | null],
     fechaCompra: [''],
     fechaVencimientoGarantia: [''],
@@ -70,18 +92,62 @@ export class ActivosGestionComponent implements OnInit {
     cantidad: [1, [Validators.required, Validators.min(1), Validators.max(50)]],
   });
 
-  ngOnInit(): void {
-    this.sucursalesService.list().subscribe({ next: (s) => this.sucursales.set(s) });
-    this.marcasService.list().subscribe({ next: (m) => this.marcas.set(m) });
-    this.categoriasService.list().subscribe({ next: (c) => this.categorias.set(c) });
-    this.loadActivos();
-    this.filterForm.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(() => this.loadActivos());
+  private readonly reloadList$ = new Subject<void>();
 
-    this.form.get('sucursalId')?.valueChanges.subscribe((id) => {
-      this.applyPisoRules(id ? Number(id) : null);
-    });
+  private readonly activos$ = merge(
+    this.filterForm.valueChanges.pipe(debounceTime(350)),
+    this.reloadList$,
+  ).pipe(
+    startWith(null),
+    map(() => this.filterForm.getRawValue()),
+    tap(() => this.listLoading.set(true)),
+    switchMap((f) => {
+      const soloBodega = f.sucursalId === 'bodega';
+      return this.activosService
+        .list({
+          soloBodegaCentral: soloBodega || undefined,
+          sucursalId:
+            f.sucursalId && !soloBodega ? Number(f.sucursalId) : undefined,
+          marcaId: f.marcaId ? Number(f.marcaId) : undefined,
+          categoriaId: f.categoriaId ? Number(f.categoriaId) : undefined,
+          anioCompra: f.mesCompra
+            ? Number(String(f.mesCompra).split('-')[0])
+            : undefined,
+          busqueda: f.busqueda || undefined,
+        })
+        .pipe(
+          tap(() => this.listLoading.set(false)),
+          catchError(() => {
+            this.listLoading.set(false);
+            this.toast.error('Error al cargar activos');
+            return of([] as Activo[]);
+          }),
+        );
+    }),
+  );
+
+  readonly activos = toSignal(this.activos$, { initialValue: [] as Activo[] });
+
+  ngOnInit(): void {
+    this.sucursalesService
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (s) => this.sucursales.set(s) });
+    this.marcasService
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (m) => this.marcas.set(m) });
+    this.categoriasService
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (c) => this.categorias.set(c) });
+
+    this.form
+      .get('sucursalId')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((id) => {
+        this.applyPisoRules(id ? Number(id) : null);
+      });
   }
 
   private applyPisoRules(sucursalId: number | null): void {
@@ -118,21 +184,7 @@ export class ActivosGestionComponent implements OnInit {
   }
 
   loadActivos(): void {
-    const f = this.filterForm.getRawValue();
-    this.activosService
-      .list({
-        sucursalId: f.sucursalId ? Number(f.sucursalId) : undefined,
-        marcaId: f.marcaId ? Number(f.marcaId) : undefined,
-        categoriaId: f.categoriaId ? Number(f.categoriaId) : undefined,
-        anioCompra: f.mesCompra
-          ? Number(String(f.mesCompra).split('-')[0])
-          : undefined,
-        busqueda: f.busqueda || undefined,
-      })
-      .subscribe({
-        next: (a) => this.activos.set(a),
-        error: () => this.toast.error('Error al cargar activos'),
-      });
+    this.reloadList$.next();
   }
 
   submit(): void {
@@ -150,7 +202,7 @@ export class ActivosGestionComponent implements OnInit {
         marcaId: Number(v.marcaId),
         modelo: v.modelo || undefined,
         categoriaId: Number(v.categoriaId),
-        sucursalId: Number(v.sucursalId),
+        sucursalId: v.sucursalId ? Number(v.sucursalId) : null,
         pisoAsignado:
           v.pisoAsignado == null ? null : Number(v.pisoAsignado),
         fechaCompra: v.fechaCompra || undefined,
@@ -276,7 +328,90 @@ export class ActivosGestionComponent implements OnInit {
       fuera_servicio: 'Fuera de servicio',
       mantenimiento_preventivo: 'Mantenimiento preventivo',
       en_reparacion: 'En reparación',
+      reservado_venta: 'Reservada (venta)',
+      vendido: 'Vendida',
     };
     return map[estado] ?? estado;
+  }
+
+  enBodega(activo: Activo): boolean {
+    return activo.sucursalId == null;
+  }
+
+  ubicacionLabel(activo: Activo): string {
+    if (this.enBodega(activo)) return 'Bodega Central';
+    return activo.sucursal?.nombre ?? 'Sucursal';
+  }
+
+  puedeMover(activo: Activo): boolean {
+    return (
+      this.puedeTrasladar() &&
+      activo.estadoOperacional !== 'reservado_venta' &&
+      activo.estadoOperacional !== 'vendido'
+    );
+  }
+
+  tieneQr(activo: Activo): boolean {
+    return !!activo.codigoQrToken?.trim();
+  }
+
+  enviarABodega(activo: Activo): void {
+    if (!this.puedeMover(activo)) return;
+    const ok = confirm(
+      `¿Enviar «${activo.nombre}» a Bodega Central?\n\nSe desactivará el QR de sucursal hasta un nuevo traslado.`,
+    );
+    if (!ok) return;
+    this.ejecutarTraslado(activo, null);
+  }
+
+  abrirTrasladoSucursal(activo: Activo): void {
+    if (!this.puedeMover(activo)) return;
+    this.trasladoSucursalId.set('');
+    this.trasladoActivo.set(activo);
+  }
+
+  cerrarTraslado(): void {
+    this.trasladoActivo.set(null);
+    this.trasladoSucursalId.set('');
+  }
+
+  confirmarTrasladoSucursal(): void {
+    const activo = this.trasladoActivo();
+    const id = this.trasladoSucursalId();
+    if (!activo || !id) {
+      this.toast.error('Seleccione la sucursal destino');
+      return;
+    }
+    this.ejecutarTraslado(activo, Number(id));
+  }
+
+  private ejecutarTraslado(activo: Activo, nuevaSucursalId: number | null): void {
+    this.trasladoLoading.set(true);
+    this.activosService.traslado(activo.id, nuevaSucursalId).subscribe({
+      next: (actualizado) => {
+        this.trasladoLoading.set(false);
+        this.cerrarTraslado();
+        const destino = nuevaSucursalId == null
+          ? 'Bodega Central'
+          : this.sucursales().find((s) => s.id === nuevaSucursalId)?.nombre ??
+            'sucursal';
+        this.toast.success(`«${actualizado.nombre}» trasladada a ${destino}`);
+        this.loadActivos();
+        if (nuevaSucursalId != null && actualizado.codigoQrToken) {
+          this.qrActivo.set(actualizado);
+        }
+      },
+      error: (err) => {
+        this.trasladoLoading.set(false);
+        const msg = err?.error?.message;
+        this.toast.error(
+          typeof msg === 'string'
+            ? msg
+            : Array.isArray(msg)
+              ? msg[0]
+              : 'No se pudo completar el traslado',
+        );
+      },
+    });
   }
 }

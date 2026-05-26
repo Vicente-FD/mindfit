@@ -6,10 +6,12 @@
         Catálogo maestro, stock global y Kardex de trazabilidad por sede
       </p>
     </div>
-    <button type="button" class="btn-create-catalog" (click)="toggleCreatePanel()">
-      <lucide-icon name="plus" [size]="16" />
-      {{ activePanel() === 'create' ? 'Cerrar formulario' : 'Crear nuevo repuesto en catálogo' }}
-    </button>
+    @if (vista() === 'repuestos') {
+      <button type="button" class="btn-create-catalog" (click)="toggleCreatePanel()">
+        <lucide-icon name="plus" [size]="16" />
+        {{ activePanel() === 'create' ? 'Cerrar formulario' : 'Crear nuevo repuesto en catálogo' }}
+      </button>
+    }
   </header>
 
   @if (activePanel() === 'create') {
@@ -65,19 +67,40 @@
     </article>
   </div>
 
+  <nav class="bodega-tabs" aria-label="Vista de bodega">
+    <button
+      type="button"
+      class="bodega-tab"
+      [class.bodega-tab--active]="vista() === 'repuestos'"
+      (click)="setVista('repuestos')"
+    >
+      Repuestos e insumos
+    </button>
+    <button
+      type="button"
+      class="bodega-tab"
+      [class.bodega-tab--active]="vista() === 'maquinas'"
+      (click)="setVista('maquinas')"
+    >
+      Máquinas en bodega
+    </button>
+  </nav>
+
   <div class="filters-bar page-card">
     <div class="filter-field filter-field--grow">
-      <label class="field-label">Buscar SKU o repuesto</label>
+      <label class="field-label">
+        {{ vista() === 'repuestos' ? 'Buscar SKU o repuesto' : 'Buscar código o máquina' }}
+      </label>
       <input
         type="search"
         class="field-input"
-        placeholder="SKU o nombre..."
+        [placeholder]="vista() === 'repuestos' ? 'SKU o nombre...' : 'Código inventario o nombre...'"
         (input)="onBusquedaInput($event)"
       />
     </div>
   </div>
 
-  @if (alertasDetalle().length > 0) {
+  @if (vista() === 'repuestos' && alertasDetalle().length > 0) {
     <div class="alert-panel">
       <lucide-icon name="alert-triangle" [size]="16" class="text-orange-energy" />
       <div class="flex flex-wrap gap-2">
@@ -91,6 +114,79 @@
     </div>
   }
 
+  @if (vista() === 'maquinas') {
+    <div class="page-card overflow-hidden">
+      @if (maquinasLoading()) {
+        <p class="p-4 text-sm text-slate-grey">Cargando máquinas...</p>
+      } @else if (maquinasFiltradas().length === 0) {
+        <p class="p-4 text-sm text-slate-grey">
+          No hay máquinas físicamente en Bodega Central. Use Gestión de activos → Trasladar a bodega.
+        </p>
+      } @else {
+        <div class="table-wrap">
+          <table class="stock-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Máquina</th>
+                <th>Marca / Categoría</th>
+                <th>Estado</th>
+                <th>Venta</th>
+                <th>Precio venta (CLP)</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of maquinasFiltradas(); track m.id) {
+                <tr>
+                  <td class="font-mono text-xs text-orange-energy">{{ m.codigoInventario }}</td>
+                  <td>{{ m.nombre }}</td>
+                  <td class="text-xs text-slate-grey">{{ m.marca }} · {{ m.categoria }}</td>
+                  <td>{{ estadoMaquinaLabel(m.estadoOperacional) }}</td>
+                  <td>
+                    <input
+                      type="number"
+                      class="field-input maquina-precio-input"
+                      min="0"
+                      step="1000"
+                      [value]="m.precioVentaClp"
+                      [disabled]="!puedeEditarVenta(m) || maquinaVentaSavingId() === m.id"
+                      (change)="onPrecioMaquinaChange(m, $any($event.target).value)"
+                    />
+                  </td>
+                  <td class="maquina-venta-actions">
+                    @if (puedeEditarVenta(m)) {
+                      <button
+                        type="button"
+                        class="btn-table"
+                        [class.btn-table--accent]="m.aptoParaVenta"
+                        [disabled]="maquinaVentaSavingId() === m.id"
+                        (click)="toggleVentaMaquina(m)"
+                      >
+                        {{ m.aptoParaVenta ? 'Quitar venta' : 'Habilitar venta' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-table"
+                        [disabled]="maquinaVentaSavingId() === m.id"
+                        (click)="guardarPrecioMaquina(m)"
+                      >
+                        Guardar precio
+                      </button>
+                    } @else {
+                      <span class="badge-warn text-xs">No editable</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  @if (vista() === 'repuestos') {
   <div class="page-card overflow-hidden">
     @if (loading()) {
       <p class="p-4 text-sm text-slate-grey">Cargando stock...</p>
@@ -161,6 +257,7 @@
       </div>
     }
   </div>
+  }
 </div>
 
 @if (activePanel() === 'edit' && selectedRow(); as row) {

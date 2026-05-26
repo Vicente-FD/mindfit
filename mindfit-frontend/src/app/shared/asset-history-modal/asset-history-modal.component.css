@@ -110,6 +110,10 @@
   box-shadow: 0 0 0 3px var(--color-obsidian-grey, #1a1a1c);
 }
 
+.timeline__card--traslado {
+  border-left: 3px solid var(--color-orange-energy, #ff6600);
+}
+
 .timeline__card {
   margin-left: 0.5rem;
   padding: 0.85rem 1rem;

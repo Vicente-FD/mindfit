@@ -120,6 +120,54 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'ventas',
+        canActivate: [
+          rolesGuard(['admin', 'jefe_operaciones', 'ejecutivo_ventas', 'gerente_bi']),
+          permisoGuard('verGestionVentas'),
+        ],
+        loadComponent: () =>
+          import('./pages/dashboard/ventas/ventas-shell.component').then(
+            (m) => m.VentasShellComponent,
+          ),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./pages/dashboard/ventas/ventas-dashboard.component').then(
+                (m) => m.VentasDashboardComponent,
+              ),
+          },
+          {
+            path: 'clientes',
+            loadComponent: () =>
+              import('./pages/dashboard/ventas/clientes.component').then(
+                (m) => m.ClientesVentasComponent,
+              ),
+          },
+          {
+            path: 'oportunidades',
+            loadComponent: () =>
+              import('./pages/dashboard/ventas/oportunidades.component').then(
+                (m) => m.OportunidadesVentasComponent,
+              ),
+          },
+          {
+            path: 'cotizaciones',
+            loadComponent: () =>
+              import('./pages/dashboard/ventas/cotizaciones.component').then(
+                (m) => m.CotizacionesVentasComponent,
+              ),
+          },
+          {
+            path: 'cotizaciones/nueva',
+            loadComponent: () =>
+              import('./pages/dashboard/ventas/crear-cotizacion.component').then(
+                (m) => m.CrearCotizacionComponent,
+              ),
+          },
+        ],
+      },
+      {
         path: 'operations/calendario',
         canActivate: [rolesGuard(['admin', 'jefe_operaciones', 'gerente_bi'])],
         loadComponent: () =>

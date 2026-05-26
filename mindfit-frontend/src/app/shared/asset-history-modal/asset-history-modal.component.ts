@@ -3,7 +3,10 @@ import { Component, effect, inject, input, output, signal } from '@angular/core'
 import { LucideAngularModule } from 'lucide-angular';
 import { ActivosService } from '../../core/services/activos.service';
 import { ToastService } from '../../core/services/toast.service';
-import { ActivoHistorialItem } from '../../core/models/activo-historial.model';
+import {
+  ActivoHistorialEvento,
+  ActivoHistorialItem,
+} from '../../core/models/activo-historial.model';
 import { resolveMediaUrl } from '../../core/utils/media-url';
 
 const PRIORIDAD_LABEL: Record<string, string> = {
@@ -26,7 +29,7 @@ export class AssetHistoryModalComponent {
   readonly activoNombre = input<string>('');
   readonly closed = output<void>();
 
-  readonly items = signal<ActivoHistorialItem[]>([]);
+  readonly eventos = signal<ActivoHistorialEvento[]>([]);
   readonly loading = signal(true);
   readonly previewUrl = signal<string | null>(null);
 
@@ -36,12 +39,12 @@ export class AssetHistoryModalComponent {
       this.loading.set(true);
       this.activosService.getHistorial(id).subscribe({
         next: (data) => {
-          this.items.set(data);
+          this.eventos.set(data);
           this.loading.set(false);
         },
         error: () => {
           this.loading.set(false);
-          this.toast.error('Error al cargar historial de reparaciones');
+          this.toast.error('Error al cargar historial del activo');
         },
       });
     });
@@ -80,5 +83,9 @@ export class AssetHistoryModalComponent {
 
   closePreview(): void {
     this.previewUrl.set(null);
+  }
+
+  esOrden(e: ActivoHistorialEvento): boolean {
+    return e.tipo === 'orden_trabajo' && !!e.orden;
   }
 }

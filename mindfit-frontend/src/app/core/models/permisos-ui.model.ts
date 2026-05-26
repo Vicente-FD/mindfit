@@ -9,6 +9,7 @@ export interface PermisosUi {
   verReportesSucursal?: boolean;
   verControlBodega?: boolean;
   verRendicionGastos?: boolean;
+  verGestionVentas?: boolean;
 }
 
 export const PERMISOS_UI_KEYS: (keyof PermisosUi)[] = [
@@ -22,6 +23,7 @@ export const PERMISOS_UI_KEYS: (keyof PermisosUi)[] = [
   'verReportesSucursal',
   'verControlBodega',
   'verRendicionGastos',
+  'verGestionVentas',
 ];
 
 export const PERMISOS_UI_DEFAULT: PermisosUi = {
@@ -35,6 +37,7 @@ export const PERMISOS_UI_DEFAULT: PermisosUi = {
   verReportesSucursal: false,
   verControlBodega: false,
   verRendicionGastos: false,
+  verGestionVentas: false,
 };
 
 export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
@@ -49,6 +52,7 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
     verReportesSucursal: true,
     verControlBodega: true,
     verRendicionGastos: true,
+    verGestionVentas: true,
   },
   jefe_operaciones: {
     verDashboardEjecutivo: true,
@@ -61,6 +65,20 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
     verReportesSucursal: false,
     verControlBodega: true,
     verRendicionGastos: true,
+    verGestionVentas: true,
+  },
+  ejecutivo_ventas: {
+    verDashboardEjecutivo: true,
+    verGestionVentas: true,
+    verCentroMonitoreo: false,
+    verAsignacionOts: false,
+    verGestionActivos: false,
+    verGestionUsuarios: false,
+    verGestionSucursales: false,
+    verParametrosSistema: false,
+    verReportesSucursal: false,
+    verControlBodega: false,
+    verRendicionGastos: false,
   },
   tecnico: {
     verDashboardEjecutivo: false,
@@ -86,6 +104,7 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
   },
   gerente_bi: {
     verDashboardEjecutivo: true,
+    verGestionVentas: true,
     verGestionActivos: false,
     verGestionUsuarios: false,
     verGestionSucursales: false,
@@ -131,6 +150,10 @@ export function resolvePermisosUi(
   }
   if (raw['generarQrActivos'] === true && !merged.verGestionActivos) {
     merged.verGestionActivos = true;
+  }
+
+  if (rol === 'jefe_operaciones') {
+    merged.verGestionVentas = true;
   }
 
   return merged;

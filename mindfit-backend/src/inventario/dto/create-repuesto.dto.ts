@@ -1,4 +1,11 @@
-import { IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateRepuestoDto {
   @IsString()
@@ -16,4 +23,13 @@ export class CreateRepuestoDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   costoUnitario: number;
+
+  @IsOptional()
+  @IsBoolean()
+  aptoParaVenta?: boolean;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  precioVentaClp?: number;
 }

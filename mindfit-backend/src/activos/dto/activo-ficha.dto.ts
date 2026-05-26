@@ -1,4 +1,4 @@
-import { ActivoHistorialItemDto } from './activo-historial.dto';
+import { ActivoHistorialEventoDto } from './activo-historial-evento.dto';
 
 export interface OrdenActivaResumenDto {
   id: number;
@@ -21,9 +21,9 @@ export interface ActivoFichaDto {
     modelo: string | null;
     categoria: string;
     estadoOperacional: string;
-    sucursalId: number;
+    sucursalId: number | null;
     sucursalNombre: string | null;
   };
-  historial: ActivoHistorialItemDto[];
+  historial: ActivoHistorialEventoDto[];
   ordenesActivas: OrdenActivaResumenDto[];
 }

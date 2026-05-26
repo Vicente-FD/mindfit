@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Activo } from '../entities/activo.entity';
 import { Repuesto } from '../entities/repuesto.entity';
 import { BodegaStock } from '../entities/bodega-stock.entity';
 import { MovimientoInventario } from '../entities/movimiento-inventario.entity';
@@ -10,6 +11,7 @@ import { InventarioService } from './inventario.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
+      Activo,
       Repuesto,
       BodegaStock,
       MovimientoInventario,

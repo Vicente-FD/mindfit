@@ -5,7 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource, EntityManager, In } from 'typeorm';
-import { EstadoOrdenTrabajo } from '../common/enums';
+import { EstadoOrdenTrabajo, OperacionAuditoria } from '../common/enums';
+import { AuditTrail } from '../entities/audit-trail.entity';
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
 import { Activo } from '../entities/activo.entity';
 import { Categoria } from '../entities/categoria.entity';
@@ -22,6 +23,7 @@ import {
   ActivoHistorialItemDto,
   HistorialUsuarioDto,
 } from './dto/activo-historial.dto';
+import { ActivoHistorialEventoDto } from './dto/activo-historial-evento.dto';
 import { ActivoFichaDto } from './dto/activo-ficha.dto';
 
 @Injectable()
@@ -44,7 +46,9 @@ export class ActivosService {
       .leftJoinAndSelect('a.categoriaRelacion', 'categoriaRelacion')
       .orderBy('a.nombre', 'ASC');
 
-    if (filters.sucursalId != null) {
+    if (filters.soloBodegaCentral) {
+      qb.andWhere('a.sucursal_id IS NULL');
+    } else if (filters.sucursalId != null) {
       qb.andWhere('a.sucursal_id = :sucursalId', {
         sucursalId: filters.sucursalId,
       });
@@ -90,9 +94,12 @@ export class ActivosService {
 
   private async resolvePisoAsignado(
     manager: EntityManager,
-    sucursalId: number,
+    sucursalId: number | null | undefined,
     pisoAsignado?: number | null,
   ): Promise<number | null> {
+    if (sucursalId == null) {
+      return null;
+    }
     const sucursal = await manager.findOne(Sucursal, { where: { id: sucursalId } });
     if (!sucursal) {
       throw new BadRequestException('Sucursal no encontrada');
@@ -281,15 +288,16 @@ export class ActivosService {
       throw new BadRequestException('Categoría no encontrada');
     }
 
+    const sucursalId = dto.sucursalId ?? null;
     const pisoAsignado = await this.resolvePisoAsignado(
       manager,
-      dto.sucursalId,
+      sucursalId,
       dto.pisoAsignado,
     );
 
     const codigo = await this.codigoInventario.generarCodigo(
       manager,
-      dto.sucursalId,
+      sucursalId,
       dto.marcaId,
       dto.categoriaId,
       dto.fechaCompra,
@@ -304,7 +312,7 @@ export class ActivosService {
       categoriaId: categoria.id,
       categoria: categoriaEnumFromSigla(categoria.sigla),
       pisoAsignado,
-      sucursalId: dto.sucursalId,
+      sucursalId,
       fechaCompra: dto.fechaCompra ?? null,
       fechaVencimientoGarantia: dto.fechaVencimientoGarantia ?? null,
       costoAdquisicion:
@@ -312,7 +320,7 @@ export class ActivosService {
       documentacionUrls: dto.documentacionUrls ?? [],
       estadoOperacional: dto.estadoOperacional,
       codigoInventario: codigo,
-      codigoQrToken: codigo,
+      codigoQrToken: sucursalId != null ? codigo : null,
     });
 
     return manager.save(activo);
@@ -357,7 +365,7 @@ export class ActivosService {
       activo.categoria = categoriaEnumFromSigla(categoria.sigla);
     }
     const sucursalId = dto.sucursalId ?? activo.sucursalId;
-    if (dto.sucursalId != null) activo.sucursalId = dto.sucursalId;
+    if (dto.sucursalId !== undefined) activo.sucursalId = dto.sucursalId;
     if (dto.pisoAsignado !== undefined || dto.sucursalId != null) {
       activo.pisoAsignado = await this.resolvePisoAsignado(
         this.transactionContext.getManager(this.dataSource),
@@ -381,12 +389,18 @@ export class ActivosService {
     if (dto.estadoOperacional != null) {
       activo.estadoOperacional = dto.estadoOperacional;
     }
+    if (dto.aptoParaVenta != null) {
+      activo.aptoParaVenta = dto.aptoParaVenta;
+    }
+    if (dto.precioVentaClp != null) {
+      activo.precioVentaClp = String(dto.precioVentaClp);
+    }
 
     await this.repo().save(activo);
     return this.findOne(id);
   }
 
-  async getHistorial(activoId: number): Promise<ActivoHistorialItemDto[]> {
+  async getHistorial(activoId: number): Promise<ActivoHistorialEventoDto[]> {
     await this.findOne(activoId);
 
     const ordenes = await this.dataSource.getRepository(OrdenTrabajo).find({
@@ -406,7 +420,55 @@ export class ActivosService {
       },
     });
 
-    return ordenes.map((o) => this.mapHistorialItem(o));
+    const eventosOt: ActivoHistorialEventoDto[] = ordenes.map((o) => {
+      const orden = this.mapHistorialItem(o);
+      const fecha = orden.fechaResolucion ?? o.createdAt.toISOString();
+      return {
+        tipo: 'orden_trabajo' as const,
+        id: `ot-${o.id}`,
+        fecha,
+        titulo: orden.titulo,
+        descripcion: orden.descripcion,
+        usuarioNombre: orden.asignadoA?.nombre ?? orden.creadoPor.nombre,
+        orden,
+      };
+    });
+
+    const audits = await this.dataSource.getRepository(AuditTrail).find({
+      where: { tableName: 'activos', rowPk: String(activoId) },
+      relations: { usuario: true },
+      order: { timeStamp: 'DESC' },
+    });
+
+    const eventosTraslado: ActivoHistorialEventoDto[] = audits
+      .filter((a) => {
+        const nd = a.newData as Record<string, unknown> | null;
+        return nd?.destino != null || nd?.sucursalId !== undefined;
+      })
+      .map((a) => {
+        const oldData = (a.oldData ?? {}) as Record<string, unknown>;
+        const newData = (a.newData ?? {}) as Record<string, unknown>;
+        const destino = String(newData.destino ?? 'Ubicación actualizada');
+        return {
+          tipo: 'traslado' as const,
+          id: `tra-${a.id}`,
+          fecha: a.timeStamp.toISOString(),
+          titulo: 'Traslado físico',
+          descripcion: destino,
+          usuarioNombre: a.usuario?.nombre ?? null,
+          traslado: {
+            destino,
+            sucursalIdAnterior:
+              (oldData.sucursalId as number | null | undefined) ?? null,
+            sucursalIdNuevo:
+              (newData.sucursalId as number | null | undefined) ?? null,
+          },
+        };
+      });
+
+    return [...eventosOt, ...eventosTraslado].sort(
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+    );
   }
 
   private mapHistorialItem(orden: OrdenTrabajo): ActivoHistorialItemDto {
@@ -494,5 +556,76 @@ export class ActivosService {
       throw new NotFoundException(`Activo ${id} no encontrado`);
     }
     return { deleted: true };
+  }
+
+  async traslado(
+    id: number,
+    nuevaSucursalId: number | null,
+    userId: number,
+  ) {
+    const activo = await this.findOne(id);
+    const oldData = {
+      sucursalId: activo.sucursalId,
+      codigoQrToken: activo.codigoQrToken,
+    };
+
+    const repo = this.repo();
+    let nuevoQr: string | null = activo.codigoQrToken;
+    let destinoLabel: string;
+
+    if (nuevaSucursalId == null) {
+      destinoLabel = 'Bodega Central';
+      nuevoQr = null;
+      await repo.update(id, {
+        sucursalId: null,
+        pisoAsignado: null,
+        codigoQrToken: null,
+      });
+    } else {
+      const sucursal = await this.dataSource
+        .getRepository(Sucursal)
+        .findOne({ where: { id: nuevaSucursalId } });
+      if (!sucursal) {
+        throw new BadRequestException('Sucursal destino no encontrada');
+      }
+      destinoLabel = sucursal.nombre;
+
+      if (!activo.codigoQrToken?.trim()) {
+        if (activo.marcaId == null || activo.categoriaId == null) {
+          throw new BadRequestException(
+            'El activo debe tener marca y categoría para generar QR',
+          );
+        }
+        nuevoQr =
+          activo.codigoInventario?.trim() ||
+          (await this.codigoInventario.generarCodigo(
+            this.transactionContext.getManager(this.dataSource),
+            nuevaSucursalId,
+            activo.marcaId,
+            activo.categoriaId,
+            activo.fechaCompra,
+          ));
+      }
+
+      await repo.update(id, {
+        sucursalId: nuevaSucursalId,
+        codigoQrToken: nuevoQr,
+      });
+    }
+
+    await this.dataSource.getRepository(AuditTrail).save({
+      tableName: 'activos',
+      rowPk: String(id),
+      operation: OperacionAuditoria.UPDATE,
+      userId,
+      oldData,
+      newData: {
+        sucursalId: nuevaSucursalId,
+        codigoQrToken: nuevoQr,
+        destino: destinoLabel,
+      },
+    });
+
+    return this.findOne(id);
   }
 }

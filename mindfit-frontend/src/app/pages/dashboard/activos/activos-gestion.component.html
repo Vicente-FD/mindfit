@@ -38,9 +38,9 @@
         </select>
       </div>
       <div>
-        <label class="field-label">Sucursal *</label>
+        <label class="field-label">Ubicación</label>
         <select class="field-input" formControlName="sucursalId">
-          <option value="">Seleccione sede</option>
+          <option value="">Bodega Central (sin QR)</option>
           @for (s of sucursales(); track s.id) {
             <option [value]="s.id">{{ s.nombre }}</option>
           }
@@ -88,7 +88,7 @@
           step="1"
         />
         <p class="mt-1 text-xs text-slate-grey">
-          Cada unidad recibe su propio código de inventario y QR (máx. 50 por registro).
+          Código de inventario automático. El QR físico se genera al trasladar a una sucursal (máx. 50 por registro).
         </p>
       </div>
       <div class="sm:col-span-2">
@@ -111,7 +111,8 @@
       <div>
         <label class="field-label">Sucursal</label>
         <select class="field-input" formControlName="sucursalId">
-          <option value="">Todas (Casa Central)</option>
+          <option value="bodega">Solo Bodega Central</option>
+          <option value="">Todas las ubicaciones</option>
           @for (s of sucursales(); track s.id) {
             <option [value]="s.id">{{ s.nombre }}</option>
           }
@@ -152,10 +153,13 @@
   </section>
 
   <section class="space-y-2">
-    @if (activos().length === 0) {
+    @if (listLoading()) {
+      <p class="activos-list-loading">Cargando inventario de máquinas...</p>
+    } @else if (activos().length === 0) {
       <p class="text-sm text-slate-grey">No hay activos con los filtros aplicados.</p>
-    }
-    @for (a of activos(); track a.id) {
+    } @else {
+      <p class="activos-list-meta">{{ activos().length }} máquina(s) encontrada(s)</p>
+      @for (a of activos(); track a.id) {
       <article class="activo-row">
         <div class="activo-main">
           <div class="activo-visual">
@@ -166,31 +170,54 @@
             >
               <span [class]="healthDotClass(a.estadoOperacional)"></span>
             </span>
-            @if (marcaLogo(a); as logo) {
-              <img
-                [src]="logo"
-                [alt]="marcaLabel(a)"
-                class="marca-logo-thumb"
-                loading="lazy"
-              />
-            }
+            <span class="marca-inicial" [attr.title]="marcaLabel(a)">
+              {{ marcaLabel(a).charAt(0) }}
+            </span>
           </div>
-          <div>
+          <div class="activo-info">
             <p class="font-mono text-sm font-semibold text-orange-energy">
               {{ a.codigoInventario || a.codigoQrToken }}
             </p>
             <p class="text-sm text-pure-white">{{ a.nombre }}</p>
             <p class="text-xs text-slate-grey">
-              {{ marcaLabel(a) }} · {{ categoriaLabel(a) }} · {{ a.sucursal?.nombre }}
+              {{ marcaLabel(a) }} · {{ categoriaLabel(a) }} ·
+              <span [class.text-orange-energy]="enBodega(a)">{{ ubicacionLabel(a) }}</span>
               @if (pisoLabel(a); as pl) { · {{ pl }} }
             </p>
           </div>
         </div>
         <div class="activo-actions">
-          <button type="button" class="btn-qr" (click)="openQr(a)" title="Etiqueta QR">
-            <lucide-icon name="qr-code" [size]="16" />
-            <span class="hidden sm:inline">Etiqueta QR</span>
-          </button>
+          @if (puedeMover(a)) {
+            @if (enBodega(a)) {
+              <button
+                type="button"
+                class="btn-traslado"
+                [disabled]="trasladoLoading()"
+                (click)="abrirTrasladoSucursal(a)"
+                title="Asignar a una sucursal física"
+              >
+                <lucide-icon name="truck" [size]="16" />
+                <span>Trasladar a sucursal</span>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn-traslado btn-traslado--bodega"
+                [disabled]="trasladoLoading()"
+                (click)="enviarABodega(a)"
+                title="Retirar de sucursal y enviar a bodega"
+              >
+                <lucide-icon name="warehouse" [size]="16" />
+                <span>Trasladar a bodega</span>
+              </button>
+            }
+          }
+          @if (tieneQr(a)) {
+            <button type="button" class="btn-qr" (click)="openQr(a)" title="Etiqueta QR">
+              <lucide-icon name="qr-code" [size]="16" />
+              <span class="hidden sm:inline">Etiqueta QR</span>
+            </button>
+          }
           <button type="button" class="btn-historial" (click)="openHistory(a)" title="Historial">
             <lucide-icon name="history" [size]="16" />
             <span>Historial</span>
@@ -200,6 +227,7 @@
           </button>
         </div>
       </article>
+      }
     }
   </section>
 </div>
@@ -222,4 +250,56 @@
     [activoNombre]="activo.nombre"
     (closed)="closeHistory()"
   />
+}
+
+@if (trasladoActivo(); as activo) {
+  <div class="traslado-backdrop" (click)="cerrarTraslado()" role="presentation"></div>
+  <div class="traslado-modal" role="dialog" aria-labelledby="traslado-title">
+    <header class="traslado-modal__head">
+      <h2 id="traslado-title" class="text-base font-semibold text-pure-white">
+        Trasladar a sucursal
+      </h2>
+      <button type="button" class="btn-ghost" (click)="cerrarTraslado()" aria-label="Cerrar">
+        <lucide-icon name="x" [size]="18" />
+      </button>
+    </header>
+    <p class="text-sm text-slate-grey">
+      <span class="font-mono text-orange-energy">{{ activo.codigoInventario }}</span>
+      — {{ activo.nombre }}
+    </p>
+    <p class="mt-1 text-xs text-slate-grey">
+      Origen: {{ ubicacionLabel(activo) }}. Al asignar sede se generará o restaurará el código QR.
+    </p>
+    <div class="mt-4">
+      <label class="field-label" for="traslado-sucursal">Sucursal destino *</label>
+      <select
+        id="traslado-sucursal"
+        class="field-input"
+        [value]="trasladoSucursalId()"
+        (change)="trasladoSucursalId.set($any($event.target).value)"
+      >
+        <option value="">Seleccione sucursal</option>
+        @for (s of sucursales(); track s.id) {
+          <option [value]="s.id" [disabled]="activo.sucursalId === s.id">
+            {{ s.nombre }}
+          </option>
+        }
+      </select>
+    </div>
+    <div class="traslado-modal__actions">
+      <button type="button" class="btn-ghost" (click)="cerrarTraslado()">Cancelar</button>
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="trasladoLoading() || !trasladoSucursalId()"
+        (click)="confirmarTrasladoSucursal()"
+      >
+        @if (trasladoLoading()) {
+          Trasladando...
+        } @else {
+          Confirmar traslado
+        }
+      </button>
+    </div>
+  </div>
 }

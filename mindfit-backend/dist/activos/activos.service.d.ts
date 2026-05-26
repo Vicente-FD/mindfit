@@ -6,7 +6,7 @@ import { CreateActivoDto } from './dto/create-activo.dto';
 import { CreateActivosResultDto } from './dto/create-activos-result.dto';
 import { FilterActivosDto } from './dto/filter-activos.dto';
 import { UpdateActivoDto } from './dto/update-activo.dto';
-import { ActivoHistorialItemDto } from './dto/activo-historial.dto';
+import { ActivoHistorialEventoDto } from './dto/activo-historial-evento.dto';
 import { ActivoFichaDto } from './dto/activo-ficha.dto';
 export declare class ActivosService {
     private readonly dataSource;
@@ -25,7 +25,7 @@ export declare class ActivosService {
     private createMany;
     private persistActivo;
     update(id: number, dto: UpdateActivoDto): Promise<Activo>;
-    getHistorial(activoId: number): Promise<ActivoHistorialItemDto[]>;
+    getHistorial(activoId: number): Promise<ActivoHistorialEventoDto[]>;
     private mapHistorialItem;
     private mapUsuario;
     private resolveComentarioCierre;
@@ -33,4 +33,5 @@ export declare class ActivosService {
     remove(id: number): Promise<{
         deleted: boolean;
     }>;
+    traslado(id: number, nuevaSucursalId: number | null, userId: number): Promise<Activo>;
 }

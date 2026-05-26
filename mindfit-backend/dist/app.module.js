@@ -24,6 +24,11 @@ const seed_service_1 = require("./database/seed.service");
 const schema_fix_service_1 = require("./database/schema-fix.service");
 const entities_1 = require("./entities");
 const rendiciones_gastos_module_1 = require("./rendiciones-gastos/rendiciones-gastos.module");
+const divisas_module_1 = require("./divisas/divisas.module");
+const clientes_module_1 = require("./clientes/clientes.module");
+const oportunidades_module_1 = require("./oportunidades/oportunidades.module");
+const cotizaciones_ventas_module_1 = require("./cotizaciones-ventas/cotizaciones-ventas.module");
+const ventas_module_1 = require("./ventas/ventas.module");
 const inventario_module_1 = require("./inventario/inventario.module");
 const audit_trail_module_1 = require("./audit-trail/audit-trail.module");
 const planes_preventivos_module_1 = require("./planes-preventivos/planes-preventivos.module");
@@ -84,6 +89,10 @@ exports.AppModule = AppModule = __decorate([
                             entities_1.OrdenTrabajoRepuesto,
                             entities_1.MovimientoInventario,
                             entities_1.RendicionGasto,
+                            entities_1.Cliente,
+                            entities_1.Oportunidad,
+                            entities_1.CotizacionVenta,
+                            entities_1.CotizacionVentasDetalle,
                         ],
                         synchronize: configService.get('NODE_ENV') !== 'production',
                         retryAttempts: 10,
@@ -116,6 +125,11 @@ exports.AppModule = AppModule = __decorate([
             audit_trail_module_1.AuditTrailModule,
             inventario_module_1.InventarioModule,
             rendiciones_gastos_module_1.RendicionesGastosModule,
+            divisas_module_1.DivisasModule,
+            clientes_module_1.ClientesModule,
+            oportunidades_module_1.OportunidadesModule,
+            cotizaciones_ventas_module_1.CotizacionesVentasModule,
+            ventas_module_1.VentasModule,
         ],
         controllers: [app_controller_1.AppController, debug_controller_1.DebugController],
         providers: [

@@ -1,0 +1,68 @@
+<header class="ventas-page-head flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-pure-white">Cotizaciones comerciales</h1>
+    <p class="mt-1 text-sm text-slate-grey">
+      Propuestas pendientes de aprobación y historial de ventas.
+    </p>
+  </div>
+  <a routerLink="/dashboard/ventas/cotizaciones/nueva" class="btn-primary inline-flex items-center gap-2">
+    <lucide-icon name="plus" [size]="16" />
+    Nueva cotización
+  </a>
+</header>
+
+@if (loading()) {
+  <p class="text-sm text-slate-grey">Cargando cotizaciones...</p>
+} @else {
+  <div class="cotiz-list">
+    @for (c of cotizaciones(); track c.id) {
+      <article class="cotiz-card page-card">
+        <div class="cotiz-card__head">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wide text-orange-energy">{{ c.folio }}</p>
+            <p class="text-sm font-semibold text-pure-white">{{ c.cliente?.razonSocial }}</p>
+            <p class="text-xs text-slate-grey">
+              Razón Social (Empresa) · RUT {{ c.cliente?.rut }}
+            </p>
+          </div>
+          <span class="estado-badge" [class]="claseEstado(c.estado)">
+            {{ estadoLabel[c.estado] }}
+          </span>
+        </div>
+        <div class="cotiz-card__meta">
+          <span>{{ c.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span>{{ c.divisaCodigo }} · {{ c.montoBruto | currency:'CLP':'symbol-narrow':'1.0-0' }} bruto ref.</span>
+          <span>{{ (c.detalles?.length ?? 0) }} máquina(s)</span>
+        </div>
+        <div class="cotiz-card__actions">
+          <button type="button" class="btn-ghost text-xs" (click)="exportarPdf(c)">
+            <lucide-icon name="file-text" [size]="14" /> PDF
+          </button>
+          <button type="button" class="btn-ghost text-xs" (click)="exportarExcel(c)">
+            <lucide-icon name="table" [size]="14" /> Excel
+          </button>
+          @if (puedeAprobar() && c.estado === 'pendiente_aprobacion') {
+            <button
+              type="button"
+              class="btn-primary text-xs"
+              [disabled]="procesandoId() === c.id"
+              (click)="aprobar(c)"
+            >
+              Aprobar
+            </button>
+            <button
+              type="button"
+              class="btn-ghost text-xs text-red-400"
+              [disabled]="procesandoId() === c.id"
+              (click)="rechazar(c)"
+            >
+              Rechazar
+            </button>
+          }
+        </div>
+      </article>
+    } @empty {
+      <p class="text-sm text-slate-grey">No hay cotizaciones registradas.</p>
+    }
+  </div>
+}

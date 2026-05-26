@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RendicionGasto = exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
+exports.CotizacionVentasDetalle = exports.CotizacionVenta = exports.Oportunidad = exports.Cliente = exports.RendicionGasto = exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
 var categoria_entity_1 = require("./categoria.entity");
 Object.defineProperty(exports, "Categoria", { enumerable: true, get: function () { return categoria_entity_1.Categoria; } });
 var marca_entity_1 = require("./marca.entity");
@@ -31,4 +31,12 @@ var movimiento_inventario_entity_1 = require("./movimiento-inventario.entity");
 Object.defineProperty(exports, "MovimientoInventario", { enumerable: true, get: function () { return movimiento_inventario_entity_1.MovimientoInventario; } });
 var rendicion_gasto_entity_1 = require("./rendicion-gasto.entity");
 Object.defineProperty(exports, "RendicionGasto", { enumerable: true, get: function () { return rendicion_gasto_entity_1.RendicionGasto; } });
+var cliente_entity_1 = require("./cliente.entity");
+Object.defineProperty(exports, "Cliente", { enumerable: true, get: function () { return cliente_entity_1.Cliente; } });
+var oportunidad_entity_1 = require("./oportunidad.entity");
+Object.defineProperty(exports, "Oportunidad", { enumerable: true, get: function () { return oportunidad_entity_1.Oportunidad; } });
+var cotizacion_venta_entity_1 = require("./cotizacion-venta.entity");
+Object.defineProperty(exports, "CotizacionVenta", { enumerable: true, get: function () { return cotizacion_venta_entity_1.CotizacionVenta; } });
+var cotizacion_ventas_detalle_entity_1 = require("./cotizacion-ventas-detalle.entity");
+Object.defineProperty(exports, "CotizacionVentasDetalle", { enumerable: true, get: function () { return cotizacion_ventas_detalle_entity_1.CotizacionVentasDetalle; } });
 //# sourceMappingURL=index.js.map

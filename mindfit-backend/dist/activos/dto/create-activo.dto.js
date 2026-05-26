@@ -54,8 +54,9 @@ __decorate([
     __metadata("design:type", String)
 ], CreateActivoDto.prototype, "numeroSerie", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
-    __metadata("design:type", Number)
+    __metadata("design:type", Object)
 ], CreateActivoDto.prototype, "sucursalId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
