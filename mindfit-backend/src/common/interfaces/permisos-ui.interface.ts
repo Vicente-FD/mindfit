@@ -9,6 +9,8 @@ export interface PermisosUi {
   verReportesSucursal?: boolean;
   verControlBodega?: boolean;
   verRendicionGastos?: boolean;
+  verGestionVentas?: boolean;
+  verControlFlota?: boolean;
 }
 
 export const PERMISOS_UI_KEYS: (keyof PermisosUi)[] = [
@@ -22,6 +24,8 @@ export const PERMISOS_UI_KEYS: (keyof PermisosUi)[] = [
   'verReportesSucursal',
   'verControlBodega',
   'verRendicionGastos',
+  'verGestionVentas',
+  'verControlFlota',
 ];
 
 export const PERMISOS_UI_DEFAULT: PermisosUi = {
@@ -35,6 +39,8 @@ export const PERMISOS_UI_DEFAULT: PermisosUi = {
   verReportesSucursal: false,
   verControlBodega: false,
   verRendicionGastos: false,
+  verGestionVentas: false,
+  verControlFlota: false,
 };
 
 /** Compatibilidad con claves antiguas guardadas en JSONB. */
@@ -77,6 +83,8 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
     verReportesSucursal: true,
     verControlBodega: true,
     verRendicionGastos: true,
+    verGestionVentas: true,
+    verControlFlota: true,
   },
   jefe_operaciones: {
     verDashboardEjecutivo: true,
@@ -89,6 +97,8 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
     verReportesSucursal: false,
     verControlBodega: true,
     verRendicionGastos: true,
+    verGestionVentas: true,
+    verControlFlota: true,
   },
   tecnico: {
     verDashboardEjecutivo: false,
@@ -145,5 +155,6 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
     verReportesSucursal: false,
     verControlBodega: false,
     verRendicionGastos: false,
+    verGestionVentas: true,
   },
 };

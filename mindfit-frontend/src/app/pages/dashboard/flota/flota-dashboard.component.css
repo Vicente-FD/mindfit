@@ -1,0 +1,513 @@
+.flota-page {
+  max-width: 72rem;
+}
+
+.flota-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.flota-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.flota-subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: rgb(148 163 184);
+}
+
+.flota-alert-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(255 102 0 / 0.45);
+  background: rgb(255 102 0 / 0.12);
+  color: #ff6600;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.flota-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  padding-bottom: 0.5rem;
+}
+
+.flota-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: rgb(148 163 184);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.flota-tab:hover {
+  color: #fff;
+  background: rgb(255 255 255 / 0.05);
+}
+
+.flota-tab--active {
+  color: #ff6600;
+  background: rgb(255 102 0 / 0.12);
+}
+
+.flota-loading,
+.flota-empty {
+  color: rgb(148 163 184);
+  font-size: 0.9rem;
+}
+
+.flota-section-head {
+  margin-bottom: 1rem;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #ff6600;
+  color: #0a0a0b;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.flota-form {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: var(--color-obsidian-grey, #1a1a1c);
+}
+
+.flota-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.flota-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: rgb(148 163 184);
+}
+
+.flota-input {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(0 0 0 / 0.25);
+  color: #fff;
+  font-size: 0.875rem;
+}
+
+.flota-form > .flota-form-actions {
+  margin-top: 1rem;
+}
+
+.flota-vehiculos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.flota-vehiculo-card {
+  padding: 1rem 1.1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: var(--color-obsidian-grey, #1a1a1c);
+}
+
+.flota-vehiculo-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.flota-vehiculo-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.flota-patente {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.flota-vehiculo-meta {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 0.85rem;
+  color: rgb(148 163 184);
+}
+
+.flota-vehiculo-dl {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+}
+
+.flota-vehiculo-dl dt {
+  color: rgb(100 116 139);
+  margin: 0;
+}
+
+.flota-vehiculo-dl dd {
+  margin: 0.1rem 0 0;
+  color: #e2e8f0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.flota-vencimientos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+  padding-top: 0.65rem;
+  font-size: 0.8rem;
+}
+
+.flota-vencimientos li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0;
+  color: rgb(148 163 184);
+}
+
+.flota-vencimiento-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #e2e8f0;
+}
+
+.flota-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.flota-badge--warn {
+  color: #ff6600;
+  background: rgb(255 102 0 / 0.15);
+}
+
+.flota-card-alert-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.flota-card-alert-note {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ff6600;
+}
+
+.flota-icon-btn {
+  display: inline-flex;
+  padding: 0.35rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: rgb(148 163 184);
+  cursor: pointer;
+}
+
+.flota-icon-btn:hover {
+  color: #ff6600;
+  background: rgb(255 102 0 / 0.1);
+}
+
+.flota-table-wrap {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: var(--color-obsidian-grey, #1a1a1c);
+}
+
+.flota-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.flota-table th,
+.flota-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.flota-table th {
+  color: rgb(148 163 184);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.flota-table td strong {
+  display: block;
+  color: #fff;
+}
+
+.flota-table-muted {
+  display: block;
+  font-size: 0.75rem;
+  color: rgb(100 116 139);
+}
+
+.flota-semaforo {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: rgb(100 116 139);
+  box-shadow: 0 0 6px currentColor;
+}
+
+.flota-semaforo--ok {
+  background: #22c55e;
+  color: #22c55e;
+}
+
+.flota-semaforo--warning {
+  background: #eab308;
+  color: #eab308;
+}
+
+.flota-semaforo--danger {
+  background: #ef4444;
+  color: #ef4444;
+}
+
+.flota-semaforo--none {
+  background: rgb(100 116 139);
+  color: rgb(100 116 139);
+}
+
+.flota-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: #ff6600;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.flota-link-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.flota-link-btn:hover:not(:disabled) {
+  background: rgb(255 102 0 / 0.1);
+}
+
+.flota-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 0.65);
+}
+
+.flota-modal {
+  width: 100%;
+  max-width: 26rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: var(--color-obsidian-grey, #1a1a1c);
+}
+
+.flota-modal--wide {
+  max-width: 36rem;
+}
+
+.flota-modal-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: rgb(148 163 184);
+}
+
+.flota-modal-section {
+  margin-bottom: 1.1rem;
+}
+
+.flota-modal-section-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ff6600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.flota-form-grid--modal {
+  margin-top: 0.5rem;
+}
+
+.flota-field-hint--section {
+  margin-bottom: 0.5rem;
+}
+
+.flota-inline-warn {
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  color: #ff6600;
+}
+
+.flota-btn-secondary {
+  padding: 0.55rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(255 255 255 / 0.15);
+  background: transparent;
+  color: rgb(148 163 184);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.flota-btn-secondary:hover {
+  border-color: rgb(255 255 255 / 0.3);
+  color: #fff;
+}
+
+.flota-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.flota-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.flota-modal__head h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.flota-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.flota-doc-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px dashed rgb(255 102 0 / 0.5);
+  background: rgb(255 102 0 / 0.08);
+  color: #ff6600;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.flota-doc-upload:hover {
+  background: rgb(255 102 0 / 0.14);
+  border-color: #ff6600;
+}
+
+.flota-file-hidden {
+  display: none;
+}
+
+.flota-doc-preview {
+  margin-top: 0.65rem;
+  max-width: 100%;
+  max-height: 10rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  object-fit: contain;
+}
+
+.flota-doc-pdf-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.65rem 0 0;
+  font-size: 0.8rem;
+  color: #e2e8f0;
+}
+
+.flota-field-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: rgb(100 116 139);
+}

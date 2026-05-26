@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CotizacionVentasDetalle = exports.CotizacionVenta = exports.Oportunidad = exports.Cliente = exports.RendicionGasto = exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
+exports.LicenciaTecnico = exports.Vehiculo = exports.CotizacionVentasDetalle = exports.CotizacionVenta = exports.Oportunidad = exports.Cliente = exports.RendicionGasto = exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
 var categoria_entity_1 = require("./categoria.entity");
 Object.defineProperty(exports, "Categoria", { enumerable: true, get: function () { return categoria_entity_1.Categoria; } });
 var marca_entity_1 = require("./marca.entity");
@@ -39,4 +39,8 @@ var cotizacion_venta_entity_1 = require("./cotizacion-venta.entity");
 Object.defineProperty(exports, "CotizacionVenta", { enumerable: true, get: function () { return cotizacion_venta_entity_1.CotizacionVenta; } });
 var cotizacion_ventas_detalle_entity_1 = require("./cotizacion-ventas-detalle.entity");
 Object.defineProperty(exports, "CotizacionVentasDetalle", { enumerable: true, get: function () { return cotizacion_ventas_detalle_entity_1.CotizacionVentasDetalle; } });
+var vehiculo_entity_1 = require("./vehiculo.entity");
+Object.defineProperty(exports, "Vehiculo", { enumerable: true, get: function () { return vehiculo_entity_1.Vehiculo; } });
+var licencia_tecnico_entity_1 = require("./licencia-tecnico.entity");
+Object.defineProperty(exports, "LicenciaTecnico", { enumerable: true, get: function () { return licencia_tecnico_entity_1.LicenciaTecnico; } });
 //# sourceMappingURL=index.js.map

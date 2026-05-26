@@ -176,6 +176,17 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'flota',
+        canActivate: [
+          rolesGuard(['admin', 'jefe_operaciones']),
+          permisoGuard('verControlFlota'),
+        ],
+        loadComponent: () =>
+          import('./pages/dashboard/flota/flota-dashboard.component').then(
+            (m) => m.FlotaDashboardComponent,
+          ),
+      },
+      {
         path: 'bodeguero',
         canActivate: [rolesGuard(['bodeguero', 'jefe_operaciones'])],
         loadComponent: () =>

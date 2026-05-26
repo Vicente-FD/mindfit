@@ -13,6 +13,8 @@ exports.PERMISOS_UI_KEYS = [
     'verReportesSucursal',
     'verControlBodega',
     'verRendicionGastos',
+    'verGestionVentas',
+    'verControlFlota',
 ];
 exports.PERMISOS_UI_DEFAULT = {
     verDashboardEjecutivo: false,
@@ -25,6 +27,8 @@ exports.PERMISOS_UI_DEFAULT = {
     verReportesSucursal: false,
     verControlBodega: false,
     verRendicionGastos: false,
+    verGestionVentas: false,
+    verControlFlota: false,
 };
 function resolvePermisosUi(rol, overrides) {
     const base = { ...(exports.PERMISOS_BY_ROL[rol] ?? exports.PERMISOS_UI_DEFAULT) };
@@ -58,6 +62,8 @@ exports.PERMISOS_BY_ROL = {
         verReportesSucursal: true,
         verControlBodega: true,
         verRendicionGastos: true,
+        verGestionVentas: true,
+        verControlFlota: true,
     },
     jefe_operaciones: {
         verDashboardEjecutivo: true,
@@ -70,6 +76,8 @@ exports.PERMISOS_BY_ROL = {
         verReportesSucursal: false,
         verControlBodega: true,
         verRendicionGastos: true,
+        verGestionVentas: true,
+        verControlFlota: true,
     },
     tecnico: {
         verDashboardEjecutivo: false,
@@ -126,6 +134,7 @@ exports.PERMISOS_BY_ROL = {
         verReportesSucursal: false,
         verControlBodega: false,
         verRendicionGastos: false,
+        verGestionVentas: true,
     },
 };
 //# sourceMappingURL=permisos-ui.interface.js.map

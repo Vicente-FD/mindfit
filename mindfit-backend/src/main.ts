@@ -8,6 +8,7 @@ import { AppModule } from './app.module';
 import { ensureUploadDir } from './ordenes-trabajo/storage/evidencias.storage';
 import { ensureMarcasUploadDir } from './marcas/storage/marcas-logo.storage';
 import { ensureBoletasUploadDir } from './rendiciones-gastos/storage/boletas.storage';
+import { ensureLicenciasUploadDir } from './licencias/storage/licencias-documentos.storage';
 
 const ANSI = {
   reset: '\x1b[0m',
@@ -40,6 +41,7 @@ async function bootstrap() {
   ensureUploadDir();
   ensureMarcasUploadDir();
   ensureBoletasUploadDir();
+  ensureLicenciasUploadDir();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {

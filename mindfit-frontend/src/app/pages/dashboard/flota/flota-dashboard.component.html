@@ -1,0 +1,500 @@
+<div class="flota-page">
+  <header class="flota-header">
+    <div>
+      <h1 class="flota-title">Control de Flota y Licencias</h1>
+      <p class="flota-subtitle">
+        Vencimientos legales, kilometraje y licencias de técnicos en terreno.
+      </p>
+    </div>
+    @if (alertasCount() > 0) {
+      <div class="flota-alert-banner">
+        <lucide-icon name="alert-circle" [size]="18" />
+        <span>{{ alertasCount() }} vehículo(s) requieren atención</span>
+      </div>
+    }
+  </header>
+
+  <nav class="flota-tabs" role="tablist">
+    <button
+      type="button"
+      class="flota-tab"
+      [class.flota-tab--active]="tab() === 'vehiculos'"
+      (click)="setTab('vehiculos')"
+    >
+      <lucide-icon name="truck" [size]="16" />
+      Vehículos de la Empresa
+    </button>
+    <button
+      type="button"
+      class="flota-tab"
+      [class.flota-tab--active]="tab() === 'licencias'"
+      (click)="setTab('licencias')"
+    >
+      <lucide-icon name="car" [size]="16" />
+      Licencias de Técnicos
+    </button>
+  </nav>
+
+  @if (loading()) {
+    <p class="flota-loading">Cargando…</p>
+  } @else if (tab() === 'vehiculos') {
+    <section class="flota-section">
+      <div class="flota-section-head">
+        <button type="button" class="btn-primary" (click)="toggleVehiculoForm()">
+          <lucide-icon name="plus" [size]="16" />
+          {{ showVehiculoForm() ? 'Cerrar formulario' : 'Registrar Vehículo' }}
+        </button>
+      </div>
+
+      @if (showVehiculoForm()) {
+        <form
+          class="flota-form"
+          [formGroup]="vehiculoForm"
+          (ngSubmit)="submitVehiculo()"
+        >
+          <div class="flota-form-grid">
+            <label class="flota-field">
+              <span>Patente</span>
+              <input formControlName="patente" class="flota-input" placeholder="ABCD12" />
+            </label>
+            <label class="flota-field">
+              <span>Marca</span>
+              <input formControlName="marca" class="flota-input" />
+            </label>
+            <label class="flota-field">
+              <span>Modelo</span>
+              <input formControlName="modelo" class="flota-input" />
+            </label>
+            <label class="flota-field">
+              <span>Año</span>
+              <input formControlName="anio" type="number" class="flota-input" />
+            </label>
+            <label class="flota-field">
+              <span>Kilometraje actual</span>
+              <input
+                formControlName="kilometrajeActual"
+                type="number"
+                class="flota-input"
+              />
+            </label>
+            <label class="flota-field">
+              <span>Próximo cambio aceite (km)</span>
+              <input
+                formControlName="siguienteCambioAceiteKm"
+                type="number"
+                class="flota-input"
+              />
+            </label>
+            <label class="flota-field">
+              <span>Sucursal</span>
+              <select formControlName="sucursalId" class="flota-input">
+                <option [value]="casaCentral">Casa Central</option>
+                @for (s of sucursales(); track s.id) {
+                  <option [value]="s.id">{{ s.nombre }}</option>
+                }
+              </select>
+            </label>
+            <label class="flota-field">
+              <span>Técnico asignado</span>
+              <select formControlName="conductorId" class="flota-input">
+                <option value="">Sin asignar</option>
+                @for (t of tecnicos(); track t.id) {
+                  <option [value]="t.id">{{ t.nombre }}</option>
+                }
+              </select>
+            </label>
+            <label class="flota-field">
+              <span>Vencimiento SOAP</span>
+              <mindfit-date-picker formControlName="vencimientoSoap" />
+            </label>
+            <label class="flota-field">
+              <span>Vencimiento Permiso</span>
+              <mindfit-date-picker formControlName="vencimientoPermiso" />
+            </label>
+            <label class="flota-field">
+              <span>Vencimiento Revisión Técnica</span>
+              <mindfit-date-picker formControlName="vencimientoRevision" />
+            </label>
+          </div>
+          <div class="flota-form-actions">
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="savingVehiculo()"
+            >
+              Guardar vehículo
+            </button>
+          </div>
+        </form>
+      }
+
+      @if (vehiculos().length === 0) {
+        <p class="flota-empty">No hay vehículos registrados.</p>
+      } @else {
+        <div class="flota-vehiculos-grid">
+          @for (v of vehiculos(); track v.id) {
+            @let alerts = alertasVehiculo(v);
+            <article class="flota-vehiculo-card">
+              <div class="flota-vehiculo-card__head">
+                <h3 class="flota-patente">{{ v.patente }}</h3>
+                <div class="flota-vehiculo-card__actions">
+                  <button
+                    type="button"
+                    class="flota-icon-btn"
+                    title="Actualizar documentos y kilometraje"
+                    (click)="openVehiculoEdit(v)"
+                  >
+                    <lucide-icon name="pencil" [size]="16" />
+                  </button>
+                  <button
+                    type="button"
+                    class="flota-icon-btn"
+                    title="Eliminar"
+                    (click)="eliminarVehiculo(v)"
+                  >
+                    <lucide-icon name="trash-2" [size]="16" />
+                  </button>
+                </div>
+              </div>
+              <p class="flota-vehiculo-meta">
+                {{ v.marca }} {{ v.modelo }} · {{ v.anio }}
+              </p>
+              <dl class="flota-vehiculo-dl">
+                <div>
+                  <dt>Sucursal</dt>
+                  <dd>{{ sucursalLabel(v) }}</dd>
+                </div>
+                <div>
+                  <dt>Técnico</dt>
+                  <dd>{{ v.conductor?.nombre ?? 'Sin asignar' }}</dd>
+                </div>
+                <div>
+                  <dt>Kilometraje</dt>
+                  <dd>
+                    {{ v.kilometrajeActual | number }} km
+                    @if (aceiteAlerta(v)) {
+                      <span class="flota-badge flota-badge--warn">
+                        <lucide-icon name="alert-triangle" [size]="12" />
+                        Aceite en {{ kmRestantesAceite(v) | number }} km
+                      </span>
+                    }
+                  </dd>
+                </div>
+              </dl>
+              <ul class="flota-vencimientos">
+                <li>
+                  <span>SOAP</span>
+                  <span class="flota-vencimiento-val">
+                    {{ formatFecha(v.vencimientoSoap) }}
+                    @if (docAlerta(v.vencimientoSoap)) {
+                      <span class="flota-badge flota-badge--warn">
+                        <lucide-icon name="alert-triangle" [size]="12" />
+                      </span>
+                    }
+                  </span>
+                </li>
+                <li>
+                  <span>Permiso</span>
+                  <span class="flota-vencimiento-val">
+                    {{ formatFecha(v.vencimientoPermiso) }}
+                    @if (docAlerta(v.vencimientoPermiso)) {
+                      <span class="flota-badge flota-badge--warn">
+                        <lucide-icon name="alert-triangle" [size]="12" />
+                      </span>
+                    }
+                  </span>
+                </li>
+                <li>
+                  <span>Revisión</span>
+                  <span class="flota-vencimiento-val">
+                    {{ formatFecha(v.vencimientoRevision) }}
+                    @if (docAlerta(v.vencimientoRevision)) {
+                      <span class="flota-badge flota-badge--warn">
+                        <lucide-icon name="alert-triangle" [size]="12" />
+                      </span>
+                    }
+                  </span>
+                </li>
+              </ul>
+              @if (alerts.soap || alerts.permiso || alerts.revision || alerts.aceite) {
+                <div class="flota-card-alert-foot">
+                  <p class="flota-card-alert-note">Requiere atención preventiva</p>
+                  <button
+                    type="button"
+                    class="flota-link-btn"
+                    (click)="openVehiculoEdit(v)"
+                  >
+                    Actualizar vencimientos
+                  </button>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  } @else {
+    <section class="flota-section">
+      <div class="flota-table-wrap">
+        <table class="flota-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Técnico</th>
+              <th>Tipo licencia</th>
+              <th>Vencimiento</th>
+              <th>Documento</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of panelLicencias(); track row.tecnicoId) {
+              <tr>
+                <td>
+                  <span
+                    class="flota-semaforo"
+                    [class.flota-semaforo--danger]="
+                      estadoVencimiento(row.fechaVencimiento) === 'danger'
+                    "
+                    [class.flota-semaforo--warning]="
+                      estadoVencimiento(row.fechaVencimiento) === 'warning'
+                    "
+                    [class.flota-semaforo--ok]="
+                      estadoVencimiento(row.fechaVencimiento) === 'ok'
+                    "
+                    [class.flota-semaforo--none]="
+                      estadoVencimiento(row.fechaVencimiento) === 'none'
+                    "
+                    title="Estado licencia"
+                  ></span>
+                </td>
+                <td>
+                  <strong>{{ row.tecnicoNombre }}</strong>
+                  <span class="flota-table-muted">{{ row.tecnicoEmail }}</span>
+                </td>
+                <td>{{ row.tipoLicencia ?? '—' }}</td>
+                <td>
+                  @if (row.fechaVencimiento) {
+                    {{ formatFecha(row.fechaVencimiento) }}
+                  } @else {
+                    <span class="flota-table-muted">Sin registrar</span>
+                  }
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="flota-link-btn"
+                    [disabled]="!row.documentoUrl"
+                    (click)="verDocumento(row.documentoUrl)"
+                  >
+                    <lucide-icon name="eye" [size]="14" />
+                    Ver licencia
+                  </button>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="flota-link-btn"
+                    (click)="openLicenciaEdit(row)"
+                  >
+                    <lucide-icon name="pencil" [size]="14" />
+                    {{ row.licenciaId ? 'Editar' : 'Registrar' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (vehiculoEdit(); as v) {
+    <div class="flota-modal-backdrop" (click)="closeVehiculoEdit()">
+      <div
+        class="flota-modal flota-modal--wide"
+        role="dialog"
+        aria-labelledby="vehiculo-modal-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="flota-modal__head">
+          <div>
+            <h2 id="vehiculo-modal-title">Actualizar — {{ v.patente }}</h2>
+            <p class="flota-modal-subtitle">
+              {{ v.marca }} {{ v.modelo }} · {{ v.anio }}
+            </p>
+          </div>
+          <button type="button" class="flota-icon-btn" (click)="closeVehiculoEdit()">
+            <lucide-icon name="x" [size]="18" />
+          </button>
+        </header>
+        <form [formGroup]="vehiculoEditForm" (ngSubmit)="submitVehiculoEdit()">
+          <section class="flota-modal-section">
+            <h3 class="flota-modal-section-title">Documentos legales</h3>
+            <p class="flota-field-hint flota-field-hint--section">
+              Renueve las fechas tras pagar SOAP, permiso de circulación o revisión técnica.
+            </p>
+            <div class="flota-form-grid flota-form-grid--modal">
+              <label class="flota-field">
+                <span>Vencimiento SOAP</span>
+                <mindfit-date-picker formControlName="vencimientoSoap" />
+                @if (docAlerta(v.vencimientoSoap)) {
+                  <span class="flota-inline-warn">Vence pronto o ya venció</span>
+                }
+              </label>
+              <label class="flota-field">
+                <span>Vencimiento Permiso de circulación</span>
+                <mindfit-date-picker formControlName="vencimientoPermiso" />
+                @if (docAlerta(v.vencimientoPermiso)) {
+                  <span class="flota-inline-warn">Vence pronto o ya venció</span>
+                }
+              </label>
+              <label class="flota-field">
+                <span>Vencimiento Revisión técnica</span>
+                <mindfit-date-picker formControlName="vencimientoRevision" />
+                @if (docAlerta(v.vencimientoRevision)) {
+                  <span class="flota-inline-warn">Vence pronto o ya venció</span>
+                }
+              </label>
+            </div>
+          </section>
+
+          <section class="flota-modal-section">
+            <h3 class="flota-modal-section-title">Kilometraje y asignación</h3>
+            <div class="flota-form-grid flota-form-grid--modal">
+              <label class="flota-field">
+                <span>Kilometraje actual</span>
+                <input
+                  formControlName="kilometrajeActual"
+                  type="number"
+                  class="flota-input"
+                />
+              </label>
+              <label class="flota-field">
+                <span>Próximo cambio de aceite (km)</span>
+                <input
+                  formControlName="siguienteCambioAceiteKm"
+                  type="number"
+                  class="flota-input"
+                />
+              </label>
+              <label class="flota-field">
+                <span>Sucursal</span>
+                <select formControlName="sucursalId" class="flota-input">
+                  <option [value]="casaCentral">Casa Central</option>
+                  @for (s of sucursales(); track s.id) {
+                    <option [value]="s.id">{{ s.nombre }}</option>
+                  }
+                </select>
+              </label>
+              <label class="flota-field">
+                <span>Técnico asignado</span>
+                <select formControlName="conductorId" class="flota-input">
+                  <option value="">Sin asignar</option>
+                  @for (t of tecnicos(); track t.id) {
+                    <option [value]="t.id">{{ t.nombre }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <div class="flota-form-actions">
+            <button
+              type="button"
+              class="flota-btn-secondary"
+              (click)="closeVehiculoEdit()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="savingVehiculoEdit()"
+            >
+              Guardar cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (licenciaEdit(); as row) {
+    <div class="flota-modal-backdrop" (click)="closeLicenciaEdit()">
+      <div
+        class="flota-modal"
+        role="dialog"
+        aria-labelledby="licencia-modal-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="flota-modal__head">
+          <h2 id="licencia-modal-title">Licencia — {{ row.tecnicoNombre }}</h2>
+          <button type="button" class="flota-icon-btn" (click)="closeLicenciaEdit()">
+            <lucide-icon name="x" [size]="18" />
+          </button>
+        </header>
+        <form [formGroup]="licenciaForm" (ngSubmit)="submitLicencia()">
+          <label class="flota-field">
+            <span>Tipo de licencia</span>
+            <select formControlName="tipoLicencia" class="flota-input">
+              @for (t of tiposLicencia; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+          </label>
+          <label class="flota-field">
+            <span>Fecha de vencimiento</span>
+            <mindfit-date-picker formControlName="fechaVencimiento" />
+          </label>
+          <div class="flota-field">
+            <span>Documento de la licencia (PDF o imagen) *</span>
+            <button
+              type="button"
+              class="flota-doc-upload"
+              (click)="licenciaFileInput.click()"
+            >
+              <lucide-icon name="camera" [size]="18" />
+              {{ documentoNombre() ? 'Cambiar archivo' : 'Seleccionar archivo' }}
+            </button>
+            <input
+              #licenciaFileInput
+              type="file"
+              class="flota-file-hidden"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+              (change)="onDocumentoLicenciaSelected($event)"
+            />
+            @if (previewDocumento()) {
+              <img
+                [src]="previewDocumento()"
+                alt="Vista previa licencia"
+                class="flota-doc-preview"
+              />
+            } @else if (documentoEsPdf() && documentoNombre()) {
+              <p class="flota-doc-pdf-label">
+                <lucide-icon name="file-text" [size]="16" />
+                {{ documentoNombre() }}
+              </p>
+            }
+            @if (!licenciaEdit()?.licenciaId) {
+              <p class="flota-field-hint">Obligatorio al registrar una licencia nueva.</p>
+            } @else {
+              <p class="flota-field-hint">
+                Opcional al editar; si no adjunta archivo, se conserva el actual.
+              </p>
+            }
+          </div>
+          <div class="flota-form-actions">
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="!puedeGuardarLicencia()"
+            >
+              Guardar licencia
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

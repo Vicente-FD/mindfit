@@ -17,3 +17,5 @@ export { Cliente } from './cliente.entity';
 export { Oportunidad } from './oportunidad.entity';
 export { CotizacionVenta } from './cotizacion-venta.entity';
 export { CotizacionVentasDetalle } from './cotizacion-ventas-detalle.entity';
+export { Vehiculo } from './vehiculo.entity';
+export { LicenciaTecnico } from './licencia-tecnico.entity';

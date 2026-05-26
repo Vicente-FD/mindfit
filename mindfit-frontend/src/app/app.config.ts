@@ -47,6 +47,9 @@ import {
   ShoppingCart,
   Kanban,
   FileText,
+  Truck,
+  Car,
+  AlertCircle,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -100,6 +103,9 @@ export const appConfig: ApplicationConfig = {
         ShoppingCart,
         Kanban,
         FileText,
+        Truck,
+        Car,
+        AlertCircle,
       }),
     ),
     provideRouter(routes),

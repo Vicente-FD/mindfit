@@ -90,6 +90,13 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
       permiso: 'verRendicionGastos',
     },
     {
+      label: 'Control de Flota',
+      route: '/dashboard/flota',
+      icon: 'truck',
+      roles: ['admin', 'jefe_operaciones'],
+      permiso: 'verControlFlota',
+    },
+    {
       label: 'Control de bodega',
       route: '/dashboard/bodeguero',
       icon: 'warehouse',
