@@ -127,9 +127,7 @@ let UsuariosService = class UsuariosService {
             sucursalId: dto.sucursalId ?? null,
             telefono: dto.telefono ?? null,
             estaActivo: dto.estaActivo ?? true,
-            permisosUi: dto.permisosUi ??
-                permisos_ui_interface_1.PERMISOS_BY_ROL[dto.rol] ??
-                permisos_ui_interface_1.PERMISOS_UI_DEFAULT,
+            permisosUi: dto.permisosUi ?? (0, permisos_ui_interface_1.getDefaultPermisosForRol)(dto.rol),
         });
         const saved = await this.repo().save(usuario);
         return this.findOne(saved.id);
@@ -158,16 +156,18 @@ let UsuariosService = class UsuariosService {
         if (dto.rol !== undefined || dto.sucursalId !== undefined) {
             usuario.sucursalId = sucursalId ?? null;
         }
+        const rolFinal = dto.rol ?? usuario.rol;
         const permisosCambiaron = dto.permisosUi !== undefined &&
             JSON.stringify((0, permisos_ui_interface_1.resolvePermisosUi)(usuario.rol, usuario.permisosUi)) !==
-                JSON.stringify((0, permisos_ui_interface_1.resolvePermisosUi)(usuario.rol, dto.permisosUi));
+                JSON.stringify((0, permisos_ui_interface_1.resolvePermisosUi)(rolFinal, dto.permisosUi));
+        const rolCambio = dto.rol !== undefined && dto.rol !== usuario.rol;
         const { sucursalId: _omit, ...rest } = dto;
         Object.assign(usuario, rest);
         if (dto.estaActivo === false) {
             await this.invalidateTokens(id);
             usuario.estadoSesion = enums_1.EstadoSesionUsuario.DESCONECTADO;
         }
-        else if (permisosCambiaron) {
+        else if (permisosCambiaron || rolCambio) {
             await this.invalidateTokens(id);
         }
         await this.repo().save(usuario);

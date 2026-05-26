@@ -162,8 +162,15 @@ let SeedService = SeedService_1 = class SeedService {
                 }));
             }
             else {
+                if (process.env.NODE_ENV !== 'production') {
+                    usuario.passwordHash = passwordHash;
+                    usuario.estaActivo = true;
+                }
                 if (u.sucursalKey === null && u.rol !== enums_1.RolUsuario.JEFE_SUCURSAL) {
                     usuario.sucursalId = null;
+                }
+                else if (u.sucursalKey != null) {
+                    usuario.sucursalId = sucursalId;
                 }
                 await this.usuarioRepo.save(usuario);
             }

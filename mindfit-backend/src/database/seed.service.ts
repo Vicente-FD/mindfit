@@ -161,8 +161,14 @@ export class SeedService implements OnModuleInit {
           }),
         );
       } else {
+        if (process.env.NODE_ENV !== 'production') {
+          usuario.passwordHash = passwordHash;
+          usuario.estaActivo = true;
+        }
         if (u.sucursalKey === null && u.rol !== RolUsuario.JEFE_SUCURSAL) {
           usuario.sucursalId = null;
+        } else if (u.sucursalKey != null) {
+          usuario.sucursalId = sucursalId;
         }
         await this.usuarioRepo.save(usuario);
       }

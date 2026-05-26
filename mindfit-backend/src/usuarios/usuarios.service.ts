@@ -10,8 +10,7 @@ import { EstadoSesionUsuario, RolUsuario } from '../common/enums';
 import { Usuario } from '../entities/usuario.entity';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import {
-  PERMISOS_BY_ROL,
-  PERMISOS_UI_DEFAULT,
+  getDefaultPermisosForRol,
   resolvePermisosUi,
 } from '../common/interfaces/permisos-ui.interface';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
@@ -103,10 +102,7 @@ export class UsuariosService {
       sucursalId: dto.sucursalId ?? null,
       telefono: dto.telefono ?? null,
       estaActivo: dto.estaActivo ?? true,
-      permisosUi:
-        dto.permisosUi ??
-        PERMISOS_BY_ROL[dto.rol] ??
-        PERMISOS_UI_DEFAULT,
+      permisosUi: dto.permisosUi ?? getDefaultPermisosForRol(dto.rol),
     });
     const saved = await this.repo().save(usuario);
     return this.findOne(saved.id);
@@ -144,10 +140,12 @@ export class UsuariosService {
       usuario.sucursalId = sucursalId ?? null;
     }
 
+    const rolFinal = dto.rol ?? usuario.rol;
     const permisosCambiaron =
       dto.permisosUi !== undefined &&
       JSON.stringify(resolvePermisosUi(usuario.rol, usuario.permisosUi)) !==
-        JSON.stringify(resolvePermisosUi(usuario.rol, dto.permisosUi));
+        JSON.stringify(resolvePermisosUi(rolFinal, dto.permisosUi));
+    const rolCambio = dto.rol !== undefined && dto.rol !== usuario.rol;
 
     const { sucursalId: _omit, ...rest } = dto;
     Object.assign(usuario, rest);
@@ -155,7 +153,7 @@ export class UsuariosService {
     if (dto.estaActivo === false) {
       await this.invalidateTokens(id);
       usuario.estadoSesion = EstadoSesionUsuario.DESCONECTADO;
-    } else if (permisosCambiaron) {
+    } else if (permisosCambiaron || rolCambio) {
       await this.invalidateTokens(id);
     }
 

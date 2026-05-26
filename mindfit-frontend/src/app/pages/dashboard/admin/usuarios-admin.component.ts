@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -9,8 +10,10 @@ import { switchMap, of } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsuariosService } from '../../../core/services/usuarios.service';
 import {
-  PERMISOS_UI_DEFAULT,
+  getDefaultPermisosForRol,
+  PERMISO_LABEL_GROUPS,
   PERMISOS_UI_KEYS,
+  ROLES_SIN_MATRIZ_PERMISOS,
   resolvePermisosUi,
 } from '../../../core/models/permisos-ui.model';
 import { SucursalesService } from '../../../core/services/sucursales.service';
@@ -39,21 +42,6 @@ const ROLE_TABS: { value: UserRole | 'todos'; label: string }[] = [
   { value: 'bodeguero', label: 'Bodegueros' },
 ];
 
-const PERMISO_LABELS: { key: keyof PermisosUi; label: string }[] = [
-  { key: 'verDashboardEjecutivo', label: 'Dashboard Ejecutivo' },
-  { key: 'verGestionActivos', label: 'Gestión de Activos' },
-  { key: 'verGestionUsuarios', label: 'Personal y Permisos' },
-  { key: 'verGestionSucursales', label: 'Sedes y Sucursales' },
-  { key: 'verParametrosSistema', label: 'Parámetros del Sistema' },
-  { key: 'verCentroMonitoreo', label: 'Centro de Monitoreo' },
-  { key: 'verAsignacionOts', label: 'Centro de Operaciones (Asignación)' },
-  { key: 'verReportesSucursal', label: 'Reportar Falla' },
-  { key: 'verControlBodega', label: 'Control de Bodega' },
-  { key: 'verRendicionGastos', label: 'Rendición de Gastos' },
-  { key: 'verGestionVentas', label: 'Centro Comercial (CRM)' },
-  { key: 'verControlFlota', label: 'Control de Flota' },
-];
-
 @Component({
   selector: 'app-usuarios-admin',
   imports: [ReactiveFormsModule, LucideAngularModule],
@@ -62,6 +50,7 @@ const PERMISO_LABELS: { key: keyof PermisosUi; label: string }[] = [
 })
 export class UsuariosAdminComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(AuthService);
   private readonly usuariosService = inject(UsuariosService);
   private readonly sucursalesService = inject(SucursalesService);
@@ -70,7 +59,8 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   readonly casaCentral = CASA_CENTRAL_VALUE;
   readonly roles = ROLES;
   readonly roleTabs = ROLE_TABS;
-  readonly permisoLabels = PERMISO_LABELS;
+  readonly permisoLabelGroups = PERMISO_LABEL_GROUPS;
+  readonly rolesSinMatriz = ROLES_SIN_MATRIZ_PERMISOS;
   readonly usuarios = signal<Usuario[]>([]);
   readonly sucursales = signal<Sucursal[]>([]);
   readonly selected = signal<Usuario | null>(null);
@@ -100,9 +90,11 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
 
   readonly permisosForm = this.fb.group(
     Object.fromEntries(
-      PERMISOS_UI_KEYS.map((key) => [key, [PERMISOS_UI_DEFAULT[key] ?? false]]),
+      PERMISOS_UI_KEYS.map((key) => [key, [false]]),
     ) as Record<keyof PermisosUi, [boolean]>,
   );
+
+  private skipRolePermisoPatch = false;
 
   readonly needsSucursal = computed(
     () => this.createForm.controls.rol.value === 'jefe_sucursal',
@@ -113,6 +105,13 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   );
 
   private refreshIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  readonly showPermisosMatrix = computed(() => {
+    const rol = this.selected()
+      ? this.editForm.controls.rol.value
+      : this.createForm.controls.rol.value;
+    return !ROLES_SIN_MATRIZ_PERMISOS.has(rol);
+  });
 
   readonly filteredUsuarios = computed(() => {
     const tab = this.activeRoleTab();
@@ -127,6 +126,21 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
       next: (s) => this.sucursales.set(s),
     });
     this.refreshIntervalId = setInterval(() => this.load(true), 30_000);
+
+    this.createForm.controls.rol.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((rol) => {
+        if (this.showForm()) {
+          this.applyPermisosDefaultsForRol(rol);
+        }
+      });
+
+    this.editForm.controls.rol.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((rol) => {
+        if (this.skipRolePermisoPatch || !this.selected()) return;
+        this.applyPermisosDefaultsForRol(rol);
+      });
   }
 
   ngOnDestroy(): void {
@@ -183,8 +197,25 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
     ctrl.setValue(!ctrl.value);
   }
 
+  private applyPermisosDefaultsForRol(rol: UserRole): void {
+    if (ROLES_SIN_MATRIZ_PERMISOS.has(rol)) {
+      const patch: Partial<PermisosUi> = {};
+      for (const key of PERMISOS_UI_KEYS) {
+        patch[key] = false;
+      }
+      this.permisosForm.patchValue(patch);
+      return;
+    }
+    const defaults = getDefaultPermisosForRol(rol);
+    const patch: Partial<PermisosUi> = {};
+    for (const key of PERMISOS_UI_KEYS) {
+      patch[key] = defaults[key] === true;
+    }
+    this.permisosForm.patchValue(patch);
+  }
+
   private resetPermisosDefaults(): void {
-    this.permisosForm.patchValue(PERMISOS_UI_DEFAULT);
+    this.applyPermisosDefaultsForRol(this.createForm.controls.rol.value);
   }
 
   private patchPermisosFromUsuario(u: Usuario): void {
@@ -264,6 +295,7 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   selectUsuario(u: Usuario): void {
     this.showForm.set(false);
     this.selected.set(u);
+    this.skipRolePermisoPatch = true;
     this.editForm.patchValue({
       nombre: u.nombre,
       email: u.email,
@@ -274,6 +306,7 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
       nuevaPassword: '',
     });
     this.patchPermisosFromUsuario(u);
+    this.skipRolePermisoPatch = false;
   }
 
   submitEdit(): void {
@@ -296,6 +329,15 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
     }
 
     const permisosUi = this.permisosForm.getRawValue() as PermisosUi;
+    const me = this.auth.getUser();
+    const permisosPrevios = me
+      ? resolvePermisosUi(me.rol, me.permisosUi)
+      : null;
+    const permisosNuevos = resolvePermisosUi(v.rol, permisosUi);
+    const permisosSelfChange =
+      me?.id === u.id &&
+      JSON.stringify(permisosPrevios) !== JSON.stringify(permisosNuevos);
+
     this.saving.set(true);
 
     this.usuariosService
@@ -320,6 +362,13 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (updated) => {
           this.saving.set(false);
+          if (permisosSelfChange || (me?.id === updated.id && v.rol !== me.rol)) {
+            this.toast.success(
+              'Permisos actualizados. Inicie sesión nuevamente para aplicar cambios.',
+            );
+            this.auth.forceLogout();
+            return;
+          }
           this.toast.success('Usuario actualizado');
           this.selected.set(updated);
           this.editForm.patchValue({ nuevaPassword: '' });

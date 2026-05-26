@@ -1,6 +1,7 @@
 export interface PermisosUi {
   verDashboardEjecutivo?: boolean;
   verGestionActivos?: boolean;
+  verSoloVisualizarActivos?: boolean;
   verGestionUsuarios?: boolean;
   verGestionSucursales?: boolean;
   verParametrosSistema?: boolean;
@@ -8,14 +9,13 @@ export interface PermisosUi {
   verAsignacionOts?: boolean;
   verReportesSucursal?: boolean;
   verControlBodega?: boolean;
-  verRendicionGastos?: boolean;
-  verGestionVentas?: boolean;
   verControlFlota?: boolean;
 }
 
 export const PERMISOS_UI_KEYS: (keyof PermisosUi)[] = [
   'verDashboardEjecutivo',
   'verGestionActivos',
+  'verSoloVisualizarActivos',
   'verGestionUsuarios',
   'verGestionSucursales',
   'verParametrosSistema',
@@ -23,14 +23,13 @@ export const PERMISOS_UI_KEYS: (keyof PermisosUi)[] = [
   'verAsignacionOts',
   'verReportesSucursal',
   'verControlBodega',
-  'verRendicionGastos',
-  'verGestionVentas',
   'verControlFlota',
 ];
 
 export const PERMISOS_UI_DEFAULT: PermisosUi = {
   verDashboardEjecutivo: false,
   verGestionActivos: false,
+  verSoloVisualizarActivos: false,
   verGestionUsuarios: false,
   verGestionSucursales: false,
   verParametrosSistema: false,
@@ -38,106 +37,65 @@ export const PERMISOS_UI_DEFAULT: PermisosUi = {
   verAsignacionOts: false,
   verReportesSucursal: false,
   verControlBodega: false,
-  verRendicionGastos: false,
-  verGestionVentas: false,
   verControlFlota: false,
 };
 
+const ALL_TRUE: PermisosUi = Object.fromEntries(
+  PERMISOS_UI_KEYS.map((k) => [k, true]),
+) as PermisosUi;
+
+const ALL_FALSE: PermisosUi = { ...PERMISOS_UI_DEFAULT };
+
 export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
-  admin: {
-    verDashboardEjecutivo: true,
-    verGestionActivos: true,
-    verGestionUsuarios: true,
-    verGestionSucursales: true,
-    verParametrosSistema: true,
-    verCentroMonitoreo: true,
-    verAsignacionOts: true,
-    verReportesSucursal: true,
-    verControlBodega: true,
-    verRendicionGastos: true,
-    verGestionVentas: true,
-    verControlFlota: true,
-  },
+  admin: { ...ALL_TRUE },
   jefe_operaciones: {
-    verDashboardEjecutivo: true,
-    verGestionActivos: true,
-    verGestionUsuarios: true,
-    verGestionSucursales: false,
-    verParametrosSistema: true,
+    ...ALL_FALSE,
     verCentroMonitoreo: true,
     verAsignacionOts: true,
-    verReportesSucursal: false,
     verControlBodega: true,
-    verRendicionGastos: true,
-    verGestionVentas: true,
+    verGestionActivos: true,
+    verGestionUsuarios: true,
     verControlFlota: true,
   },
   ejecutivo_ventas: {
+    ...ALL_FALSE,
     verDashboardEjecutivo: true,
-    verGestionVentas: true,
-    verCentroMonitoreo: false,
-    verAsignacionOts: false,
-    verGestionActivos: false,
-    verGestionUsuarios: false,
-    verGestionSucursales: false,
-    verParametrosSistema: false,
-    verReportesSucursal: false,
-    verControlBodega: false,
-    verRendicionGastos: false,
-  },
-  tecnico: {
-    verDashboardEjecutivo: false,
-    verGestionActivos: false,
-    verGestionUsuarios: false,
-    verGestionSucursales: false,
-    verParametrosSistema: false,
-    verCentroMonitoreo: false,
-    verAsignacionOts: false,
-    verReportesSucursal: false,
-    verControlBodega: false,
-  },
-  jefe_sucursal: {
-    verDashboardEjecutivo: false,
-    verGestionActivos: false,
-    verGestionUsuarios: false,
-    verGestionSucursales: false,
-    verParametrosSistema: false,
-    verCentroMonitoreo: false,
-    verAsignacionOts: false,
-    verReportesSucursal: true,
-    verControlBodega: false,
-  },
-  gerente_bi: {
-    verDashboardEjecutivo: true,
-    verGestionVentas: true,
-    verGestionActivos: false,
-    verGestionUsuarios: false,
-    verGestionSucursales: false,
-    verParametrosSistema: false,
-    verCentroMonitoreo: true,
-    verAsignacionOts: false,
-    verReportesSucursal: false,
-    verControlBodega: false,
+    verControlBodega: true,
+    verGestionActivos: true,
   },
   bodeguero: {
-    verDashboardEjecutivo: false,
-    verGestionActivos: false,
-    verGestionUsuarios: false,
-    verGestionSucursales: false,
-    verParametrosSistema: false,
-    verCentroMonitoreo: false,
-    verAsignacionOts: false,
-    verReportesSucursal: false,
+    ...ALL_FALSE,
     verControlBodega: true,
   },
+  gerente_bi: {
+    ...ALL_FALSE,
+    verCentroMonitoreo: true,
+    verAsignacionOts: true,
+    verDashboardEjecutivo: true,
+    verSoloVisualizarActivos: true,
+  },
+  tecnico: { ...ALL_FALSE },
+  jefe_sucursal: {
+    ...ALL_FALSE,
+    verReportesSucursal: true,
+  },
 };
+
+export function getDefaultPermisosForRol(rol: string): PermisosUi {
+  const base = PERMISOS_BY_ROL[rol] ?? PERMISOS_UI_DEFAULT;
+  const merged: PermisosUi = { ...PERMISOS_UI_DEFAULT };
+  for (const key of PERMISOS_UI_KEYS) {
+    merged[key] = base[key] === true;
+  }
+  return merged;
+}
 
 /** Fusiona defaults por rol, overrides del usuario y claves legacy en JSONB. */
 export function resolvePermisosUi(
   rol: string,
   overrides?: PermisosUi | Record<string, boolean> | null,
 ): PermisosUi {
-  const base = { ...(PERMISOS_BY_ROL[rol] ?? PERMISOS_UI_DEFAULT) };
+  const base = getDefaultPermisosForRol(rol);
   const raw = (overrides ?? {}) as Record<string, boolean | undefined>;
   const merged: PermisosUi = { ...base };
 
@@ -150,15 +108,14 @@ export function resolvePermisosUi(
   if (raw['verAsignacionOt'] !== undefined && raw['verCentroMonitoreo'] === undefined) {
     merged.verCentroMonitoreo = raw['verAsignacionOt'];
   }
-  if (raw['verAsignacionOts'] !== undefined) {
-    merged.verAsignacionOts = raw['verAsignacionOts'];
+  if (raw['verGestionVentas'] === true && !merged.verDashboardEjecutivo) {
+    merged.verDashboardEjecutivo = true;
+  }
+  if (raw['verRendicionGastos'] === true && !merged.verAsignacionOts) {
+    merged.verAsignacionOts = true;
   }
   if (raw['generarQrActivos'] === true && !merged.verGestionActivos) {
     merged.verGestionActivos = true;
-  }
-
-  if (rol === 'jefe_operaciones') {
-    merged.verGestionVentas = true;
   }
 
   return merged;
@@ -171,3 +128,76 @@ export function hasPermiso(
 ): boolean {
   return resolvePermisosUi(rol, overrides)[key] === true;
 }
+
+export function hasAnyPermiso(
+  rol: string,
+  overrides: PermisosUi | null | undefined,
+  keys: (keyof PermisosUi)[],
+): boolean {
+  const resolved = resolvePermisosUi(rol, overrides);
+  return keys.some((k) => resolved[k] === true);
+}
+
+export interface PermisoLabelGroup {
+  rol: string;
+  titulo: string;
+  items: { key: keyof PermisosUi; label: string }[];
+}
+
+export const PERMISO_LABEL_GROUPS: PermisoLabelGroup[] = [
+  {
+    rol: 'admin',
+    titulo: 'Super Admin — acceso total',
+    items: [
+      { key: 'verDashboardEjecutivo', label: 'Dashboard Ejecutivo' },
+      { key: 'verGestionActivos', label: 'Gestión de Activos (CRUD)' },
+      { key: 'verSoloVisualizarActivos', label: 'Activos solo lectura' },
+      { key: 'verGestionUsuarios', label: 'Personal y Permisos' },
+      { key: 'verGestionSucursales', label: 'Sedes y Sucursales' },
+      { key: 'verParametrosSistema', label: 'Parámetros del Sistema' },
+      { key: 'verCentroMonitoreo', label: 'Centro de Monitoreo' },
+      { key: 'verAsignacionOts', label: 'Centro de Operaciones / Gastos' },
+      { key: 'verReportesSucursal', label: 'Reportar Falla (Sucursal)' },
+      { key: 'verControlBodega', label: 'Control de Bodega' },
+      { key: 'verControlFlota', label: 'Control de Flota' },
+    ],
+  },
+  {
+    rol: 'jefe_operaciones',
+    titulo: 'Jefe de Operaciones — sugeridos',
+    items: [
+      { key: 'verCentroMonitoreo', label: 'Centro de Monitoreo' },
+      { key: 'verAsignacionOts', label: 'Centro de Operaciones / Gastos' },
+      { key: 'verControlBodega', label: 'Control de Bodega' },
+      { key: 'verGestionActivos', label: 'Gestión de Activos (CRUD)' },
+      { key: 'verGestionUsuarios', label: 'Personal y Permisos' },
+      { key: 'verControlFlota', label: 'Control de Flota' },
+    ],
+  },
+  {
+    rol: 'gerente_bi',
+    titulo: 'Gerencia / BI — sugeridos',
+    items: [
+      { key: 'verDashboardEjecutivo', label: 'Dashboard Ejecutivo' },
+      { key: 'verCentroMonitoreo', label: 'Centro de Monitoreo' },
+      { key: 'verAsignacionOts', label: 'Calendario / Operaciones' },
+      { key: 'verSoloVisualizarActivos', label: 'Activos solo lectura + historial' },
+    ],
+  },
+  {
+    rol: 'ejecutivo_ventas',
+    titulo: 'Ejecutivo de Ventas — sugeridos',
+    items: [
+      { key: 'verDashboardEjecutivo', label: 'Centro Comercial' },
+      { key: 'verControlBodega', label: 'Control de Bodega' },
+      { key: 'verGestionActivos', label: 'Gestión de Activos (CRUD)' },
+    ],
+  },
+  {
+    rol: 'bodeguero',
+    titulo: 'Bodeguero — sugeridos',
+    items: [{ key: 'verControlBodega', label: 'Control de Bodega' }],
+  },
+];
+
+export const ROLES_SIN_MATRIZ_PERMISOS = new Set(['tecnico', 'jefe_sucursal']);

@@ -1,15 +1,29 @@
 <div class="space-y-4">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
-      <h2 class="text-lg font-semibold text-pure-white">Gestión de activos</h2>
-      <p class="text-xs text-slate-grey">Códigos de inventario y etiquetas QR</p>
+      <h2 class="text-lg font-semibold text-pure-white">
+        @if (modoSoloLectura()) {
+          Consulta de activos
+        } @else {
+          Gestión de activos
+        }
+      </h2>
+      <p class="text-xs text-slate-grey">
+        @if (modoSoloLectura()) {
+          Vista de solo lectura — historial y etiquetas QR
+        } @else {
+          Códigos de inventario y etiquetas QR
+        }
+      </p>
     </div>
-    <button type="button" class="btn-primary text-sm" (click)="toggleForm()">
-      {{ showForm() ? 'Ocultar formulario' : '+ Registrar activo' }}
-    </button>
+    @if (puedeGestionarActivos()) {
+      <button type="button" class="btn-primary text-sm" (click)="toggleForm()">
+        {{ showForm() ? 'Ocultar formulario' : '+ Registrar activo' }}
+      </button>
+    }
   </div>
 
-  @if (showForm()) {
+  @if (showForm() && puedeGestionarActivos()) {
     <form class="page-card grid gap-3 sm:grid-cols-2" [formGroup]="form" (ngSubmit)="submit()">
       <div class="sm:col-span-2">
         <label class="field-label">Nombre del equipo *</label>
@@ -222,9 +236,11 @@
             <lucide-icon name="history" [size]="16" />
             <span>Historial</span>
           </button>
-          <button type="button" class="btn-editar" (click)="openEdit(a)" title="Editar">
-            <lucide-icon name="pencil" [size]="18" />
-          </button>
+          @if (puedeGestionarActivos()) {
+            <button type="button" class="btn-editar" (click)="openEdit(a)" title="Editar">
+              <lucide-icon name="pencil" [size]="18" />
+            </button>
+          }
         </div>
       </article>
       }

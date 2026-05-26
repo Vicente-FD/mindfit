@@ -3,20 +3,14 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../core/services/auth.service';
 import { SessionHeartbeatService } from '../../core/services/session-heartbeat.service';
-import { UserRole } from '../../core/models/user.model';
-import { PermisosUi } from '../../core/models/permisos-ui.model';
+import {
+  DASHBOARD_NAV_ITEMS,
+  filterVisibleNavItems,
+} from '../../core/navigation/dashboard-nav.config';
 import { QrScannerModalComponent } from '../qr-scanner-modal/qr-scanner-modal.component';
 import { AssetDetailsSheetComponent } from '../asset-details-sheet/asset-details-sheet.component';
 import { TecnicoUiService } from '../../core/services/tecnico-ui.service';
 import { WorkOrder } from '../../core/models/work-order.model';
-
-interface NavItem {
-  label: string;
-  route: string;
-  icon: string;
-  roles: UserRole[];
-  permiso?: keyof PermisosUi;
-}
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -47,127 +41,13 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
 
   readonly showQrFab = computed(() => this.user()?.rol === 'tecnico');
 
-  readonly navItems: NavItem[] = [
-    {
-      label: 'Dashboard',
-      route: '/dashboard/admin',
-      icon: 'layout-dashboard',
-      roles: ['admin'],
-      permiso: 'verDashboardEjecutivo',
-    },
-    {
-      label: 'Centro de Monitoreo',
-      route: '/dashboard/monitoreo',
-      icon: 'activity',
-      roles: ['admin', 'jefe_operaciones', 'gerente_bi'],
-      permiso: 'verCentroMonitoreo',
-    },
-    {
-      label: 'Centro de operaciones',
-      route: '/dashboard/jefe-operaciones',
-      icon: 'clipboard-list',
-      roles: ['admin', 'jefe_operaciones'],
-      permiso: 'verAsignacionOts',
-    },
-    {
-      label: 'Centro Comercial',
-      route: '/dashboard/ventas',
-      icon: 'shopping-cart',
-      roles: ['admin', 'jefe_operaciones', 'ejecutivo_ventas', 'gerente_bi'],
-      permiso: 'verGestionVentas',
-    },
-    {
-      label: 'Calendario OT',
-      route: '/dashboard/operations/calendario',
-      icon: 'calendar-days',
-      roles: ['admin', 'jefe_operaciones', 'gerente_bi'],
-    },
-    {
-      label: 'Rendición de Gastos',
-      route: '/dashboard/operations/gastos',
-      icon: 'wallet',
-      roles: ['admin', 'jefe_operaciones'],
-      permiso: 'verRendicionGastos',
-    },
-    {
-      label: 'Control de Flota',
-      route: '/dashboard/flota',
-      icon: 'truck',
-      roles: ['admin', 'jefe_operaciones'],
-      permiso: 'verControlFlota',
-    },
-    {
-      label: 'Control de bodega',
-      route: '/dashboard/bodeguero',
-      icon: 'warehouse',
-      roles: ['bodeguero', 'jefe_operaciones'],
-      permiso: 'verControlBodega',
-    },
-    {
-      label: 'Gestión de Activos',
-      route: '/dashboard/activos',
-      icon: 'package',
-      roles: ['admin', 'jefe_operaciones'],
-      permiso: 'verGestionActivos',
-    },
-    {
-      label: 'Personal y Permisos',
-      route: '/dashboard/usuarios',
-      icon: 'users',
-      roles: ['admin', 'jefe_operaciones'],
-      permiso: 'verGestionUsuarios',
-    },
-    {
-      label: 'Sedes y Sucursales',
-      route: '/dashboard/sucursales',
-      icon: 'building-2',
-      roles: ['admin'],
-      permiso: 'verGestionSucursales',
-    },
-    {
-      label: 'Parámetros del Sistema',
-      route: '/dashboard/parametros',
-      icon: 'settings',
-      roles: ['admin', 'jefe_operaciones'],
-      permiso: 'verParametrosSistema',
-    },
-    {
-      label: 'Bitácora del sistema',
-      route: '/dashboard/bitacora',
-      icon: 'scroll-text',
-      roles: ['admin'],
-    },
-    {
-      label: 'Reportar Falla',
-      route: '/dashboard/sucursal',
-      icon: 'alert-triangle',
-      roles: ['jefe_sucursal'],
-      permiso: 'verReportesSucursal',
-    },
-    {
-      label: 'Mis Tareas',
-      route: '/dashboard/tecnico',
-      icon: 'wrench',
-      roles: ['tecnico'],
-    },
-    {
-      label: 'Dashboard Ejecutivo',
-      route: '/dashboard/gerente',
-      icon: 'bar-chart-3',
-      roles: ['gerente_bi', 'jefe_operaciones'],
-      permiso: 'verDashboardEjecutivo',
-    },
-  ];
+  readonly navItems = DASHBOARD_NAV_ITEMS;
 
   readonly visibleNav = computed(() => {
-    const rol = this.user()?.rol;
-    if (!rol) return [];
+    const u = this.user();
+    if (!u) return [];
     this.permisosUi();
-    return this.navItems.filter((item) => {
-      if (!item.roles.includes(rol)) return false;
-      if (item.permiso && !this.auth.canAccess(item.permiso)) return false;
-      return true;
-    });
+    return filterVisibleNavItems(this.navItems, u);
   });
 
   readonly ubicacionLabel = computed(() => {

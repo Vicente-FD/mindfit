@@ -6,11 +6,15 @@ import { environment } from '../../../environments/environment';
 import {
   AuthUser,
   LoginResponse,
-  ROLE_DASHBOARD_ROUTES,
   SessionProfileResponse,
-  UserRole,
 } from '../models/user.model';
-import { PermisosUi, hasPermiso, resolvePermisosUi } from '../models/permisos-ui.model';
+import {
+  PermisosUi,
+  hasAnyPermiso,
+  hasPermiso,
+  resolvePermisosUi,
+} from '../models/permisos-ui.model';
+import { resolveLandingRoute } from '../navigation/dashboard-nav.config';
 
 const TOKEN_KEY = 'mindfit_token';
 const USER_KEY = 'mindfit_user';
@@ -99,11 +103,33 @@ export class AuthService {
     return hasPermiso(u.rol, u.permisosUi, permiso);
   }
 
+  canAccessAny(...permisos: (keyof PermisosUi)[]): boolean {
+    const u = this.userSignal();
+    if (!u) return false;
+    return hasAnyPermiso(u.rol, u.permisosUi, permisos);
+  }
+
+  /** Primera ruta permitida del sidebar (o vista móvil por rol). */
+  getLandingRoute(user?: AuthUser | null): string {
+    const u = user ?? this.userSignal();
+    if (!u) return '/login';
+    return resolveLandingRoute(u);
+  }
+
+  /** @deprecated Usar getLandingRoute() */
+  getDashboardRouteForRole(_rol?: AuthUser['rol'] | null): string {
+    return this.getLandingRoute();
+  }
+
   private persistSession(token: string, user: AuthUser): void {
+    const resolved: AuthUser = {
+      ...user,
+      permisosUi: resolvePermisosUi(user.rol, user.permisosUi),
+    };
     localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    localStorage.setItem(USER_KEY, JSON.stringify(resolved));
     this.tokenSignal.set(token);
-    this.userSignal.set(user);
+    this.userSignal.set(resolved);
   }
 
   private clearSessionAndRedirect(): void {
@@ -122,15 +148,9 @@ export class AuthService {
     return this.userSignal();
   }
 
-  hasRole(...roles: UserRole[]): boolean {
+  hasRole(...roles: AuthUser['rol'][]): boolean {
     const current = this.userSignal()?.rol;
     return !!current && roles.includes(current);
-  }
-
-  getDashboardRouteForRole(rol?: UserRole | null): string {
-    const role = rol ?? this.userSignal()?.rol;
-    if (!role) return '/login';
-    return ROLE_DASHBOARD_ROUTES[role] ?? '/login';
   }
 
   isTokenValid(): boolean {

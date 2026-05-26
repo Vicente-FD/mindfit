@@ -1,10 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PERMISOS_BY_ROL = exports.PERMISOS_UI_DEFAULT = exports.PERMISOS_UI_KEYS = void 0;
+exports.getDefaultPermisosForRol = getDefaultPermisosForRol;
 exports.resolvePermisosUi = resolvePermisosUi;
 exports.PERMISOS_UI_KEYS = [
     'verDashboardEjecutivo',
     'verGestionActivos',
+    'verSoloVisualizarActivos',
     'verGestionUsuarios',
     'verGestionSucursales',
     'verParametrosSistema',
@@ -12,13 +14,12 @@ exports.PERMISOS_UI_KEYS = [
     'verAsignacionOts',
     'verReportesSucursal',
     'verControlBodega',
-    'verRendicionGastos',
-    'verGestionVentas',
     'verControlFlota',
 ];
 exports.PERMISOS_UI_DEFAULT = {
     verDashboardEjecutivo: false,
     verGestionActivos: false,
+    verSoloVisualizarActivos: false,
     verGestionUsuarios: false,
     verGestionSucursales: false,
     verParametrosSistema: false,
@@ -26,12 +27,54 @@ exports.PERMISOS_UI_DEFAULT = {
     verAsignacionOts: false,
     verReportesSucursal: false,
     verControlBodega: false,
-    verRendicionGastos: false,
-    verGestionVentas: false,
     verControlFlota: false,
 };
+const ALL_TRUE = Object.fromEntries(exports.PERMISOS_UI_KEYS.map((k) => [k, true]));
+const ALL_FALSE = { ...exports.PERMISOS_UI_DEFAULT };
+exports.PERMISOS_BY_ROL = {
+    admin: { ...ALL_TRUE },
+    jefe_operaciones: {
+        ...ALL_FALSE,
+        verCentroMonitoreo: true,
+        verAsignacionOts: true,
+        verControlBodega: true,
+        verGestionActivos: true,
+        verGestionUsuarios: true,
+        verControlFlota: true,
+    },
+    ejecutivo_ventas: {
+        ...ALL_FALSE,
+        verDashboardEjecutivo: true,
+        verControlBodega: true,
+        verGestionActivos: true,
+    },
+    bodeguero: {
+        ...ALL_FALSE,
+        verControlBodega: true,
+    },
+    gerente_bi: {
+        ...ALL_FALSE,
+        verCentroMonitoreo: true,
+        verAsignacionOts: true,
+        verDashboardEjecutivo: true,
+        verSoloVisualizarActivos: true,
+    },
+    tecnico: { ...ALL_FALSE },
+    jefe_sucursal: {
+        ...ALL_FALSE,
+        verReportesSucursal: true,
+    },
+};
+function getDefaultPermisosForRol(rol) {
+    const base = exports.PERMISOS_BY_ROL[rol] ?? exports.PERMISOS_UI_DEFAULT;
+    const merged = { ...exports.PERMISOS_UI_DEFAULT };
+    for (const key of exports.PERMISOS_UI_KEYS) {
+        merged[key] = base[key] === true;
+    }
+    return merged;
+}
 function resolvePermisosUi(rol, overrides) {
-    const base = { ...(exports.PERMISOS_BY_ROL[rol] ?? exports.PERMISOS_UI_DEFAULT) };
+    const base = getDefaultPermisosForRol(rol);
     const raw = (overrides ?? {});
     const merged = { ...base };
     for (const key of exports.PERMISOS_UI_KEYS) {
@@ -39,102 +82,18 @@ function resolvePermisosUi(rol, overrides) {
             merged[key] = raw[key];
         }
     }
-    if (raw['verAsignacionOt'] !== undefined && merged.verCentroMonitoreo === undefined) {
+    if (raw['verAsignacionOt'] !== undefined && raw['verCentroMonitoreo'] === undefined) {
         merged.verCentroMonitoreo = raw['verAsignacionOt'];
     }
-    if (raw['verAsignacionOts'] !== undefined) {
-        merged.verAsignacionOts = raw['verAsignacionOts'];
+    if (raw['verGestionVentas'] === true && merged.verDashboardEjecutivo === false) {
+        merged.verDashboardEjecutivo = true;
     }
-    if (raw['generarQrActivos'] === true && merged.verGestionActivos === false) {
+    if (raw['verRendicionGastos'] === true && merged.verAsignacionOts === false) {
+        merged.verAsignacionOts = true;
+    }
+    if (raw['generarQrActivos'] === true) {
         merged.verGestionActivos = true;
     }
     return merged;
 }
-exports.PERMISOS_BY_ROL = {
-    admin: {
-        verDashboardEjecutivo: true,
-        verGestionActivos: true,
-        verGestionUsuarios: true,
-        verGestionSucursales: true,
-        verParametrosSistema: true,
-        verCentroMonitoreo: true,
-        verAsignacionOts: true,
-        verReportesSucursal: true,
-        verControlBodega: true,
-        verRendicionGastos: true,
-        verGestionVentas: true,
-        verControlFlota: true,
-    },
-    jefe_operaciones: {
-        verDashboardEjecutivo: true,
-        verGestionActivos: true,
-        verGestionUsuarios: true,
-        verGestionSucursales: false,
-        verParametrosSistema: true,
-        verCentroMonitoreo: true,
-        verAsignacionOts: true,
-        verReportesSucursal: false,
-        verControlBodega: true,
-        verRendicionGastos: true,
-        verGestionVentas: true,
-        verControlFlota: true,
-    },
-    tecnico: {
-        verDashboardEjecutivo: false,
-        verGestionActivos: false,
-        verGestionUsuarios: false,
-        verGestionSucursales: false,
-        verParametrosSistema: false,
-        verCentroMonitoreo: false,
-        verAsignacionOts: false,
-        verReportesSucursal: false,
-        verControlBodega: false,
-    },
-    jefe_sucursal: {
-        verDashboardEjecutivo: false,
-        verGestionActivos: false,
-        verGestionUsuarios: false,
-        verGestionSucursales: false,
-        verParametrosSistema: false,
-        verCentroMonitoreo: false,
-        verAsignacionOts: false,
-        verReportesSucursal: true,
-        verControlBodega: false,
-    },
-    gerente_bi: {
-        verDashboardEjecutivo: true,
-        verGestionActivos: false,
-        verGestionUsuarios: false,
-        verGestionSucursales: false,
-        verParametrosSistema: false,
-        verCentroMonitoreo: true,
-        verAsignacionOts: false,
-        verReportesSucursal: false,
-        verControlBodega: false,
-    },
-    bodeguero: {
-        verDashboardEjecutivo: false,
-        verGestionActivos: false,
-        verGestionUsuarios: false,
-        verGestionSucursales: false,
-        verParametrosSistema: false,
-        verCentroMonitoreo: false,
-        verAsignacionOts: false,
-        verReportesSucursal: false,
-        verControlBodega: true,
-    },
-    ejecutivo_ventas: {
-        verDashboardEjecutivo: true,
-        verCentroMonitoreo: false,
-        verAsignacionOts: false,
-        verGestionActivos: false,
-        verGestionUsuarios: false,
-        verGestionSucursales: false,
-        verParametrosSistema: false,
-        verReportesSucursal: false,
-        verControlBodega: false,
-        verRendicionGastos: false,
-        verGestionVentas: true,
-    },
-};
 //# sourceMappingURL=permisos-ui.interface.js.map

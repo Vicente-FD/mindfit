@@ -51,6 +51,7 @@ export class ActivosController {
   @Roles(
     RolUsuario.ADMIN,
     RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.EJECUTIVO_VENTAS,
     RolUsuario.TECNICO,
     RolUsuario.JEFE_SUCURSAL,
     RolUsuario.GERENTE_BI,
@@ -63,6 +64,7 @@ export class ActivosController {
   @Roles(
     RolUsuario.ADMIN,
     RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.EJECUTIVO_VENTAS,
     RolUsuario.TECNICO,
     RolUsuario.JEFE_SUCURSAL,
     RolUsuario.GERENTE_BI,
@@ -75,6 +77,7 @@ export class ActivosController {
   @Roles(
     RolUsuario.ADMIN,
     RolUsuario.JEFE_OPERACIONES,
+    RolUsuario.EJECUTIVO_VENTAS,
     RolUsuario.TECNICO,
     RolUsuario.JEFE_SUCURSAL,
     RolUsuario.GERENTE_BI,

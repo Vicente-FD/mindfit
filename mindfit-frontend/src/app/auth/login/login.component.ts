@@ -35,7 +35,7 @@ export class LoginComponent {
     this.auth.login(email, password).subscribe({
       next: (res) => {
         this.loading.set(false);
-        const route = this.auth.getDashboardRouteForRole(res.user.rol);
+        const route = this.auth.getLandingRoute(res.user);
         this.router.navigateByUrl(route);
       },
       error: () => {

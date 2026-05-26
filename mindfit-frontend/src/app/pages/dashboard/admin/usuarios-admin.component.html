@@ -52,29 +52,46 @@
         </div>
       </div>
 
-      <div class="border-t border-white/5 pt-3" [formGroup]="permisosForm">
-        <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-grey">
-          Permisos de interfaz
-        </h4>
-        <div class="grid grid-cols-2 gap-2">
-          @for (p of permisoLabels; track p.key) {
-            <button
-              type="button"
-              [class]="permisoChipClass(p.key)"
-              (click)="togglePermiso(p.key)"
-            >
-              @if (permisoActivo(p.key)) {
-                <lucide-icon
-                  name="check"
-                  [size]="12"
-                  class="shrink-0 text-orange-energy"
-                />
-              }
-              <span class="leading-tight text-left">{{ p.label }}</span>
-            </button>
+      @if (showPermisosMatrix()) {
+        <div class="border-t border-white/5 pt-3" [formGroup]="permisosForm">
+          <h4 class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-grey">
+            Permisos de interfaz (overrides)
+          </h4>
+          <p class="mb-3 text-xs text-slate-grey/90">
+            Al cambiar el rol se cargan los permisos sugeridos. Puede activar o revocar
+            cualquier píldora para subrogancias temporales.
+          </p>
+          @for (g of permisoLabelGroups; track g.rol) {
+            <div class="mb-3">
+              <p class="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-wide text-orange-energy/90">
+                {{ g.titulo }}
+              </p>
+              <div class="grid grid-cols-2 gap-2">
+                @for (p of g.items; track p.key) {
+                  <button
+                    type="button"
+                    [class]="permisoChipClass(p.key)"
+                    (click)="togglePermiso(p.key)"
+                  >
+                    @if (permisoActivo(p.key)) {
+                      <lucide-icon
+                        name="check"
+                        [size]="12"
+                        class="shrink-0 text-orange-energy"
+                      />
+                    }
+                    <span class="leading-tight text-left">{{ p.label }}</span>
+                  </button>
+                }
+              </div>
+            </div>
           }
         </div>
-      </div>
+      } @else {
+        <p class="border-t border-white/5 pt-3 text-xs text-slate-grey">
+          Este rol usa vistas móviles dedicadas y no utiliza la matriz de permisos de escritorio.
+        </p>
+      }
 
       <button type="submit" class="btn-primary" [disabled]="createForm.invalid">Crear usuario</button>
     </form>
@@ -188,26 +205,43 @@
             </div>
           </div>
 
-          <div class="border-t border-white/5 pt-3" [formGroup]="permisosForm">
-            <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-grey">
-              Permisos de interfaz
-            </h4>
-            <div class="grid grid-cols-2 gap-2">
-              @for (p of permisoLabels; track p.key) {
-                <label [class]="permisoChipClass(p.key)">
-                  <input type="checkbox" class="sr-only" [formControlName]="p.key" />
-                  @if (permisoActivo(p.key)) {
-                    <lucide-icon
-                      name="check"
-                      [size]="12"
-                      class="shrink-0 text-orange-energy"
-                    />
-                  }
-                  <span class="leading-tight">{{ p.label }}</span>
-                </label>
+          @if (showPermisosMatrix()) {
+            <div class="border-t border-white/5 pt-3" [formGroup]="permisosForm">
+              <h4 class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-grey">
+                Permisos de interfaz (overrides)
+              </h4>
+              <p class="mb-3 text-xs text-slate-grey/90">
+                Cambios aplicados en el próximo heartbeat (~30 s) o al volver a iniciar sesión
+                del usuario afectado.
+              </p>
+              @for (g of permisoLabelGroups; track g.rol) {
+                <div class="mb-3">
+                  <p class="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-wide text-orange-energy/90">
+                    {{ g.titulo }}
+                  </p>
+                  <div class="grid grid-cols-2 gap-2">
+                    @for (p of g.items; track p.key) {
+                      <label [class]="permisoChipClass(p.key)">
+                        <input type="checkbox" class="sr-only" [formControlName]="p.key" />
+                        @if (permisoActivo(p.key)) {
+                          <lucide-icon
+                            name="check"
+                            [size]="12"
+                            class="shrink-0 text-orange-energy"
+                          />
+                        }
+                        <span class="leading-tight">{{ p.label }}</span>
+                      </label>
+                    }
+                  </div>
+                </div>
               }
             </div>
-          </div>
+          } @else {
+            <p class="border-t border-white/5 pt-3 text-xs text-slate-grey">
+              Rol con vista móvil dedicada — sin matriz de permisos de escritorio.
+            </p>
+          }
 
           <div class="flex flex-wrap gap-2">
             <button

@@ -29,7 +29,10 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
-        canActivate: [rolesGuard(['admin'])],
+        canActivate: [
+          rolesGuard(['admin']),
+          permisoGuard('verDashboardEjecutivo'),
+        ],
         loadComponent: () =>
           import('./pages/dashboard/admin/admin-dashboard.component').then(
             (m) => m.AdminDashboardComponent,
@@ -45,7 +48,7 @@ export const routes: Routes = [
       },
       {
         path: 'usuarios',
-        canActivate: [rolesGuard(['admin', 'jefe_operaciones'])],
+        canActivate: [permisoGuard('verGestionUsuarios')],
         loadComponent: () =>
           import('./pages/dashboard/admin/usuarios-admin.component').then(
             (m) => m.UsuariosAdminComponent,
@@ -53,7 +56,7 @@ export const routes: Routes = [
       },
       {
         path: 'sucursales',
-        canActivate: [rolesGuard(['admin'])],
+        canActivate: [permisoGuard('verGestionSucursales')],
         loadComponent: () =>
           import('./pages/dashboard/admin/sucursales-admin.component').then(
             (m) => m.SucursalesAdminComponent,
@@ -61,7 +64,7 @@ export const routes: Routes = [
       },
       {
         path: 'parametros',
-        canActivate: [rolesGuard(['admin', 'jefe_operaciones'])],
+        canActivate: [permisoGuard('verParametrosSistema')],
         loadComponent: () =>
           import('./pages/dashboard/admin/parametros-admin.component').then(
             (m) => m.ParametrosAdminComponent,
@@ -69,7 +72,9 @@ export const routes: Routes = [
       },
       {
         path: 'activos',
-        canActivate: [rolesGuard(['admin', 'jefe_operaciones'])],
+        canActivate: [
+          permisoGuard(['verGestionActivos', 'verSoloVisualizarActivos']),
+        ],
         loadComponent: () =>
           import('./pages/dashboard/activos/activos-gestion.component').then(
             (m) => m.ActivosGestionComponent,
@@ -77,10 +82,7 @@ export const routes: Routes = [
       },
       {
         path: 'monitoreo',
-        canActivate: [
-          rolesGuard(['admin', 'jefe_operaciones', 'gerente_bi']),
-          permisoGuard('verCentroMonitoreo'),
-        ],
+        canActivate: [permisoGuard('verCentroMonitoreo')],
         loadComponent: () =>
           import('./pages/dashboard/monitoreo/sede-monitoreo.component').then(
             (m) => m.SedeMonitoreoComponent,
@@ -88,10 +90,7 @@ export const routes: Routes = [
       },
       {
         path: 'jefe-operaciones',
-        canActivate: [
-          rolesGuard(['admin', 'jefe_operaciones']),
-          permisoGuard('verAsignacionOts'),
-        ],
+        canActivate: [permisoGuard('verAsignacionOts')],
         loadComponent: () =>
           import('./pages/dashboard/jefe-operaciones/jefe-operaciones-dashboard.component').then(
             (m) => m.JefeOperacionesDashboardComponent,
@@ -99,10 +98,7 @@ export const routes: Routes = [
       },
       {
         path: 'operations/planner',
-        canActivate: [
-          rolesGuard(['admin', 'jefe_operaciones']),
-          permisoGuard('verAsignacionOts'),
-        ],
+        canActivate: [permisoGuard('verAsignacionOts')],
         loadComponent: () =>
           import('./pages/dashboard/operations/weekly-planner.component').then(
             (m) => m.WeeklyPlannerComponent,
@@ -110,10 +106,7 @@ export const routes: Routes = [
       },
       {
         path: 'operations/gastos',
-        canActivate: [
-          rolesGuard(['admin', 'jefe_operaciones']),
-          permisoGuard('verRendicionGastos'),
-        ],
+        canActivate: [permisoGuard('verAsignacionOts')],
         loadComponent: () =>
           import('./pages/dashboard/operations/gastos-ops.component').then(
             (m) => m.GastosOpsComponent,
@@ -121,10 +114,7 @@ export const routes: Routes = [
       },
       {
         path: 'ventas',
-        canActivate: [
-          rolesGuard(['admin', 'jefe_operaciones', 'ejecutivo_ventas', 'gerente_bi']),
-          permisoGuard('verGestionVentas'),
-        ],
+        canActivate: [permisoGuard('verDashboardEjecutivo')],
         loadComponent: () =>
           import('./pages/dashboard/ventas/ventas-shell.component').then(
             (m) => m.VentasShellComponent,
@@ -169,7 +159,7 @@ export const routes: Routes = [
       },
       {
         path: 'operations/calendario',
-        canActivate: [rolesGuard(['admin', 'jefe_operaciones', 'gerente_bi'])],
+        canActivate: [permisoGuard('verAsignacionOts')],
         loadComponent: () =>
           import('./pages/dashboard/shared/weekly-tracker-calendar.component').then(
             (m) => m.WeeklyTrackerCalendarComponent,
@@ -177,10 +167,7 @@ export const routes: Routes = [
       },
       {
         path: 'flota',
-        canActivate: [
-          rolesGuard(['admin', 'jefe_operaciones']),
-          permisoGuard('verControlFlota'),
-        ],
+        canActivate: [permisoGuard('verControlFlota')],
         loadComponent: () =>
           import('./pages/dashboard/flota/flota-dashboard.component').then(
             (m) => m.FlotaDashboardComponent,
@@ -188,7 +175,7 @@ export const routes: Routes = [
       },
       {
         path: 'bodeguero',
-        canActivate: [rolesGuard(['bodeguero', 'jefe_operaciones'])],
+        canActivate: [permisoGuard('verControlBodega')],
         loadComponent: () =>
           import('./pages/dashboard/bodeguero/bodeguero-dashboard.component').then(
             (m) => m.BodegueroDashboardComponent,
@@ -204,7 +191,7 @@ export const routes: Routes = [
       },
       {
         path: 'gerente',
-        canActivate: [rolesGuard(['gerente_bi', 'jefe_operaciones'])],
+        canActivate: [permisoGuard('verDashboardEjecutivo')],
         loadComponent: () =>
           import('./pages/dashboard/gerente/gerente-dashboard.component').then(
             (m) => m.GerenteDashboardComponent,

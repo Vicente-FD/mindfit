@@ -66,10 +66,19 @@ export class ActivosGestionComponent implements OnInit {
   readonly trasladoSucursalId = signal('');
   readonly trasladoLoading = signal(false);
 
-  readonly puedeTrasladar = computed(() => {
-    const rol = this.auth.user()?.rol;
-    return rol === 'admin' || rol === 'jefe_operaciones';
-  });
+  readonly puedeGestionarActivos = computed(() =>
+    this.auth.canAccess('verGestionActivos'),
+  );
+
+  readonly modoSoloLectura = computed(
+    () =>
+      this.auth.canAccess('verSoloVisualizarActivos') &&
+      !this.puedeGestionarActivos(),
+  );
+
+  readonly puedeTrasladar = computed(
+    () => this.puedeGestionarActivos(),
+  );
 
   readonly filterForm = this.fb.nonNullable.group({
     sucursalId: [''],
