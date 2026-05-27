@@ -9,8 +9,10 @@ export declare class AuthResponseDto {
         rol: RolUsuario;
         sucursalId: number | null;
         sucursalNombre: string | null;
+        telefono: string | null;
         estadoSesion: EstadoSesionUsuario;
         permisosUi: PermisosUi;
+        requiereCambioPassword: boolean;
     };
 }
 export declare class SessionProfileDto {

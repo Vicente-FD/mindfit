@@ -33,6 +33,7 @@ import {
   Settings,
   Activity,
   Eye,
+  EyeOff,
   ChevronDown,
   ChevronUp,
   ChevronLeft,
@@ -51,6 +52,7 @@ import {
   Car,
   AlertCircle,
   Cpu,
+  Key,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -90,6 +92,7 @@ export const appConfig: ApplicationConfig = {
         Settings,
         Activity,
         Eye,
+        EyeOff,
         ChevronDown,
         ChevronUp,
         ChevronLeft,
@@ -108,6 +111,7 @@ export const appConfig: ApplicationConfig = {
         Car,
         AlertCircle,
         Cpu,
+        Key,
       }),
     ),
     provideRouter(routes),

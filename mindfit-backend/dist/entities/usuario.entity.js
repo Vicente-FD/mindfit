@@ -30,6 +30,7 @@ let Usuario = class Usuario {
     estadoSesion;
     permisosUi;
     tokenVersion;
+    requiereCambioPassword;
     createdAt;
     updatedAt;
     deletedAt;
@@ -97,6 +98,10 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'token_version', type: 'int', default: 0 }),
     __metadata("design:type", Number)
 ], Usuario.prototype, "tokenVersion", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'requiere_cambio_password', type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], Usuario.prototype, "requiereCambioPassword", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)

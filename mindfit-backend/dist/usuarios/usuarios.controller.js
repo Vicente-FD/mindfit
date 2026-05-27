@@ -14,19 +14,29 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsuariosController = void 0;
 const common_1 = require("@nestjs/common");
+const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const enums_1 = require("../common/enums");
 const create_usuario_dto_1 = require("./dto/create-usuario.dto");
 const update_password_dto_1 = require("./dto/update-password.dto");
 const update_usuario_dto_1 = require("./dto/update-usuario.dto");
+const solicitudes_password_service_1 = require("./solicitudes-password.service");
 const usuarios_service_1 = require("./usuarios.service");
 let UsuariosController = class UsuariosController {
     usuariosService;
-    constructor(usuariosService) {
+    solicitudesPasswordService;
+    constructor(usuariosService, solicitudesPasswordService) {
         this.usuariosService = usuariosService;
+        this.solicitudesPasswordService = solicitudesPasswordService;
     }
     findAll() {
         return this.usuariosService.findAll();
+    }
+    listRecuperacionPendientes() {
+        return this.solicitudesPasswordService.findPendientes();
+    }
+    aprobarRecuperacion(solicitudId, admin) {
+        return this.solicitudesPasswordService.aprobar(solicitudId, admin.sub);
     }
     findOne(id) {
         return this.usuariosService.findOne(id);
@@ -51,6 +61,22 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], UsuariosController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('recuperar/pendientes'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], UsuariosController.prototype, "listRecuperacionPendientes", null);
+__decorate([
+    (0, common_1.Patch)('recuperar/aprobar/:solicitudId'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN),
+    __param(0, (0, common_1.Param)('solicitudId', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Function]),
+    __metadata("design:returntype", void 0)
+], UsuariosController.prototype, "aprobarRecuperacion", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -91,6 +117,7 @@ __decorate([
 exports.UsuariosController = UsuariosController = __decorate([
     (0, common_1.Controller)('usuarios'),
     (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES),
-    __metadata("design:paramtypes", [usuarios_service_1.UsuariosService])
+    __metadata("design:paramtypes", [usuarios_service_1.UsuariosService,
+        solicitudes_password_service_1.SolicitudesPasswordService])
 ], UsuariosController);
 //# sourceMappingURL=usuarios.controller.js.map

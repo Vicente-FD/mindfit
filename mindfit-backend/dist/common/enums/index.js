@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EstadoRendicionGasto = exports.TipoMovimientoInventario = exports.OperacionAuditoria = exports.TipoEvidencia = exports.ClasificacionOrden = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoCotizacionVenta = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.DivisaCodigo = exports.EtapaOportunidad = exports.RolUsuario = void 0;
+exports.EstadoSolicitudPassword = exports.EstadoRendicionGasto = exports.TipoMovimientoInventario = exports.OperacionAuditoria = exports.TipoEvidencia = exports.ClasificacionOrden = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoCotizacionVenta = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.DivisaCodigo = exports.EtapaOportunidad = exports.RolUsuario = void 0;
 var RolUsuario;
 (function (RolUsuario) {
     RolUsuario["ADMIN"] = "admin";
@@ -102,4 +102,6 @@ var TipoMovimientoInventario;
 })(TipoMovimientoInventario || (exports.TipoMovimientoInventario = TipoMovimientoInventario = {}));
 var estado_rendicion_gasto_enum_1 = require("./estado-rendicion-gasto.enum");
 Object.defineProperty(exports, "EstadoRendicionGasto", { enumerable: true, get: function () { return estado_rendicion_gasto_enum_1.EstadoRendicionGasto; } });
+var estado_solicitud_password_enum_1 = require("./estado-solicitud-password.enum");
+Object.defineProperty(exports, "EstadoSolicitudPassword", { enumerable: true, get: function () { return estado_solicitud_password_enum_1.EstadoSolicitudPassword; } });
 //# sourceMappingURL=index.js.map

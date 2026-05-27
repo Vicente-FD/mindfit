@@ -9,7 +9,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsuariosModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
+const solicitud_password_entity_1 = require("../entities/solicitud-password.entity");
 const usuario_entity_1 = require("../entities/usuario.entity");
+const password_reset_module_1 = require("../auth/password-reset/password-reset.module");
+const solicitudes_password_service_1 = require("./solicitudes-password.service");
 const usuarios_controller_1 = require("./usuarios.controller");
 const usuarios_service_1 = require("./usuarios.service");
 let UsuariosModule = class UsuariosModule {
@@ -17,10 +20,13 @@ let UsuariosModule = class UsuariosModule {
 exports.UsuariosModule = UsuariosModule;
 exports.UsuariosModule = UsuariosModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([usuario_entity_1.Usuario])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([usuario_entity_1.Usuario, solicitud_password_entity_1.SolicitudPassword]),
+            password_reset_module_1.PasswordResetModule,
+        ],
         controllers: [usuarios_controller_1.UsuariosController],
-        providers: [usuarios_service_1.UsuariosService],
-        exports: [usuarios_service_1.UsuariosService],
+        providers: [usuarios_service_1.UsuariosService, solicitudes_password_service_1.SolicitudesPasswordService],
+        exports: [usuarios_service_1.UsuariosService, solicitudes_password_service_1.SolicitudesPasswordService],
     })
 ], UsuariosModule);
 //# sourceMappingURL=usuarios.module.js.map

@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DataSource } from 'typeorm';
@@ -43,6 +44,7 @@ async function bootstrap() {
   ensureBoletasUploadDir();
   ensureLicenciasUploadDir();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',

@@ -18,8 +18,10 @@ export interface AuthUser {
   rol: UserRole;
   sucursalId: number | null;
   sucursalNombre?: string | null;
+  telefono?: string | null;
   estadoSesion?: EstadoSesion;
   permisosUi: PermisosUi;
+  requiereCambioPassword?: boolean;
 }
 
 export interface LoginResponse {
@@ -30,6 +32,10 @@ export interface LoginResponse {
 export interface SessionProfileResponse {
   user: AuthUser;
   forceLogout: boolean;
+}
+
+export interface CambiarPasswordPerfilResponse extends SessionProfileResponse {
+  accessToken: string;
 }
 
 export const ROLE_DASHBOARD_ROUTES: Record<UserRole, string> = {

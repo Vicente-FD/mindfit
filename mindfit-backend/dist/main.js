@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const core_1 = require("@nestjs/core");
+const platform_socket_io_1 = require("@nestjs/platform-socket.io");
 const config_1 = require("@nestjs/config");
 const typeorm_1 = require("typeorm");
 const path_1 = require("path");
@@ -40,6 +41,7 @@ async function bootstrap() {
     (0, boletas_storage_1.ensureBoletasUploadDir)();
     (0, licencias_documentos_storage_1.ensureLicenciasUploadDir)();
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.useWebSocketAdapter(new platform_socket_io_1.IoAdapter(app));
     app.useStaticAssets((0, path_1.join)(process.cwd(), 'uploads'), {
         prefix: '/uploads/',
     });

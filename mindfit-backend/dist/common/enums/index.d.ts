@@ -84,3 +84,4 @@ export declare enum TipoMovimientoInventario {
     VENTA_COTIZACION = "venta_cotizacion"
 }
 export { EstadoRendicionGasto } from './estado-rendicion-gasto.enum';
+export { EstadoSolicitudPassword } from './estado-solicitud-password.enum';

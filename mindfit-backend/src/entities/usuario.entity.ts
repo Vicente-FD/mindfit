@@ -65,6 +65,9 @@ export class Usuario {
   @Column({ name: 'token_version', type: 'int', default: 0 })
   tokenVersion: number;
 
+  @Column({ name: 'requiere_cambio_password', type: 'boolean', default: false })
+  requiereCambioPassword: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

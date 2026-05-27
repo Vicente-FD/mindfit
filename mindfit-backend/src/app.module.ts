@@ -29,6 +29,7 @@ import {
   RendicionGasto,
   Sucursal,
   Usuario,
+  SolicitudPassword,
   Cliente,
   Oportunidad,
   CotizacionVenta,
@@ -94,6 +95,7 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
           entities: [
             Sucursal,
             Usuario,
+            SolicitudPassword,
             Categoria,
             Marca,
             Activo,

@@ -43,4 +43,34 @@ export class UsuariosService {
   deactivate(id: number): Observable<{ deactivated: boolean }> {
     return this.http.delete<{ deactivated: boolean }>(`${this.baseUrl}/${id}`);
   }
+
+  listRecuperacionPendientes(): Observable<SolicitudRecuperacionPendiente[]> {
+    return this.http.get<SolicitudRecuperacionPendiente[]>(
+      `${this.baseUrl}/recuperar/pendientes`,
+    );
+  }
+
+  aprobarRecuperacion(
+    solicitudId: number,
+  ): Observable<AprobarRecuperacionResponse> {
+    return this.http.patch<AprobarRecuperacionResponse>(
+      `${this.baseUrl}/recuperar/aprobar/${solicitudId}`,
+      {},
+    );
+  }
+}
+
+export interface SolicitudRecuperacionPendiente {
+  id: number;
+  usuarioId: number;
+  nombre: string;
+  email: string;
+  rol: string;
+  createdAt: string;
+}
+
+export interface AprobarRecuperacionResponse {
+  solicitudId: number;
+  usuarioId: number;
+  contrasenaTemporal: string;
 }

@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -8,7 +9,11 @@ import {
 import { LucideAngularModule } from 'lucide-angular';
 import { switchMap, of } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
-import { UsuariosService } from '../../../core/services/usuarios.service';
+import {
+  AprobarRecuperacionResponse,
+  SolicitudRecuperacionPendiente,
+  UsuariosService,
+} from '../../../core/services/usuarios.service';
 import {
   getDefaultPermisosForRol,
   PERMISO_ALL_ITEMS,
@@ -45,7 +50,7 @@ const ROLE_TABS: { value: UserRole | 'todos'; label: string }[] = [
 
 @Component({
   selector: 'app-usuarios-admin',
-  imports: [ReactiveFormsModule, LucideAngularModule],
+  imports: [ReactiveFormsModule, LucideAngularModule, DatePipe],
   templateUrl: './usuarios-admin.component.html',
   styleUrl: './usuarios-admin.component.css',
 })
@@ -71,6 +76,12 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   readonly saving = signal(false);
   readonly showForm = signal(false);
   readonly activeRoleTab = signal<UserRole | 'todos'>('todos');
+  readonly solicitudesPendientes = signal<SolicitudRecuperacionPendiente[]>([]);
+  readonly loadingSolicitudes = signal(false);
+  readonly approvingId = signal<number | null>(null);
+  readonly tempPasswordResult = signal<AprobarRecuperacionResponse | null>(null);
+  readonly recoveryPanelOpen = signal(true);
+  readonly isAdmin = computed(() => this.auth.hasRole('admin'));
 
   readonly createForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -125,10 +136,14 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
+    this.loadSolicitudesPendientes();
     this.sucursalesService.list().subscribe({
       next: (s) => this.sucursales.set(s),
     });
-    this.refreshIntervalId = setInterval(() => this.load(true), 30_000);
+    this.refreshIntervalId = setInterval(() => {
+      this.load(true);
+      this.loadSolicitudesPendientes(true);
+    }, 30_000);
 
     this.createForm.controls.rol.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -149,6 +164,56 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.refreshIntervalId != null) {
       clearInterval(this.refreshIntervalId);
+    }
+  }
+
+  loadSolicitudesPendientes(silent = false): void {
+    if (!this.isAdmin()) return;
+    if (!silent) this.loadingSolicitudes.set(true);
+    this.usuariosService.listRecuperacionPendientes().subscribe({
+      next: (rows) => {
+        this.solicitudesPendientes.set(rows);
+        if (!silent) this.loadingSolicitudes.set(false);
+      },
+      error: () => {
+        if (!silent) this.loadingSolicitudes.set(false);
+      },
+    });
+  }
+
+  toggleRecoveryPanel(): void {
+    this.recoveryPanelOpen.update((v) => !v);
+  }
+
+  aprobarSolicitud(solicitud: SolicitudRecuperacionPendiente): void {
+    this.approvingId.set(solicitud.id);
+    this.usuariosService.aprobarRecuperacion(solicitud.id).subscribe({
+      next: (res) => {
+        this.approvingId.set(null);
+        this.tempPasswordResult.set(res);
+        this.loadSolicitudesPendientes(true);
+        this.toast.success('Clave temporal generada');
+      },
+      error: (err) => {
+        this.approvingId.set(null);
+        const msg = err?.error?.message ?? 'No se pudo aprobar la solicitud';
+        this.toast.error(Array.isArray(msg) ? msg.join(', ') : String(msg));
+      },
+    });
+  }
+
+  cerrarModalClave(): void {
+    this.tempPasswordResult.set(null);
+  }
+
+  async copiarClaveTemporal(): Promise<void> {
+    const pwd = this.tempPasswordResult()?.contrasenaTemporal;
+    if (!pwd) return;
+    try {
+      await navigator.clipboard.writeText(pwd);
+      this.toast.success('Contraseña copiada al portapapeles');
+    } catch {
+      this.toast.error('No se pudo copiar. Seleccione el texto manualmente.');
     }
   }
 

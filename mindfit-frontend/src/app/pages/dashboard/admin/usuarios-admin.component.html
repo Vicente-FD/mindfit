@@ -111,8 +111,57 @@
   </nav>
 
   <div class="grid gap-4 lg:grid-cols-2">
-    <section class="page-card">
-      <h3 class="mb-3 text-sm font-semibold text-pure-white">Personal</h3>
+    <section class="page-card space-y-3">
+      @if (isAdmin()) {
+        <div class="recovery-panel">
+          <button type="button" class="recovery-panel__summary" (click)="toggleRecoveryPanel()">
+            <span class="flex items-center gap-2">
+              <lucide-icon name="key" [size]="16" class="text-orange-energy" />
+              Solicitudes de Restablecimiento Pendientes
+              <span class="recovery-badge">{{ solicitudesPendientes().length }}</span>
+            </span>
+            <lucide-icon
+              [name]="recoveryPanelOpen() ? 'chevron-up' : 'chevron-down'"
+              [size]="16"
+              class="text-slate-grey"
+            />
+          </button>
+
+          @if (recoveryPanelOpen()) {
+            <div class="recovery-panel__body">
+              @if (loadingSolicitudes()) {
+                <p class="text-xs text-slate-grey">Cargando solicitudes...</p>
+              } @else if (solicitudesPendientes().length === 0) {
+                <p class="text-xs text-slate-grey">No hay solicitudes pendientes.</p>
+              } @else {
+                <ul class="recovery-list">
+                  @for (s of solicitudesPendientes(); track s.id) {
+                    <li class="recovery-row">
+                      <div class="min-w-0 flex-1">
+                        <p class="text-sm font-medium text-pure-white">{{ s.nombre }}</p>
+                        <p class="text-xs text-slate-grey">{{ s.email }} · {{ rolLabel($any(s.rol)) }}</p>
+                        <p class="text-xs text-slate-grey/80">
+                          {{ s.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn-recovery"
+                        [disabled]="approvingId() === s.id"
+                        (click)="aprobarSolicitud(s)"
+                      >
+                        @if (approvingId() === s.id) { Generando... } @else { Generar Clave Temporal }
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <h3 class="text-sm font-semibold text-pure-white">Personal</h3>
       @if (loading()) {
         <p class="text-sm text-slate-grey">Cargando...</p>
       } @else {
@@ -262,3 +311,32 @@
     </section>
   </div>
 </div>
+
+@if (tempPasswordResult(); as res) {
+  <div class="mf-modal-backdrop" role="dialog" aria-modal="true" (click)="cerrarModalClave()">
+    <div class="mf-modal-panel max-w-md" (click)="$event.stopPropagation()">
+      <div class="mf-modal-header">
+        <h3 class="text-lg font-semibold text-pure-white">Clave temporal generada</h3>
+        <button type="button" class="mf-modal-close" (click)="cerrarModalClave()" aria-label="Cerrar">
+          <lucide-icon name="x" [size]="20" />
+        </button>
+      </div>
+      <div class="mf-modal-body space-y-4">
+        <p class="text-sm text-slate-grey">
+          Copia esta contraseña y entrégasela de forma segura al usuario. En su próximo inicio de sesión,
+          el sistema le obligará a cambiarla por una contraseña personal.
+        </p>
+        <div class="temp-password-box">
+          <span class="text-xs uppercase tracking-wide text-orange-energy">Clave temporal</span>
+          <p class="temp-password-value">{{ res.contrasenaTemporal }}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="btn-primary text-sm" (click)="copiarClaveTemporal()">
+            Copiar contraseña
+          </button>
+          <button type="button" class="btn-ghost text-sm" (click)="cerrarModalClave()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

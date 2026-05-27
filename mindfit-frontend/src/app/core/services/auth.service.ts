@@ -5,6 +5,7 @@ import { tap, finalize } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AuthUser,
+  CambiarPasswordPerfilResponse,
   LoginResponse,
   SessionProfileResponse,
 } from '../models/user.model';
@@ -33,6 +34,9 @@ export class AuthService {
   });
   readonly isAuthenticated = computed(() => !!this.tokenSignal());
   readonly role = computed(() => this.userSignal()?.rol ?? null);
+  readonly mustChangePassword = computed(
+    () => !!this.userSignal()?.requiereCambioPassword,
+  );
 
   constructor(
     private readonly http: HttpClient,
@@ -45,6 +49,26 @@ export class AuthService {
         email,
         password,
       })
+      .pipe(
+        tap((response) => {
+          this.persistSession(response.accessToken, response.user);
+        }),
+      );
+  }
+
+  solicitarRecuperacion(email: string) {
+    return this.http.post<{ message: string; watchToken?: string }>(
+      `${environment.apiUrl}/auth/recuperar/solicitar`,
+      { email },
+    );
+  }
+
+  cambiarPasswordPerfil(passwordActual: string, nuevoPassword: string) {
+    return this.http
+      .patch<CambiarPasswordPerfilResponse>(
+        `${environment.apiUrl}/auth/mi-perfil/cambiar-password`,
+        { passwordActual, nuevoPassword },
+      )
       .pipe(
         tap((response) => {
           this.persistSession(response.accessToken, response.user);
@@ -113,6 +137,7 @@ export class AuthService {
   getLandingRoute(user?: AuthUser | null): string {
     const u = user ?? this.userSignal();
     if (!u) return '/login';
+    if (u.requiereCambioPassword) return '/dashboard/perfil';
     return resolveLandingRoute(u);
   }
 
@@ -125,6 +150,7 @@ export class AuthService {
     const resolved: AuthUser = {
       ...user,
       permisosUi: resolvePermisosUi(user.rol, user.permisosUi),
+      requiereCambioPassword: user.requiereCambioPassword ?? false,
     };
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(resolved));
@@ -177,6 +203,7 @@ export class AuthService {
       if (!parsed.permisosUi) {
         parsed.permisosUi = resolvePermisosUi(parsed.rol, {});
       }
+      parsed.requiereCambioPassword = parsed.requiereCambioPassword ?? false;
       return parsed;
     } catch {
       return null;

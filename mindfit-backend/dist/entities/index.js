@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LicenciaTecnico = exports.Vehiculo = exports.CotizacionVentaHistorial = exports.CotizacionVentasDetalle = exports.CotizacionVenta = exports.Oportunidad = exports.Cliente = exports.RendicionGasto = exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
+exports.LicenciaTecnico = exports.Vehiculo = exports.CotizacionVentaHistorial = exports.CotizacionVentasDetalle = exports.CotizacionVenta = exports.Oportunidad = exports.Cliente = exports.RendicionGasto = exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.SolicitudPassword = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
 var categoria_entity_1 = require("./categoria.entity");
 Object.defineProperty(exports, "Categoria", { enumerable: true, get: function () { return categoria_entity_1.Categoria; } });
 var marca_entity_1 = require("./marca.entity");
@@ -9,6 +9,8 @@ var sucursal_entity_1 = require("./sucursal.entity");
 Object.defineProperty(exports, "Sucursal", { enumerable: true, get: function () { return sucursal_entity_1.Sucursal; } });
 var usuario_entity_1 = require("./usuario.entity");
 Object.defineProperty(exports, "Usuario", { enumerable: true, get: function () { return usuario_entity_1.Usuario; } });
+var solicitud_password_entity_1 = require("./solicitud-password.entity");
+Object.defineProperty(exports, "SolicitudPassword", { enumerable: true, get: function () { return solicitud_password_entity_1.SolicitudPassword; } });
 var activo_entity_1 = require("./activo.entity");
 Object.defineProperty(exports, "Activo", { enumerable: true, get: function () { return activo_entity_1.Activo; } });
 var orden_trabajo_entity_1 = require("./orden-trabajo.entity");

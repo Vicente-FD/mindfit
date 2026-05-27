@@ -2,6 +2,7 @@ export { Categoria } from './categoria.entity';
 export { Marca } from './marca.entity';
 export { Sucursal } from './sucursal.entity';
 export { Usuario } from './usuario.entity';
+export { SolicitudPassword } from './solicitud-password.entity';
 export { Activo } from './activo.entity';
 export { OrdenTrabajo } from './orden-trabajo.entity';
 export { EvidenciaOt } from './evidencia-ot.entity';

@@ -41,6 +41,8 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
 
   readonly showQrFab = computed(() => this.user()?.rol === 'tecnico');
 
+  readonly navLocked = this.auth.mustChangePassword;
+
   readonly navItems = DASHBOARD_NAV_ITEMS;
 
   readonly visibleNav = computed(() => {

@@ -1,0 +1,156 @@
+<div class="perfil-shell">
+  <header class="perfil-header">
+    <p class="text-xs font-semibold uppercase tracking-widest text-orange-energy">Mi cuenta</p>
+    <h1 class="page-title mt-1">Mi Perfil</h1>
+    <p class="page-desc">Consulta tu información y gestiona la seguridad de tu acceso.</p>
+  </header>
+
+  @if (mustChange()) {
+    <div class="perfil-alert" role="alert">
+      <lucide-icon name="alert-triangle" [size]="20" class="shrink-0 text-orange-energy" />
+      <p>
+        Has iniciado sesión con una contraseña temporal. Por seguridad, debes ingresar una
+        contraseña nueva antes de continuar utilizando la plataforma.
+      </p>
+    </div>
+  }
+
+  @if (loadingProfile()) {
+    <div class="perfil-grid">
+      <div class="perfil-card skeleton-pulse min-h-[20rem]"></div>
+      <div class="perfil-card skeleton-pulse min-h-[20rem]"></div>
+    </div>
+  } @else if (user(); as u) {
+    <div class="perfil-grid">
+      <section class="perfil-card perfil-card--account">
+        <div class="perfil-avatar" aria-hidden="true">{{ initials() }}</div>
+        <h2 class="perfil-card-title">{{ u.nombre }}</h2>
+        <p class="perfil-card-sub">{{ u.email }}</p>
+
+        <dl class="perfil-dl">
+          <div class="perfil-dl-row">
+            <dt>Nombre completo</dt>
+            <dd>{{ u.nombre }}</dd>
+          </div>
+          <div class="perfil-dl-row">
+            <dt>Correo electrónico</dt>
+            <dd>{{ u.email }}</dd>
+          </div>
+          <div class="perfil-dl-row">
+            <dt>Teléfono</dt>
+            <dd>{{ u.telefono || '—' }}</dd>
+          </div>
+          <div class="perfil-dl-row">
+            <dt>Rol en el sistema</dt>
+            <dd>{{ rolLabel() }}</dd>
+          </div>
+          <div class="perfil-dl-row">
+            <dt>Estado de sesión</dt>
+            <dd>{{ estadoSesionLabel() }}</dd>
+          </div>
+          <div class="perfil-dl-row">
+            <dt>Sucursal asignada</dt>
+            <dd>{{ sedeLabel() }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="perfil-card perfil-card--security">
+        <h2 class="perfil-card-title">Seguridad y contraseña</h2>
+        <p class="perfil-card-sub mb-4">
+          Actualiza tu contraseña de forma autónoma. Se cerrarán otras sesiones activas por seguridad.
+        </p>
+
+        <form class="perfil-form" [formGroup]="passwordForm" (ngSubmit)="onSubmit()">
+          <div class="field-with-toggle">
+            <label class="field-label" for="password-actual">Contraseña actual *</label>
+            <div class="input-wrap">
+              <input
+                id="password-actual"
+                class="field-input"
+                [type]="showActual() ? 'text' : 'password'"
+                formControlName="passwordActual"
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="toggle-eye"
+                (click)="toggleVisibility('actual')"
+                [attr.aria-label]="showActual() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              >
+                <lucide-icon [name]="showActual() ? 'eye-off' : 'eye'" [size]="18" />
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label" for="password-nueva">Nueva contraseña *</label>
+            <div class="input-wrap">
+              <input
+                id="password-nueva"
+                class="field-input"
+                [type]="showNueva() ? 'text' : 'password'"
+                formControlName="nuevoPassword"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="toggle-eye"
+                (click)="toggleVisibility('nueva')"
+                [attr.aria-label]="showNueva() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              >
+                <lucide-icon [name]="showNueva() ? 'eye-off' : 'eye'" [size]="18" />
+              </button>
+            </div>
+
+            <ul class="password-rules">
+              <li [class.password-rules__ok]="ruleMinLength()">
+                Mínimo 8 caracteres
+              </li>
+              <li [class.password-rules__ok]="ruleUppercase()">
+                Al menos una mayúscula
+              </li>
+              <li [class.password-rules__ok]="ruleNumber()">
+                Al menos un número
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <label class="field-label" for="password-confirmar">Confirmar nueva contraseña *</label>
+            <div class="input-wrap">
+              <input
+                id="password-confirmar"
+                class="field-input"
+                [type]="showConfirmar() ? 'text' : 'password'"
+                formControlName="confirmarPassword"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="toggle-eye"
+                (click)="toggleVisibility('confirmar')"
+                [attr.aria-label]="showConfirmar() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              >
+                <lucide-icon [name]="showConfirmar() ? 'eye-off' : 'eye'" [size]="18" />
+              </button>
+            </div>
+            @if (passwordsMismatch()) {
+              <p class="mismatch-hint">
+                Las contraseñas no coinciden. Verifique ambos campos.
+              </p>
+            }
+          </div>
+
+          @if (error()) {
+            <p class="form-error">{{ error() }}</p>
+          }
+
+          <button type="submit" class="btn-primary w-full sm:w-auto" [disabled]="!canSubmit()">
+            @if (saving()) { Actualizando... } @else { Actualizar Contraseña }
+          </button>
+        </form>
+      </section>
+    </div>
+  }
+</div>

@@ -78,6 +78,7 @@ exports.AppModule = AppModule = __decorate([
                         entities: [
                             entities_1.Sucursal,
                             entities_1.Usuario,
+                            entities_1.SolicitudPassword,
                             entities_1.Categoria,
                             entities_1.Marca,
                             entities_1.Activo,

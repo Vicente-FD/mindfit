@@ -1,3 +1,84 @@
+.recovery-panel {
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 102 0 / 0.2);
+  background: rgb(255 102 0 / 0.05);
+}
+
+.recovery-panel__summary {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-pure-white, #fff);
+  text-align: left;
+}
+
+.recovery-panel__body {
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+  padding: 0.65rem 0.75rem 0.75rem;
+}
+
+.recovery-badge {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgb(255 102 0 / 0.2);
+  color: var(--color-orange-energy, #ff6600);
+}
+
+.recovery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.recovery-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.55rem;
+  border-radius: 0.5rem;
+  background: rgb(0 0 0 / 0.25);
+  border: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.btn-recovery {
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--color-orange-energy, #ff6600);
+  color: #000;
+  white-space: nowrap;
+}
+
+.btn-recovery:disabled {
+  opacity: 0.6;
+}
+
+.temp-password-box {
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px dashed rgb(255 102 0 / 0.45);
+  background: rgb(0 0 0 / 0.35);
+}
+
+.temp-password-value {
+  margin-top: 0.35rem;
+  font-family: ui-monospace, monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-orange-energy, #ff6600);
+  word-break: break-all;
+}
+
 .user-row {
   border-radius: 0.75rem;
   border: 1px solid rgb(255 255 255 / 0.06);

@@ -122,6 +122,20 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     roles: ['gerente_bi', 'jefe_operaciones'],
     permiso: 'verDashboardEjecutivo',
   },
+  {
+    label: 'Mi Perfil',
+    route: '/dashboard/perfil',
+    icon: 'settings',
+    roles: [
+      'admin',
+      'jefe_operaciones',
+      'tecnico',
+      'jefe_sucursal',
+      'gerente_bi',
+      'bodeguero',
+      'ejecutivo_ventas',
+    ],
+  },
 ];
 
 export function isNavItemVisible(

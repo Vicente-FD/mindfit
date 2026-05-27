@@ -13,6 +13,8 @@ const jwt_1 = require("@nestjs/jwt");
 const passport_1 = require("@nestjs/passport");
 const typeorm_1 = require("@nestjs/typeorm");
 const usuario_entity_1 = require("../entities/usuario.entity");
+const usuarios_module_1 = require("../usuarios/usuarios.module");
+const password_reset_module_1 = require("./password-reset/password-reset.module");
 const auth_controller_1 = require("./auth.controller");
 const auth_service_1 = require("./auth.service");
 const jwt_strategy_1 = require("./strategies/jwt.strategy");
@@ -22,6 +24,8 @@ exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            usuarios_module_1.UsuariosModule,
+            password_reset_module_1.PasswordResetModule,
             typeorm_1.TypeOrmModule.forFeature([usuario_entity_1.Usuario]),
             passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
             jwt_1.JwtModule.registerAsync({

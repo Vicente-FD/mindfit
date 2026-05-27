@@ -17,6 +17,7 @@ export class SchemaFixService implements OnModuleInit {
     await this.ensureCotizacionHistorial();
     await this.ensureOportunidadesCrm();
     await this.ensureMonitoreoIndexes();
+    await this.ensureSolicitudesPassword();
     await this.ensureRendicionesGastos();
     await this.ensureOtSchema();
     await this.ensureMovimientosInventario();
@@ -97,6 +98,40 @@ export class SchemaFixService implements OnModuleInit {
       ON usuarios (sucursal_id);
     `);
     this.logger.log('Índices de monitoreo verificados');
+  }
+
+  private async ensureSolicitudesPassword(): Promise<void> {
+    await this.dataSource.query(`
+      DO $$ BEGIN
+        CREATE TYPE solicitudes_password_estado_enum AS ENUM ('pendiente', 'procesado');
+      EXCEPTION
+        WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE usuarios
+      ADD COLUMN IF NOT EXISTS requiere_cambio_password BOOLEAN NOT NULL DEFAULT false;
+    `);
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS solicitudes_password (
+        id SERIAL PRIMARY KEY,
+        usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+        estado VARCHAR(20) NOT NULL DEFAULT 'pendiente'
+          CHECK (estado IN ('pendiente', 'procesado')),
+        contrasena_temporal_legible VARCHAR(120) NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_solicitudes_password_estado
+      ON solicitudes_password (estado);
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE solicitudes_password
+      ADD COLUMN IF NOT EXISTS watch_token VARCHAR(64) NULL UNIQUE;
+    `);
+    this.logger.log('Tabla solicitudes_password verificada');
   }
 
   private async ensureOportunidadesCrm(): Promise<void> {

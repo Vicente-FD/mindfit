@@ -4,6 +4,7 @@ import { guestGuard } from './core/guards/guest.guard';
 import { rolesGuard } from './core/guards/roles.guard';
 import { permisoGuard } from './core/guards/permiso.guard';
 import { dashboardRedirectGuard } from './core/guards/dashboard-redirect.guard';
+import { mustChangePasswordGuard } from './core/guards/must-change-password.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -15,12 +16,19 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    canActivate: [authGuard],
+    canActivate: [authGuard, mustChangePasswordGuard],
     loadComponent: () =>
       import('./layout/dashboard-layout/dashboard-layout.component').then(
         (m) => m.DashboardLayoutComponent,
       ),
     children: [
+      {
+        path: 'perfil',
+        loadComponent: () =>
+          import('./pages/dashboard/perfil/perfil.component').then(
+            (m) => m.PerfilComponent,
+          ),
+      },
       {
         path: '',
         pathMatch: 'full',

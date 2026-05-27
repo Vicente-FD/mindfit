@@ -52,14 +52,17 @@ const typeorm_1 = require("@nestjs/typeorm");
 const bcrypt = __importStar(require("bcrypt"));
 const typeorm_2 = require("typeorm");
 const enums_1 = require("../common/enums");
+const audit_trail_entity_1 = require("../entities/audit-trail.entity");
 const permisos_ui_interface_1 = require("../common/interfaces/permisos-ui.interface");
 const usuario_entity_1 = require("../entities/usuario.entity");
 let AuthService = class AuthService {
     usuarioRepository;
     jwtService;
-    constructor(usuarioRepository, jwtService) {
+    dataSource;
+    constructor(usuarioRepository, jwtService, dataSource) {
         this.usuarioRepository = usuarioRepository;
         this.jwtService = jwtService;
+        this.dataSource = dataSource;
     }
     async login(dto) {
         const usuario = await this.usuarioRepository.findOne({
@@ -115,6 +118,51 @@ let AuthService = class AuthService {
     async invalidateTokens(userId) {
         await this.usuarioRepository.increment({ id: userId }, 'tokenVersion', 1);
     }
+    async cambiarPasswordPerfil(userId, dto) {
+        return this.dataSource.transaction(async (manager) => {
+            const usuario = await manager.findOne(usuario_entity_1.Usuario, {
+                where: { id: userId },
+                relations: { sucursal: true },
+            });
+            if (!usuario || !usuario.estaActivo) {
+                throw new common_1.UnauthorizedException('Sesión finalizada');
+            }
+            const passwordValid = await bcrypt.compare(dto.passwordActual, usuario.passwordHash);
+            if (!passwordValid) {
+                throw new common_1.UnauthorizedException('La contraseña actual es incorrecta');
+            }
+            if (dto.passwordActual === dto.nuevoPassword) {
+                throw new common_1.BadRequestException('La nueva contraseña debe ser distinta a la actual');
+            }
+            const tokenVersionAnterior = usuario.tokenVersion ?? 0;
+            const requiereCambioAnterior = usuario.requiereCambioPassword ?? false;
+            usuario.passwordHash = await bcrypt.hash(dto.nuevoPassword, 10);
+            usuario.requiereCambioPassword = false;
+            usuario.tokenVersion = tokenVersionAnterior + 1;
+            await manager.save(usuario);
+            await manager.getRepository(audit_trail_entity_1.AuditTrail).save({
+                tableName: 'usuarios',
+                rowPk: String(usuario.id),
+                operation: enums_1.OperacionAuditoria.UPDATE,
+                userId: usuario.id,
+                oldData: {
+                    tokenVersion: tokenVersionAnterior,
+                    requiereCambioPassword: requiereCambioAnterior,
+                },
+                newData: {
+                    passwordChanged: true,
+                    tokenVersion: usuario.tokenVersion,
+                    requiereCambioPassword: false,
+                },
+            });
+            const accessToken = await this.signToken(usuario);
+            return {
+                accessToken,
+                user: this.toAuthUser(usuario),
+                forceLogout: false,
+            };
+        });
+    }
     async signToken(usuario) {
         return this.jwtService.signAsync({
             sub: usuario.id,
@@ -145,8 +193,10 @@ let AuthService = class AuthService {
             rol: usuario.rol,
             sucursalId: usuario.sucursalId,
             sucursalNombre: usuario.sucursal?.nombre ?? null,
+            telefono: usuario.telefono ?? null,
             estadoSesion: usuario.estadoSesion,
             permisosUi: this.resolvePermisos(usuario),
+            requiereCambioPassword: usuario.requiereCambioPassword ?? false,
         };
     }
 };
@@ -155,6 +205,7 @@ exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(usuario_entity_1.Usuario)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        typeorm_2.DataSource])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

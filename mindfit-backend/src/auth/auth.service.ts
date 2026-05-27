@@ -1,9 +1,14 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { Repository } from 'typeorm';
-import { EstadoSesionUsuario } from '../common/enums';
+import { DataSource, Repository } from 'typeorm';
+import { EstadoSesionUsuario, OperacionAuditoria } from '../common/enums';
+import { AuditTrail } from '../entities/audit-trail.entity';
 import {
   PermisosUi,
   resolvePermisosUi,
@@ -11,6 +16,8 @@ import {
 import { Usuario } from '../entities/usuario.entity';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto, SessionProfileDto } from './dto/auth-response.dto';
+import { CambiarPasswordPerfilDto } from './dto/cambiar-password-perfil.dto';
+import { CambiarPasswordPerfilResponseDto } from './dto/cambiar-password-perfil-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,6 +25,7 @@ export class AuthService {
     @InjectRepository(Usuario)
     private readonly usuarioRepository: Repository<Usuario>,
     private readonly jwtService: JwtService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async login(dto: LoginDto): Promise<AuthResponseDto> {
@@ -89,6 +97,67 @@ export class AuthService {
     await this.usuarioRepository.increment({ id: userId }, 'tokenVersion', 1);
   }
 
+  async cambiarPasswordPerfil(
+    userId: number,
+    dto: CambiarPasswordPerfilDto,
+  ): Promise<CambiarPasswordPerfilResponseDto> {
+    return this.dataSource.transaction(async (manager) => {
+      const usuario = await manager.findOne(Usuario, {
+        where: { id: userId },
+        relations: { sucursal: true },
+      });
+
+      if (!usuario || !usuario.estaActivo) {
+        throw new UnauthorizedException('Sesión finalizada');
+      }
+
+      const passwordValid = await bcrypt.compare(
+        dto.passwordActual,
+        usuario.passwordHash,
+      );
+      if (!passwordValid) {
+        throw new UnauthorizedException('La contraseña actual es incorrecta');
+      }
+
+      if (dto.passwordActual === dto.nuevoPassword) {
+        throw new BadRequestException(
+          'La nueva contraseña debe ser distinta a la actual',
+        );
+      }
+
+      const tokenVersionAnterior = usuario.tokenVersion ?? 0;
+      const requiereCambioAnterior = usuario.requiereCambioPassword ?? false;
+      usuario.passwordHash = await bcrypt.hash(dto.nuevoPassword, 10);
+      usuario.requiereCambioPassword = false;
+      usuario.tokenVersion = tokenVersionAnterior + 1;
+      await manager.save(usuario);
+
+      await manager.getRepository(AuditTrail).save({
+        tableName: 'usuarios',
+        rowPk: String(usuario.id),
+        operation: OperacionAuditoria.UPDATE,
+        userId: usuario.id,
+        oldData: {
+          tokenVersion: tokenVersionAnterior,
+          requiereCambioPassword: requiereCambioAnterior,
+        },
+        newData: {
+          passwordChanged: true,
+          tokenVersion: usuario.tokenVersion,
+          requiereCambioPassword: false,
+        },
+      });
+
+      const accessToken = await this.signToken(usuario);
+
+      return {
+        accessToken,
+        user: this.toAuthUser(usuario),
+        forceLogout: false,
+      };
+    });
+  }
+
   private async signToken(usuario: Usuario): Promise<string> {
     return this.jwtService.signAsync({
       sub: usuario.id,
@@ -125,8 +194,10 @@ export class AuthService {
       rol: usuario.rol,
       sucursalId: usuario.sucursalId,
       sucursalNombre: usuario.sucursal?.nombre ?? null,
+      telefono: usuario.telefono ?? null,
       estadoSesion: usuario.estadoSesion,
       permisosUi: this.resolvePermisos(usuario),
+      requiereCambioPassword: usuario.requiereCambioPassword ?? false,
     };
   }
 }

@@ -17,10 +17,32 @@
       @if (error()) {
         <p class="rounded-lg border border-orange-energy/30 bg-orange-energy/10 px-3 py-2 text-sm text-orange-energy">{{ error() }}</p>
       }
+      @if (pendingRecoveryBanner()) {
+        <p class="rounded-lg border border-white/10 bg-deep-black/50 px-3 py-2 text-sm text-slate-grey">
+          {{ pendingRecoveryBanner() }}
+        </p>
+      }
       <button type="submit" class="btn-primary w-full" [disabled]="loading() || form.invalid">
         @if (loading()) { Ingresando... } @else { Iniciar sesion }
       </button>
     </form>
+
+    <div class="mt-4 border-t border-white/5 pt-4">
+      <button
+        type="button"
+        class="w-full text-center text-sm text-orange-energy hover:underline"
+        (click)="openRecoveryModal()"
+      >
+        ¿Olvidaste tu contraseña?
+      </button>
+    </div>
+
     <p class="mt-6 text-center text-xs text-slate-grey">Mindfit Ops CMMS</p>
   </div>
 </div>
+
+<app-password-reset-modal
+  [open]="recoveryModalOpen()"
+  (closed)="onRecoveryClosed()"
+  (declined)="onRecoveryDeclined()"
+/>

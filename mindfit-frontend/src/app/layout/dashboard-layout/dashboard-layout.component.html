@@ -7,15 +7,28 @@
           <span class="brand-text">Mindfit Ops</span>
         </div>
         <nav class="sidebar-nav">
-          @for (item of visibleNav(); track item.route) {
-            <a
-              [routerLink]="item.route"
-              routerLinkActive="nav-active"
-              class="nav-link"
-            >
-              <lucide-icon [name]="item.icon" [size]="18" class="nav-icon" />
-              <span>{{ item.label }}</span>
+          @if (navLocked()) {
+            <a routerLink="/dashboard/perfil" routerLinkActive="nav-active" class="nav-link">
+              <lucide-icon name="settings" [size]="18" class="nav-icon" />
+              <span>Mi perfil</span>
             </a>
+            @for (item of visibleNav(); track item.route) {
+              <span class="nav-link nav-link--locked" aria-disabled="true">
+                <lucide-icon [name]="item.icon" [size]="18" class="nav-icon" />
+                <span>{{ item.label }}</span>
+              </span>
+            }
+          } @else {
+            @for (item of visibleNav(); track item.route) {
+              <a
+                [routerLink]="item.route"
+                routerLinkActive="nav-active"
+                class="nav-link"
+              >
+                <lucide-icon [name]="item.icon" [size]="18" class="nav-icon" />
+                <span>{{ item.label }}</span>
+              </a>
+            }
           }
         </nav>
       </div>
@@ -43,17 +56,33 @@
     </header>
 
     <main class="main-content" [class.main-mobile]="isMobileRole()">
+      @if (navLocked()) {
+        <div class="password-lock-banner" role="alert">
+          <lucide-icon name="alert-triangle" [size]="18" class="shrink-0 text-orange-energy" />
+          <p>
+            Has iniciado sesión con una contraseña temporal. Por seguridad, debes ingresar una
+            contraseña nueva antes de continuar utilizando la plataforma.
+          </p>
+        </div>
+      }
       <router-outlet />
     </main>
 
     @if (isMobileRole()) {
       <nav class="bottom-nav">
         <div class="bottom-nav-inner">
-          @for (item of visibleNav(); track item.route) {
-            <a [routerLink]="item.route" routerLinkActive="bottom-nav-active" class="bottom-nav-link">
-              <lucide-icon [name]="item.icon" [size]="20" />
-              <span>{{ item.label }}</span>
+          @if (navLocked()) {
+            <a routerLink="/dashboard/perfil" routerLinkActive="bottom-nav-active" class="bottom-nav-link">
+              <lucide-icon name="settings" [size]="20" />
+              <span>Perfil</span>
             </a>
+          } @else {
+            @for (item of visibleNav(); track item.route) {
+              <a [routerLink]="item.route" routerLinkActive="bottom-nav-active" class="bottom-nav-link">
+                <lucide-icon [name]="item.icon" [size]="20" />
+                <span>{{ item.label }}</span>
+              </a>
+            }
           }
           @if (showQrFab()) {
             <button type="button" class="qr-fab" (click)="openScanner()" aria-label="Escanear QR">

@@ -98,3 +98,4 @@ export enum TipoMovimientoInventario {
 }
 
 export { EstadoRendicionGasto } from './estado-rendicion-gasto.enum';
+export { EstadoSolicitudPassword } from './estado-solicitud-password.enum';
