@@ -11,6 +11,7 @@ import { QrScannerModalComponent } from '../qr-scanner-modal/qr-scanner-modal.co
 import { AssetDetailsSheetComponent } from '../asset-details-sheet/asset-details-sheet.component';
 import { TecnicoUiService } from '../../core/services/tecnico-ui.service';
 import { WorkOrder } from '../../core/models/work-order.model';
+import { DashboardFooterComponent } from '../dashboard-footer/dashboard-footer.component';
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -21,6 +22,7 @@ import { WorkOrder } from '../../core/models/work-order.model';
     QrScannerModalComponent,
     AssetDetailsSheetComponent,
     LucideAngularModule,
+    DashboardFooterComponent,
   ],
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.css',
