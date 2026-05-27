@@ -65,7 +65,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     label: 'Control de bodega',
     route: '/dashboard/bodeguero',
     icon: 'warehouse',
-    roles: ['bodeguero', 'jefe_operaciones', 'ejecutivo_ventas'],
+    roles: ['admin', 'bodeguero', 'jefe_operaciones', 'ejecutivo_ventas'],
     permiso: 'verControlBodega',
   },
   {
