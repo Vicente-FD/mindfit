@@ -26,6 +26,13 @@ export declare class SucursalesService {
     findOne(id: number): Promise<Sucursal>;
     getMonitoreo(sucursalId: number): Promise<SucursalMonitoreoResponseDto>;
     getMonitoreoGlobal(): Promise<SucursalMonitoreoResponseDto>;
+    private fetchMonitoreoPayload;
+    private mergeOrdenesUnicas;
+    private loadActivosMonitoreo;
+    private loadOrdenesEnCursoMonitoreo;
+    private loadOrdenesHistorialMonitoreo;
+    private loadOtMetricasMonitoreo;
+    private loadCotizacionesPendientes;
     private buildMonitoreoPayload;
     private sedeRefOrden;
     private resolutionDate;

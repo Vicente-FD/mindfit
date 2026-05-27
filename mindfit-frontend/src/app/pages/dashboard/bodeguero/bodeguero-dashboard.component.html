@@ -1,4 +1,4 @@
-<div class="bodega-page space-y-5">
+<div class="dashboard-page-shell bodega-page space-y-5">
   <header class="flex flex-wrap items-start justify-between gap-4">
     <div>
       <h1 class="text-xl font-semibold text-pure-white">Bodega central</h1>
@@ -98,6 +98,26 @@
         (input)="onBusquedaInput($event)"
       />
     </div>
+    @if (vista() === 'maquinas') {
+      <div class="filter-field">
+        <label class="field-label">Marca</label>
+        <select class="field-input" (change)="setFiltroMarca($any($event.target).value)">
+          <option value="">Todas</option>
+          @for (m of marcasDisponibles(); track m) {
+            <option [value]="m">{{ m }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="field-label">Categoría</label>
+        <select class="field-input" (change)="setFiltroCategoria($any($event.target).value)">
+          <option value="">Todas</option>
+          @for (c of categoriasDisponibles(); track c) {
+            <option [value]="c">{{ c }}</option>
+          }
+        </select>
+      </div>
+    }
   </div>
 
   @if (vista() === 'repuestos' && alertasDetalle().length > 0) {
@@ -199,6 +219,7 @@
             <tr>
               <th>SKU</th>
               <th>Repuesto</th>
+              <th>Nivel</th>
               <th>Costo unit.</th>
               <th>Stock</th>
               <th>Mín.</th>
@@ -217,6 +238,11 @@
                   <button type="button" class="link-name" (click)="openEditRepuesto(row)">
                     {{ row.repuesto.nombre }}
                   </button>
+                </td>
+                <td>
+                  <span class="stock-badge" [class]="'stock-badge--' + nivelStock(row)">
+                    {{ nivelStockLabel(nivelStock(row)) }}
+                  </span>
                 </td>
                 <td class="text-xs">
                   <button type="button" class="link-costo" (click)="openEditRepuesto(row)" title="Modificar costo">

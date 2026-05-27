@@ -18,6 +18,8 @@ export interface TrabajoEnCursoDto extends Partial<MonitoreoSedeRefDto> {
     clasificacion: string;
     estado: string;
     tecnicoNombre: string | null;
+    activoNombre: string | null;
+    activoCodigo: string | null;
     fechaInicioReal: string | null;
     minutosTranscurridos: number;
     tiempoTranscurridoLabel: string;
@@ -59,6 +61,15 @@ export interface BitacoraTimelineItemDto extends Partial<MonitoreoSedeRefDto> {
     fotoDespuesUrl: string | null;
     activoNombre: string | null;
 }
+export interface CotizacionPendienteMonitoreoDto {
+    id: number;
+    folio: string;
+    clienteRazonSocial: string;
+    ejecutivoNombre: string | null;
+    montoBruto: number;
+    divisaCodigo: string;
+    createdAt: string;
+}
 export interface SucursalMonitoreoResponseDto {
     sucursal: {
         id: number;
@@ -67,6 +78,7 @@ export interface SucursalMonitoreoResponseDto {
     };
     salud: SucursalMonitoreoSaludDto;
     trabajosEnCurso: TrabajoEnCursoDto[];
+    cotizacionesPendientes: CotizacionPendienteMonitoreoDto[];
     historialInfraestructura: HistorialInfraDto[];
     historialMaquinas: HistorialMaquinaDto[];
     bitacoraTimeline: BitacoraTimelineItemDto[];

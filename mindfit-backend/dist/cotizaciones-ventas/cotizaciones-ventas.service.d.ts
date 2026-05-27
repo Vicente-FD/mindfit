@@ -23,6 +23,7 @@ export declare class CotizacionesVentasService {
     private procesarLineaActivo;
     private findOneInTransaction;
     private actualizarDetalles;
+    private recalcularDetallesPorDivisa;
     private liberarActivoReserva;
     private registrarHistorial;
     private snapshotCotizacion;

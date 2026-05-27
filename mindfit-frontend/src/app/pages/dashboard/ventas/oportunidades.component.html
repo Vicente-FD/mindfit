@@ -1,13 +1,16 @@
-<header class="ventas-page-head">
+<header class="ventas-page-head flex flex-wrap items-center justify-between gap-3">
   <div>
-    <h1 class="text-xl font-semibold text-pure-white">Pipeline de oportunidades</h1>
-    <p class="mt-1 text-sm text-slate-grey">Tablero Kanban por etapa comercial.</p>
+    <h1 class="page-title">Pipeline de oportunidades</h1>
+    <p class="page-desc">Tablero Kanban interactivo — arrastre tarjetas entre etapas.</p>
   </div>
-  <button type="button" class="btn-primary" (click)="toggleForm()">+ Nueva oportunidad</button>
+  <button type="button" class="btn-primary inline-flex items-center gap-2" (click)="toggleForm()">
+    <lucide-icon name="plus" [size]="16" />
+    Nueva oportunidad
+  </button>
 </header>
 
 @if (showForm()) {
-  <form class="page-card grid gap-3 sm:grid-cols-2" [formGroup]="form" (ngSubmit)="crear()">
+  <form class="page-card grid gap-3 sm:grid-cols-2 lg:grid-cols-3" [formGroup]="form" (ngSubmit)="crear()">
     <div>
       <label class="field-label">Cliente *</label>
       <select class="field-input" formControlName="clienteId">
@@ -22,14 +25,27 @@
       <input class="field-input" formControlName="titulo" />
     </div>
     <div>
-      <label class="field-label">Monto estimado (CLP)</label>
+      <label class="field-label">Monto estimado</label>
       <input type="number" class="field-input" formControlName="montoEstimado" min="0" />
     </div>
-    <div class="sm:col-span-2">
+    <div>
+      <label class="field-label">Divisa</label>
+      <select class="field-input" formControlName="divisaCodigo">
+        <option value="CLP">CLP</option>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="CAD">CAD</option>
+      </select>
+    </div>
+    <div>
+      <label class="field-label">Fecha estimada de cierre</label>
+      <mindfit-date-picker formControlName="fechaCierreEstimada" />
+    </div>
+    <div class="sm:col-span-2 lg:col-span-3">
       <label class="field-label">Notas</label>
       <textarea class="field-input min-h-20" formControlName="notas"></textarea>
     </div>
-    <div class="sm:col-span-2">
+    <div class="sm:col-span-2 lg:col-span-3">
       <button type="submit" class="btn-primary">Crear oportunidad</button>
     </div>
   </form>
@@ -38,29 +54,98 @@
 @if (loading()) {
   <p class="text-sm text-slate-grey">Cargando tablero...</p>
 } @else {
-  <div class="kanban-board">
+  <div class="kanban-board" cdkDropListGroup>
     @for (col of etapas; track col.id) {
-      <div class="kanban-col">
-        <h3 class="kanban-col__title">{{ col.label }}</h3>
-        <div class="kanban-col__cards">
-          @for (o of porEtapa().get(col.id) ?? []; track o.id) {
-            <article class="kanban-card">
-              <p class="kanban-card__cliente">{{ o.cliente?.razonSocial ?? 'Cliente' }}</p>
-              <h4 class="kanban-card__titulo">{{ o.titulo }}</h4>
-              <p class="kanban-card__monto">{{ o.montoEstimado | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-              <div class="kanban-card__actions">
-                @if (etapaAnterior(col.id); as prev) {
-                  <button type="button" class="btn-ghost text-xs" (click)="moverEtapa(o, prev)">←</button>
+      <div class="kanban-col h-full flex flex-col">
+        <header class="kanban-col__head">
+          <h3 class="kanban-col__title">{{ col.label }}</h3>
+          <span class="kanban-col__sum">
+            {{ totalesPorEtapa().get(col.id) ?? 0 | currency:'CLP':'symbol-narrow':'1.0-0' }}
+          </span>
+        </header>
+        <div
+          class="kanban-col__cards flex-1"
+          cdkDropList
+          [id]="'kanban-' + col.id"
+          [cdkDropListData]="cardsEnEtapa(col.id)"
+          [cdkDropListConnectedTo]="connectedLists(col.id)"
+          (cdkDropListDropped)="onDrop($event, col.id)"
+        >
+          @for (o of cardsEnEtapa(col.id); track o.id) {
+            <article class="kanban-card h-full flex flex-col" cdkDrag [cdkDragData]="o">
+              <div class="kanban-card__top">
+                <p class="kanban-card__empresa">{{ o.cliente?.razonSocial ?? 'Cliente' }}</p>
+                <p class="kanban-card__cliente text-xs text-slate-grey">RUT {{ o.cliente?.rut }}</p>
+                <h4 class="kanban-card__titulo">{{ o.titulo }}</h4>
+                <p class="kanban-card__monto">
+                  {{ divisaSymbol(o.divisaCodigo) }}{{ o.montoEstimado | number:'1.0-0' }}
+                  <span class="text-xs text-slate-grey">{{ o.divisaCodigo }}</span>
+                </p>
+              </div>
+
+              <div class="kanban-card__fecha">
+                <label class="field-label text-xs">Cierre estimado</label>
+                <input
+                  type="date"
+                  class="field-input text-xs py-2"
+                  [value]="o.fechaCierreEstimada ?? ''"
+                  (change)="actualizarFechaCierre(o, $any($event.target).value)"
+                />
+              </div>
+
+              <ul class="kanban-checklist">
+                @for (item of o.checklist; track item.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="checklist-item"
+                      [class.checklist-item--done]="item.completado"
+                      (click)="toggleChecklist(o, item)"
+                    >
+                      <lucide-icon [name]="item.completado ? 'check-circle' : 'circle'" [size]="14" />
+                      <span>{{ item.texto }}</span>
+                    </button>
+                  </li>
                 }
-                @if (etapaSiguiente(col.id); as next) {
-                  <button type="button" class="btn-ghost text-xs" (click)="moverEtapa(o, next)">→</button>
+              </ul>
+
+              <div class="kanban-notas">
+                <button type="button" class="btn-ghost text-xs w-full justify-start" (click)="toggleNotas(o)">
+                  <lucide-icon name="message-square" [size]="14" />
+                  Actividad ({{ o.actividades.length }})
+                </button>
+                @if (notaExpandida() === o.id) {
+                  <ul class="notas-list">
+                    @for (a of o.actividades; track a.id) {
+                      <li class="nota-item">
+                        <time>{{ a.createdAt | date:'dd/MM HH:mm' }}</time>
+                        <p>{{ a.texto }}</p>
+                      </li>
+                    }
+                  </ul>
+                  <div class="nota-input-row">
+                    <input
+                      class="field-input text-xs"
+                      placeholder="Bitácora rápida..."
+                      [value]="notaDraft(o.id)"
+                      (input)="onNotaInput(o, $any($event.target).value)"
+                      (keydown.enter)="agregarNota(o); $event.preventDefault()"
+                    />
+                    <button type="button" class="btn-primary text-xs py-2 px-3" (click)="agregarNota(o)">
+                      +
+                    </button>
+                  </div>
                 }
               </div>
-              @if (puedeConvertir(col.id)) {
-                <button type="button" class="btn-primary w-full mt-2 text-xs py-2" (click)="convertirCotizacion(o)">
-                  Convertir en cotización
-                </button>
-              }
+
+              <button
+                type="button"
+                class="btn-primary w-full mt-auto text-xs py-2 inline-flex items-center justify-center gap-1"
+                (click)="convertirCotizacion(o)"
+              >
+                <lucide-icon name="file-plus" [size]="14" />
+                Convertir en cotización
+              </button>
             </article>
           }
         </div>

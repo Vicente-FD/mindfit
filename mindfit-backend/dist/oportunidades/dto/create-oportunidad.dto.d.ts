@@ -6,4 +6,5 @@ export declare class CreateOportunidadDto {
     montoEstimado?: number;
     divisaCodigo?: string;
     notas?: string;
+    fechaCierreEstimada?: string;
 }

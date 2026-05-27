@@ -43,6 +43,9 @@ export class OportunidadesService {
       montoEstimado: String(dto.montoEstimado ?? 0),
       divisaCodigo: dto.divisaCodigo ?? 'CLP',
       notas: dto.notas?.trim() ?? null,
+      fechaCierreEstimada: dto.fechaCierreEstimada ?? null,
+      checklist: this.checklistDefault(),
+      actividades: [],
     });
     const saved = await this.repo().save(opp);
     return this.findOne(saved.id);
@@ -57,11 +60,30 @@ export class OportunidadesService {
     }
     if (dto.divisaCodigo != null) opp.divisaCodigo = dto.divisaCodigo;
     if (dto.notas !== undefined) opp.notas = dto.notas?.trim() ?? null;
+    if (dto.fechaCierreEstimada !== undefined) {
+      opp.fechaCierreEstimada = dto.fechaCierreEstimada || null;
+    }
+    if (dto.checklist != null) opp.checklist = dto.checklist;
+    if (dto.actividades != null) {
+      opp.actividades = dto.actividades.map((a) => ({
+        id: a.id,
+        texto: a.texto,
+        createdAt: a.createdAt ?? new Date().toISOString(),
+      }));
+    }
     await this.repo().save(opp);
     return this.findOne(id);
   }
 
   async marcarGanada(id: number) {
     return this.update(id, { etapa: EtapaOportunidad.GANADA });
+  }
+
+  private checklistDefault() {
+    return [
+      { id: '1', texto: 'Llamar al cliente', completado: false },
+      { id: '2', texto: 'Enviar propuesta', completado: false },
+      { id: '3', texto: 'Visita técnica', completado: false },
+    ];
   }
 }

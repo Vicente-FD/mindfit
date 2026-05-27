@@ -13,12 +13,16 @@ exports.UpdateOportunidadDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const enums_1 = require("../../common/enums");
+const oportunidad_crm_dto_1 = require("./oportunidad-crm.dto");
 class UpdateOportunidadDto {
     titulo;
     etapa;
     montoEstimado;
     divisaCodigo;
     notas;
+    fechaCierreEstimada;
+    checklist;
+    actividades;
 }
 exports.UpdateOportunidadDto = UpdateOportunidadDto;
 __decorate([
@@ -50,4 +54,23 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateOportunidadDto.prototype, "notas", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", Object)
+], UpdateOportunidadDto.prototype, "fechaCierreEstimada", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => oportunidad_crm_dto_1.OportunidadChecklistItemDto),
+    __metadata("design:type", Array)
+], UpdateOportunidadDto.prototype, "checklist", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => oportunidad_crm_dto_1.OportunidadActividadDto),
+    __metadata("design:type", Array)
+], UpdateOportunidadDto.prototype, "actividades", void 0);
 //# sourceMappingURL=update-oportunidad.dto.js.map

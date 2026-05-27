@@ -193,6 +193,13 @@ export class CotizacionesVentasService {
         comentarios = dto.comentariosComerciales?.trim() ?? null;
       }
 
+      const cambioDivisa =
+        dto.divisaCodigo != null &&
+        dto.divisaCodigo !== cotizacion.divisaCodigo;
+      const cambioTasa =
+        dto.tasaCambioClp != null &&
+        Number(dto.tasaCambioClp) !== Number(cotizacion.tasaCambioClp);
+
       if (dto.detalles != null) {
         if (!dto.detalles.length) {
           throw new BadRequestException('Debe incluir al menos una máquina');
@@ -210,6 +217,13 @@ export class CotizacionesVentasService {
           }
         }
         await this.actualizarDetalles(manager, cotizacion, dto.detalles);
+      } else if (cambioDivisa || cambioTasa) {
+        await this.recalcularDetallesPorDivisa(
+          manager,
+          cotizacion.id,
+          divisaCodigo as DivisaCodigo,
+          tasaCambio,
+        );
       }
 
       const refreshed = await this.findOneInTransaction(manager, id);
@@ -496,6 +510,26 @@ export class CotizacionesVentasService {
         linea.cotizacionId = cotizacion.id;
         await detalleRepo.save(linea);
       }
+    }
+  }
+
+  private async recalcularDetallesPorDivisa(
+    manager: EntityManager,
+    cotizacionId: number,
+    divisa: DivisaCodigo,
+    tasa: number,
+  ): Promise<void> {
+    const detalleRepo = manager.getRepository(CotizacionVentasDetalle);
+    const detalles = await detalleRepo.find({ where: { cotizacionId } });
+    for (const d of detalles) {
+      const costoClp = Number(d.costoHistoricoClp ?? 0);
+      const precio =
+        divisa === DivisaCodigo.CLP
+          ? Math.round(costoClp * 100) / 100
+          : Math.round((costoClp / tasa) * 100) / 100;
+      d.precioUnitarioPactado = String(precio);
+      d.totalLineaNeto = String(precio);
+      await detalleRepo.save(d);
     }
   }
 

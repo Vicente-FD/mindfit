@@ -15,6 +15,8 @@ export class SchemaFixService implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     await this.ensureFlotaLicencias();
     await this.ensureCotizacionHistorial();
+    await this.ensureOportunidadesCrm();
+    await this.ensureMonitoreoIndexes();
     await this.ensureRendicionesGastos();
     await this.ensureOtSchema();
     await this.ensureMovimientosInventario();
@@ -67,6 +69,50 @@ export class SchemaFixService implements OnModuleInit {
       ON licencias_tecnicos (fecha_vencimiento);
     `);
     this.logger.log('Flota y licencias verificadas');
+  }
+
+  private async ensureMonitoreoIndexes(): Promise<void> {
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_activos_sucursal_deleted
+      ON activos (sucursal_id) WHERE deleted_at IS NULL;
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_activos_estado_operacional
+      ON activos (estado_operacional);
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_ot_sucursal_estado
+      ON ordenes_trabajo (sucursal_id, estado) WHERE deleted_at IS NULL;
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_ot_estado_updated
+      ON ordenes_trabajo (estado, updated_at DESC) WHERE deleted_at IS NULL;
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_cotizaciones_estado
+      ON cotizaciones_ventas (estado);
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_usuarios_sucursal
+      ON usuarios (sucursal_id);
+    `);
+    this.logger.log('Índices de monitoreo verificados');
+  }
+
+  private async ensureOportunidadesCrm(): Promise<void> {
+    await this.dataSource.query(`
+      ALTER TABLE oportunidades
+      ADD COLUMN IF NOT EXISTS fecha_cierre_estimada DATE NULL;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE oportunidades
+      ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]'::jsonb;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE oportunidades
+      ADD COLUMN IF NOT EXISTS actividades JSONB DEFAULT '[]'::jsonb;
+    `);
+    this.logger.log('Campos CRM en oportunidades verificados');
   }
 
   private async ensureCotizacionHistorial(): Promise<void> {

@@ -138,7 +138,7 @@ __decorate([
 ], InventarioController.prototype, "registrarAjuste", null);
 __decorate([
     (0, common_1.Get)('bodega/stock'),
-    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO, enums_1.RolUsuario.EJECUTIVO_VENTAS, enums_1.RolUsuario.GERENTE_BI),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [filter_bodega_dto_1.FilterBodegaDto]),
@@ -146,7 +146,7 @@ __decorate([
 ], InventarioController.prototype, "listStock", null);
 __decorate([
     (0, common_1.Get)('bodega/kpis'),
-    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN, enums_1.RolUsuario.JEFE_OPERACIONES, enums_1.RolUsuario.BODEGUERO, enums_1.RolUsuario.EJECUTIVO_VENTAS, enums_1.RolUsuario.GERENTE_BI),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)

@@ -50,6 +50,7 @@ import {
   Truck,
   Car,
   AlertCircle,
+  Cpu,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -106,6 +107,7 @@ export const appConfig: ApplicationConfig = {
         Truck,
         Car,
         AlertCircle,
+        Cpu,
       }),
     ),
     provideRouter(routes),

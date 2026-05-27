@@ -26,6 +26,9 @@ let Oportunidad = class Oportunidad {
     montoEstimado;
     divisaCodigo;
     notas;
+    fechaCierreEstimada;
+    checklist;
+    actividades;
     createdAt;
     updatedAt;
     cotizaciones;
@@ -83,6 +86,18 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
     __metadata("design:type", Object)
 ], Oportunidad.prototype, "notas", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'fecha_cierre_estimada', type: 'date', nullable: true }),
+    __metadata("design:type", Object)
+], Oportunidad.prototype, "fechaCierreEstimada", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'jsonb', nullable: true, default: () => "'[]'" }),
+    __metadata("design:type", Array)
+], Oportunidad.prototype, "checklist", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'jsonb', nullable: true, default: () => "'[]'" }),
+    __metadata("design:type", Array)
+], Oportunidad.prototype, "actividades", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)

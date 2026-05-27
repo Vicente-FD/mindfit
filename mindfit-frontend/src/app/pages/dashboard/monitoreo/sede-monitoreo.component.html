@@ -1,4 +1,4 @@
-<div class="monitoreo-page space-y-6">
+<div class="dashboard-page-shell monitoreo-page">
   <header class="flex flex-wrap items-start justify-between gap-4">
     <div>
       <p class="text-xs font-semibold uppercase tracking-widest text-orange-energy">
@@ -8,7 +8,7 @@
       <p class="page-desc max-w-2xl">
         Vista consultiva en tiempo real. Sin acciones operativas: solo visualización del pulso operativo.
       </p>
-      @if (scopeLabel()) {
+      @if (scopeLabel() && !loading()) {
         <p class="mt-2 text-xs font-medium text-orange-energy">{{ scopeLabel() }}</p>
       }
     </div>
@@ -30,217 +30,294 @@
   </header>
 
   @if (loading() && !data()) {
-    <p class="text-sm text-slate-grey">Cargando monitoreo…</p>
+    <div class="monitoreo-skeleton space-y-4" aria-busy="true" aria-label="Cargando monitoreo">
+      <div class="skeleton-tabs">
+        <div class="skeleton-pulse h-10 w-48 rounded-lg"></div>
+        <div class="skeleton-pulse h-10 w-52 rounded-lg"></div>
+      </div>
+      <div class="metrics-grid">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="skeleton-pulse skeleton-metric rounded-xl"></div>
+        }
+      </div>
+      <div class="skeleton-pulse skeleton-panel rounded-2xl"></div>
+      <div class="skeleton-pulse skeleton-panel rounded-2xl"></div>
+    </div>
   } @else if (error()) {
     <p class="text-sm text-red-400">{{ error() }}</p>
   } @else if (data(); as m) {
-    <section class="metrics-grid">
-      <article class="metric-card">
-        <span class="stat-label">Activos operativos</span>
-        <p class="stat-value text-status-green">{{ m.salud.activosOperativos }}</p>
-      </article>
-      <article class="metric-card">
-        <span class="stat-label">Fuera de servicio</span>
-        <p class="stat-value text-red-400">{{ m.salud.activosFueraServicio }}</p>
-      </article>
-      <article class="metric-card">
-        <span class="stat-label">En reparación</span>
-        <p class="stat-value text-slate-grey">{{ m.salud.activosEnReparacion }}</p>
-      </article>
-      <article class="metric-card metric-card-highlight">
-        <span class="stat-label">Efectividad (PE)</span>
-        <p class="stat-value text-orange-energy">{{ m.salud.porcentajeEfectividad }}%</p>
-        <p class="mt-1 text-xs text-slate-grey">
-          {{ m.salud.otsResueltas }} / {{ m.salud.otsReportadas }} OTs resueltas
-        </p>
-      </article>
-    </section>
+    <nav class="monitoreo-tabs" aria-label="Secciones de monitoreo">
+      <button
+        type="button"
+        class="monitoreo-tab"
+        [class.monitoreo-tab--active]="activeTab() === 'operaciones'"
+        (click)="setTab('operaciones')"
+      >
+        <lucide-icon name="wrench" [size]="16" />
+        Operaciones y OTs
+      </button>
+      <button
+        type="button"
+        class="monitoreo-tab"
+        [class.monitoreo-tab--active]="activeTab() === 'comercial'"
+        (click)="setTab('comercial')"
+      >
+        <lucide-icon name="file-text" [size]="16" />
+        Comercial y Cotizaciones
+        <span class="monitoreo-tab__badge">{{ m.cotizacionesPendientes.length }}</span>
+      </button>
+    </nav>
 
-    <section class="page-card">
-      <div class="section-head">
-        <h2 class="section-title">Actividad en vivo</h2>
-        <span class="live-tag">
-          <span class="ping-live ping-live-green"></span>
-          En ejecución
-        </span>
+    @if (loading()) {
+      <div class="monitoreo-skeleton-overlay" aria-hidden="true">
+        <div class="skeleton-pulse h-2 w-full rounded-full opacity-40"></div>
       </div>
+    }
 
-      @if (m.trabajosEnCurso.length === 0) {
-        <p class="text-sm text-slate-grey">
-          @if (isGlobalView()) {
-            No hay trabajos en curso en ninguna sede.
-          } @else {
-            No hay trabajos en curso en esta sede.
-          }
-        </p>
-      } @else {
-        <div class="live-grid">
-          @for (t of m.trabajosEnCurso; track t.ordenId) {
-            <article class="live-card">
-              <div class="live-card-head">
-                <span [class]="pingClass(t.estado)"></span>
-                <span class="text-xs font-medium text-pure-white">
-                  {{ estadoEnCursoLabel(t.estado) }}
-                </span>
-                <span class="live-timer">
-                  <lucide-icon name="clock" [size]="14" class="text-slate-grey" />
-                  {{ elapsedLabel(t) }}
-                </span>
-              </div>
-              @if (showSedeRef(t)) {
-                <span class="badge-sede">{{ sedeRefLabel(t) }}</span>
-              }
-              <h3 class="live-card-title">{{ t.titulo }}</h3>
-              <p class="text-xs text-slate-grey">{{ t.codigoOt }}</p>
-              <div class="mt-2 flex flex-wrap gap-2">
-                <span [class]="clasificacionBadgeClass(t.clasificacion)">
-                  {{ clasificacionLabel(t.clasificacion) }}
-                </span>
-              </div>
-              <p class="mt-3 text-sm text-slate-grey">
-                Técnico:
-                <span class="text-pure-white">{{ t.tecnicoNombre ?? 'Sin asignar' }}</span>
-              </p>
-              @if (t.fechaInicioReal) {
-                <p class="mt-1 text-xs text-slate-grey">
-                  Check-in: {{ t.fechaInicioReal | date: 'dd/MM/yyyy HH:mm' }}
-                </p>
-              }
-            </article>
-          }
+    @if (activeTab() === 'operaciones') {
+      <section class="metrics-grid">
+        <article class="metric-card h-full">
+          <span class="stat-label">Activos operativos</span>
+          <p class="stat-value text-status-green">{{ m.salud.activosOperativos }}</p>
+        </article>
+        <article class="metric-card h-full">
+          <span class="stat-label">Fuera de servicio</span>
+          <p class="stat-value text-red-400">{{ m.salud.activosFueraServicio }}</p>
+        </article>
+        <article class="metric-card h-full">
+          <span class="stat-label">En reparación</span>
+          <p class="stat-value text-slate-grey">{{ m.salud.activosEnReparacion }}</p>
+        </article>
+        <article class="metric-card metric-card-highlight h-full">
+          <span class="stat-label">Efectividad (PE)</span>
+          <p class="stat-value text-orange-energy">{{ m.salud.porcentajeEfectividad }}%</p>
+          <p class="mt-1 text-xs text-slate-grey">
+            {{ m.salud.otsResueltas }} / {{ m.salud.otsReportadas }} OTs resueltas
+          </p>
+        </article>
+      </section>
+
+      <section class="page-card">
+        <div class="section-head">
+          <h2 class="section-title">Técnicos en terreno</h2>
+          <span class="live-tag">
+            <span class="ping-live ping-live-green"></span>
+            Check-in activo · {{ m.trabajosEnCurso.length }}
+          </span>
         </div>
-      }
-    </section>
 
-    <section class="page-card">
-      <h2 class="section-title">Daños de sede e infraestructura</h2>
-      <p class="section-desc">Historial de reportes de camarines, climatización, duchas y peticiones resueltas.</p>
-
-      @if (m.historialInfraestructura.length === 0) {
-        <p class="mt-3 text-sm text-slate-grey">Sin registros de infraestructura cerrados.</p>
-      } @else {
-        <ul class="infra-list">
-          @for (h of m.historialInfraestructura; track h.ordenId) {
-            <li class="infra-row">
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  @if (showSedeRef(h)) {
-                    <span class="badge-sede">{{ sedeRefLabel(h) }}</span>
-                  }
-                  <span [class]="prioridadClass(h.prioridad)">{{ h.prioridad }}</span>
-                  <span [class]="clasificacionBadgeClass(h.clasificacion)">
-                    {{ clasificacionLabel(h.clasificacion) }}
+        @if (m.trabajosEnCurso.length === 0) {
+          <p class="text-sm text-slate-grey">No hay técnicos con trabajo en curso en este alcance.</p>
+        } @else {
+          <div class="live-grid">
+            @for (t of m.trabajosEnCurso; track t.ordenId) {
+              <article class="live-card card-equal">
+                <div class="live-card-head">
+                  <span [class]="pingClass(t.estado)"></span>
+                  <span class="text-xs font-medium text-pure-white">
+                    {{ t.tecnicoNombre ?? 'Sin asignar' }}
                   </span>
-                  <span class="text-xs text-slate-grey">{{ h.codigoOt }}</span>
+                  <span class="live-timer">
+                    <lucide-icon name="clock" [size]="14" class="text-slate-grey" />
+                    {{ elapsedLabel(t) }}
+                  </span>
                 </div>
-                <p class="mt-2 text-sm text-pure-white">{{ h.reporteOriginal }}</p>
-                @if (h.comentarioCierre) {
-                  <p class="mt-1 text-xs text-slate-grey">
-                    Cierre: {{ h.comentarioCierre }}
+                @if (showSedeRef(t)) {
+                  <span class="badge-sede">{{ sedeRefLabel(t) }}</span>
+                }
+                <h3 class="live-card-title">{{ t.titulo }}</h3>
+                <p class="text-xs text-slate-grey">{{ t.codigoOt }}</p>
+                @if (t.activoNombre) {
+                  <p class="mt-2 text-sm text-pure-white">
+                    <lucide-icon name="cpu" [size]="14" class="inline text-orange-energy" />
+                    {{ t.activoNombre }}
+                    @if (t.activoCodigo) {
+                      <span class="text-slate-grey"> · {{ t.activoCodigo }}</span>
+                    }
                   </p>
                 }
-              </div>
-              <time class="infra-date">{{ h.fechaResolucion | date: 'dd/MM/yy' }}</time>
-            </li>
-          }
-        </ul>
-      }
-    </section>
-
-    <section class="page-card">
-      <h2 class="section-title">Historial de máquinas</h2>
-      @if (m.historialMaquinas.length === 0) {
-        <p class="mt-3 text-sm text-slate-grey">Sin mantenimientos correctivos o preventivos registrados.</p>
-      } @else {
-        <div class="machine-grid">
-          @for (h of m.historialMaquinas; track h.ordenId) {
-            <article class="machine-card">
-              @if (showSedeRef(h)) {
-                <span class="badge-sede mb-2">{{ sedeRefLabel(h) }}</span>
-              }
-              <p class="text-xs text-orange-energy">{{ h.activoCodigo ?? '—' }}</p>
-              <h3 class="font-medium text-pure-white">{{ h.activoNombre }}</h3>
-              <p class="text-sm text-slate-grey">{{ h.titulo }}</p>
-              <div class="mt-2 flex gap-2">
-                <span class="badge-machine">{{ h.tipoMantenimiento }}</span>
-                <span [class]="prioridadClass(h.prioridad)">{{ h.prioridad }}</span>
-              </div>
-              @if (h.fotoAntesUrl || h.fotoDespuesUrl) {
-                <div class="thumb-row">
-                  @if (h.fotoAntesUrl) {
-                    <button type="button" class="thumb-btn" (click)="openPhoto(h.fotoAntesUrl)">
-                      <img [src]="mediaUrl(h.fotoAntesUrl)" alt="Antes" />
-                      <span>Antes</span>
-                    </button>
-                  }
-                  @if (h.fotoDespuesUrl) {
-                    <button type="button" class="thumb-btn" (click)="openPhoto(h.fotoDespuesUrl)">
-                      <img [src]="mediaUrl(h.fotoDespuesUrl)" alt="Después" />
-                      <span>Después</span>
-                    </button>
-                  }
-                </div>
-              }
-            </article>
-          }
-        </div>
-      }
-    </section>
-
-    <section class="page-card">
-      <h2 class="section-title">Bitácora histórica</h2>
-      <p class="section-desc">Línea de tiempo de trabajos completados con evidencia fotográfica.</p>
-
-      @if (m.bitacoraTimeline.length === 0) {
-        <p class="mt-3 text-sm text-slate-grey">Sin eventos en la bitácora.</p>
-      } @else {
-        <ol class="timeline">
-          @for (ev of m.bitacoraTimeline; track ev.ordenId) {
-            <li class="timeline-item">
-              <span class="timeline-dot"></span>
-              <div class="timeline-body">
-                <time class="timeline-date">{{ ev.fechaEvento | date: 'dd MMM yyyy, HH:mm' }}</time>
-                @if (showSedeRef(ev)) {
-                  <span class="badge-sede mt-1">{{ sedeRefLabel(ev) }}</span>
-                }
-                <h3 class="timeline-title">{{ ev.titulo }}</h3>
-                <p class="text-xs text-slate-grey">
-                  {{ ev.codigoOt }}
-                  @if (ev.activoNombre) {
-                    · {{ ev.activoNombre }}
-                  }
-                </p>
                 <div class="mt-2 flex flex-wrap gap-2">
-                  <span [class]="clasificacionBadgeClass(ev.clasificacion)">
-                    {{ clasificacionLabel(ev.clasificacion) }}
+                  <span [class]="clasificacionBadgeClass(t.clasificacion)">
+                    {{ clasificacionLabel(t.clasificacion) }}
                   </span>
-                  <span class="badge-machine">{{ ev.tipoMantenimiento }}</span>
                 </div>
-                @if (ev.comentarioCierre) {
-                  <p class="mt-2 text-sm text-slate-grey">{{ ev.comentarioCierre }}</p>
+                <p class="mt-auto pt-3 text-xs text-slate-grey">
+                  Tiempo acumulado:
+                  <strong class="text-orange-energy">{{ elapsedLabel(t) }}</strong>
+                </p>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="page-card">
+        <h2 class="section-title">Daños de sede e infraestructura</h2>
+        <p class="section-desc">Historial de reportes de camarines, climatización, duchas y peticiones resueltas.</p>
+
+        @if (m.historialInfraestructura.length === 0) {
+          <p class="mt-3 text-sm text-slate-grey">Sin registros de infraestructura cerrados.</p>
+        } @else {
+          <ul class="infra-list">
+            @for (h of m.historialInfraestructura; track h.ordenId) {
+              <li class="infra-row">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    @if (showSedeRef(h)) {
+                      <span class="badge-sede">{{ sedeRefLabel(h) }}</span>
+                    }
+                    <span [class]="prioridadClass(h.prioridad)">{{ h.prioridad }}</span>
+                    <span [class]="clasificacionBadgeClass(h.clasificacion)">
+                      {{ clasificacionLabel(h.clasificacion) }}
+                    </span>
+                    <span class="text-xs text-slate-grey">{{ h.codigoOt }}</span>
+                  </div>
+                  <p class="mt-2 text-sm text-pure-white">{{ h.reporteOriginal }}</p>
+                  @if (h.comentarioCierre) {
+                    <p class="mt-1 text-xs text-slate-grey">Cierre: {{ h.comentarioCierre }}</p>
+                  }
+                </div>
+                <time class="infra-date">{{ h.fechaResolucion | date: 'dd/MM/yy' }}</time>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="page-card">
+        <h2 class="section-title">Historial de máquinas</h2>
+        @if (m.historialMaquinas.length === 0) {
+          <p class="mt-3 text-sm text-slate-grey">Sin mantenimientos correctivos o preventivos registrados.</p>
+        } @else {
+          <div class="machine-grid">
+            @for (h of m.historialMaquinas; track h.ordenId) {
+              <article class="machine-card card-equal">
+                @if (showSedeRef(h)) {
+                  <span class="badge-sede mb-2">{{ sedeRefLabel(h) }}</span>
                 }
-                @if (hasPhotos(ev)) {
-                  <div class="thumb-row mt-3">
-                    @if (ev.fotoAntesUrl) {
-                      <button type="button" class="thumb-btn" (click)="openPhoto(ev.fotoAntesUrl)">
-                        <img [src]="mediaUrl(ev.fotoAntesUrl)" alt="Antes" />
+                <p class="text-xs text-orange-energy">{{ h.activoCodigo ?? '—' }}</p>
+                <h3 class="font-medium text-pure-white">{{ h.activoNombre }}</h3>
+                <p class="text-sm text-slate-grey">{{ h.titulo }}</p>
+                <div class="mt-2 flex gap-2">
+                  <span class="badge-machine">{{ h.tipoMantenimiento }}</span>
+                  <span [class]="prioridadClass(h.prioridad)">{{ h.prioridad }}</span>
+                </div>
+                @if (h.fotoAntesUrl || h.fotoDespuesUrl) {
+                  <div class="thumb-row">
+                    @if (h.fotoAntesUrl) {
+                      <button type="button" class="thumb-btn" (click)="openPhoto(h.fotoAntesUrl)">
+                        <img [src]="mediaUrl(h.fotoAntesUrl)" alt="Antes" />
                         <span>Antes</span>
                       </button>
                     }
-                    @if (ev.fotoDespuesUrl) {
-                      <button type="button" class="thumb-btn" (click)="openPhoto(ev.fotoDespuesUrl)">
-                        <img [src]="mediaUrl(ev.fotoDespuesUrl)" alt="Después" />
+                    @if (h.fotoDespuesUrl) {
+                      <button type="button" class="thumb-btn" (click)="openPhoto(h.fotoDespuesUrl)">
+                        <img [src]="mediaUrl(h.fotoDespuesUrl)" alt="Después" />
                         <span>Después</span>
                       </button>
                     }
                   </div>
                 }
-              </div>
-            </li>
-          }
-        </ol>
-      }
-    </section>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="page-card">
+        <h2 class="section-title">Bitácora histórica</h2>
+        <p class="section-desc">Línea de tiempo de trabajos completados con evidencia fotográfica.</p>
+
+        @if (m.bitacoraTimeline.length === 0) {
+          <p class="mt-3 text-sm text-slate-grey">Sin eventos en la bitácora.</p>
+        } @else {
+          <ol class="timeline">
+            @for (ev of m.bitacoraTimeline; track ev.ordenId) {
+              <li class="timeline-item">
+                <span class="timeline-dot"></span>
+                <div class="timeline-body">
+                  <time class="timeline-date">{{ ev.fechaEvento | date: 'dd MMM yyyy, HH:mm' }}</time>
+                  @if (showSedeRef(ev)) {
+                    <span class="badge-sede mt-1">{{ sedeRefLabel(ev) }}</span>
+                  }
+                  <h3 class="timeline-title">{{ ev.titulo }}</h3>
+                  <p class="text-xs text-slate-grey">
+                    {{ ev.codigoOt }}
+                    @if (ev.activoNombre) {
+                      · {{ ev.activoNombre }}
+                    }
+                  </p>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <span [class]="clasificacionBadgeClass(ev.clasificacion)">
+                      {{ clasificacionLabel(ev.clasificacion) }}
+                    </span>
+                    <span class="badge-machine">{{ ev.tipoMantenimiento }}</span>
+                  </div>
+                  @if (ev.comentarioCierre) {
+                    <p class="mt-2 text-sm text-slate-grey">{{ ev.comentarioCierre }}</p>
+                  }
+                  @if (hasPhotos(ev)) {
+                    <div class="thumb-row mt-3">
+                      @if (ev.fotoAntesUrl) {
+                        <button type="button" class="thumb-btn" (click)="openPhoto(ev.fotoAntesUrl)">
+                          <img [src]="mediaUrl(ev.fotoAntesUrl)" alt="Antes" />
+                          <span>Antes</span>
+                        </button>
+                      }
+                      @if (ev.fotoDespuesUrl) {
+                        <button type="button" class="thumb-btn" (click)="openPhoto(ev.fotoDespuesUrl)">
+                          <img [src]="mediaUrl(ev.fotoDespuesUrl)" alt="Después" />
+                          <span>Después</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+    } @else {
+      <section class="page-card">
+        <div class="section-head">
+          <h2 class="section-title">Cotizaciones pendientes de aprobación</h2>
+          <span class="text-xs text-slate-grey">{{ m.cotizacionesPendientes.length }} activas</span>
+        </div>
+        <p class="section-desc mb-4">
+          Propuestas comerciales en revisión. Solo lectura — sin acciones de aprobación desde este panel.
+        </p>
+
+        @if (m.cotizacionesPendientes.length === 0) {
+          <p class="text-sm text-slate-grey">No hay cotizaciones en espera de aprobación.</p>
+        } @else {
+          <div class="consult-table-wrap">
+            <table class="consult-table">
+              <thead>
+                <tr>
+                  <th>Folio</th>
+                  <th>Cliente</th>
+                  <th>Ejecutivo</th>
+                  <th>Monto</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of m.cotizacionesPendientes; track c.id) {
+                  <tr>
+                    <td class="text-orange-energy font-semibold">{{ c.folio }}</td>
+                    <td>{{ c.clienteRazonSocial }}</td>
+                    <td>{{ c.ejecutivoNombre ?? '—' }}</td>
+                    <td>{{ c.montoBruto | number:'1.0-0' }} {{ c.divisaCodigo }}</td>
+                    <td class="text-slate-grey text-xs">{{ c.createdAt | date:'dd/MM/yy HH:mm' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
 
     <p class="text-center text-xs text-slate-grey/70">
       Última actualización: {{ m.consultadoEn | date: 'dd/MM/yyyy HH:mm:ss' }} · Solo lectura

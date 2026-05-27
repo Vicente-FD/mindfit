@@ -114,6 +114,63 @@
     </div>
   }
 
+  <section class="analytics-section card-grid-stretch lg:grid-cols-3">
+    <div class="page-card card-equal">
+      <h2 class="text-sm font-semibold text-pure-white">Conversión del pipeline</h2>
+      <div class="donut-wrap">
+        <svg class="donut-chart" viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="donut-track" cx="50" cy="50" r="42" />
+          <circle
+            class="donut-fill"
+            cx="50"
+            cy="50"
+            r="42"
+            [attr.stroke-dasharray]="donutStroke().circ"
+            [attr.stroke-dashoffset]="donutStroke().offset"
+          />
+        </svg>
+        <div class="donut-center">
+          <span class="donut-pct">{{ conversionPct() | number:'1.0-1' }}%</span>
+          <span class="donut-label">Ganadas / Total</span>
+        </div>
+      </div>
+      <p class="exec-hint mt-2">
+        Pipeline abierto
+        {{ dashboardBase()?.montoPipelineAbierto | currency:'CLP':'symbol-narrow':'1.0-0' }}
+      </p>
+    </div>
+
+    <div class="page-card card-equal lg:col-span-2">
+      <h2 class="text-sm font-semibold text-pure-white">Ventas mensuales por sucursal</h2>
+      <div class="bar-chart-list">
+        @for (b of ventasPorSucursal(); track b.label) {
+          <div class="bar-chart-row">
+            <span class="bar-chart-label">{{ b.label }}</span>
+            <div class="bar-chart-track">
+              <div class="bar-chart-fill" [style.width.%]="b.pct"></div>
+            </div>
+            <span class="bar-chart-value">{{ b.monto | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="page-card">
+    <h2 class="text-sm font-semibold text-pure-white">Rendimiento técnicos (OTs cerradas)</h2>
+    <div class="bar-chart-list mt-3">
+      @for (t of rendimientoTecnicos(); track t.label) {
+        <div class="bar-chart-row">
+          <span class="bar-chart-label">{{ t.label }}</span>
+          <div class="bar-chart-track">
+            <div class="bar-chart-fill bar-chart-fill--tech" [style.width.%]="t.pct"></div>
+          </div>
+          <span class="bar-chart-value">{{ t.monto }} OTs</span>
+        </div>
+      }
+    </div>
+  </section>
+
   @if (embudo().length) {
     <section class="page-card ventas-funnel">
       <h2 class="text-sm font-semibold text-pure-white">Embudo comercial (Kanban)</h2>

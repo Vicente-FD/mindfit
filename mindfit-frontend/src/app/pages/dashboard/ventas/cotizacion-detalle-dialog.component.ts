@@ -234,6 +234,7 @@ export class CotizacionDetalleDialogComponent {
 
   private patchFormFromCotizacion(c: CotizacionVenta): void {
     const divisa = (c.divisaCodigo ?? 'CLP') as DivisaCodigo;
+    const tasa = Number(c.tasaCambioClp) || 1;
     this.form.patchValue(
       {
         divisaCodigo: divisa,
@@ -242,10 +243,12 @@ export class CotizacionDetalleDialogComponent {
       { emitEvent: false },
     );
     this.divisaCodigo.set(divisa);
-
     const lineas: CotizacionDetalleLinea[] = (c.detalles ?? []).map((d) => {
       const precioUnit = Number(d.precioUnitarioPactado);
-      const costoClp = Number(d.costoHistoricoClp ?? precioUnit);
+      const precioReferenciaClp =
+        divisa === 'CLP'
+          ? precioUnit
+          : Math.round(precioUnit * tasa * 100) / 100;
       return {
         activoId: d.activoId ?? 0,
         sku: d.skuEstatico,
@@ -254,7 +257,7 @@ export class CotizacionDetalleDialogComponent {
         marca: '',
         categoria: d.categoriaEstatica ?? '',
         cantidad: d.cantidad,
-        precioReferenciaClp: costoClp,
+        precioReferenciaClp,
         precioUnitarioPactado: precioUnit,
         totalLineaNeto: Number(d.totalLineaNeto),
       };

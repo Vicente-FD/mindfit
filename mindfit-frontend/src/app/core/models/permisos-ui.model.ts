@@ -81,6 +81,17 @@ export const PERMISOS_BY_ROL: Record<string, PermisosUi> = {
   },
 };
 
+/** Plantillas rápidas para cargar permisos por rol base. */
+export const PERMISO_PLANTILLAS: { id: string; label: string }[] = [
+  { id: '', label: '— Seleccionar plantilla —' },
+  { id: 'admin', label: 'Super Admin (todos)' },
+  { id: 'jefe_operaciones', label: 'Jefe de Operaciones' },
+  { id: 'ejecutivo_ventas', label: 'Ejecutivo de Ventas' },
+  { id: 'gerente_bi', label: 'Gerente / BI' },
+  { id: 'bodeguero', label: 'Bodeguero' },
+  { id: 'jefe_sucursal', label: 'Jefe de Sucursal' },
+];
+
 export function getDefaultPermisosForRol(rol: string): PermisosUi {
   const base = PERMISOS_BY_ROL[rol] ?? PERMISOS_UI_DEFAULT;
   const merged: PermisosUi = { ...PERMISOS_UI_DEFAULT };
@@ -201,3 +212,7 @@ export const PERMISO_LABEL_GROUPS: PermisoLabelGroup[] = [
 ];
 
 export const ROLES_SIN_MATRIZ_PERMISOS = new Set(['tecnico', 'jefe_sucursal']);
+
+/** Lista única de permisos para la matriz compacta (11 píldoras). */
+export const PERMISO_ALL_ITEMS: { key: keyof PermisosUi; label: string }[] =
+  PERMISO_LABEL_GROUPS[0].items;

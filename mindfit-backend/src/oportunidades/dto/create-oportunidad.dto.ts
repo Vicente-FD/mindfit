@@ -1,4 +1,5 @@
 import {
+  IsDateString,
   IsEnum,
   IsInt,
   IsNumber,
@@ -37,4 +38,8 @@ export class CreateOportunidadDto {
   @IsOptional()
   @IsString()
   notas?: string;
+
+  @IsOptional()
+  @IsDateString()
+  fechaCierreEstimada?: string;
 }

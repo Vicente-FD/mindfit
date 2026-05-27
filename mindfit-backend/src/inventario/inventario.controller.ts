@@ -99,6 +99,8 @@ export class InventarioController {
     RolUsuario.ADMIN,
     RolUsuario.JEFE_OPERACIONES,
     RolUsuario.BODEGUERO,
+    RolUsuario.EJECUTIVO_VENTAS,
+    RolUsuario.GERENTE_BI,
   )
   listStock(@Query() query: FilterBodegaDto) {
     return this.inventario.findStock(query);
@@ -109,6 +111,8 @@ export class InventarioController {
     RolUsuario.ADMIN,
     RolUsuario.JEFE_OPERACIONES,
     RolUsuario.BODEGUERO,
+    RolUsuario.EJECUTIVO_VENTAS,
+    RolUsuario.GERENTE_BI,
   )
   getKpis() {
     return this.inventario.getKpis();

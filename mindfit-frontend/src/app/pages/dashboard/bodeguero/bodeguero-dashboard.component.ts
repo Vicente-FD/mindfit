@@ -52,13 +52,29 @@ export class BodegueroDashboardComponent implements OnInit, OnDestroy {
   readonly trazabilidad = signal<MovimientoTrazabilidad[]>([]);
   readonly trazabilidadLoading = signal(false);
   readonly filtroBusqueda = signal('');
+  readonly filtroMarca = signal<string | null>(null);
+  readonly filtroCategoria = signal<string | null>(null);
   readonly trazabilidadSedeId = signal<number | null>(null);
+
+  readonly marcasDisponibles = computed(() => {
+    const set = new Set(this.maquinas().map((m) => m.marca).filter(Boolean));
+    return [...set].sort();
+  });
+
+  readonly categoriasDisponibles = computed(() => {
+    const set = new Set(this.maquinas().map((m) => m.categoria).filter(Boolean));
+    return [...set].sort();
+  });
 
   readonly maquinasFiltradas = computed(() => {
     const rows = this.maquinas();
     const q = this.filtroBusqueda().trim().toLowerCase();
-    if (!q) return rows;
+    const marca = this.filtroMarca();
+    const cat = this.filtroCategoria();
     return rows.filter((m) => {
+      if (marca && m.marca !== marca) return false;
+      if (cat && m.categoria !== cat) return false;
+      if (!q) return true;
       const cod = m.codigoInventario?.toLowerCase() ?? '';
       const nombre = m.nombre?.toLowerCase() ?? '';
       return cod.includes(q) || nombre.includes(q);
@@ -81,6 +97,28 @@ export class BodegueroDashboardComponent implements OnInit, OnDestroy {
       (r) => r.cantidadActual <= r.cantidadMinimaAlerta,
     ),
   );
+
+  nivelStock(row: BodegaStockRow): 'ok' | 'warn' | 'crit' {
+    const actual = row.cantidadActual;
+    const min = row.cantidadMinimaAlerta;
+    if (actual <= min) return 'crit';
+    if (actual <= Math.ceil(min * 1.25)) return 'warn';
+    return 'ok';
+  }
+
+  nivelStockLabel(nivel: 'ok' | 'warn' | 'crit'): string {
+    if (nivel === 'ok') return 'Stock OK';
+    if (nivel === 'warn') return 'Cerca del mínimo';
+    return 'Reorden';
+  }
+
+  setFiltroMarca(v: string): void {
+    this.filtroMarca.set(v || null);
+  }
+
+  setFiltroCategoria(v: string): void {
+    this.filtroCategoria.set(v || null);
+  }
 
   readonly createForm = this.fb.nonNullable.group({
     sku: ['', [Validators.required, Validators.maxLength(50)]],

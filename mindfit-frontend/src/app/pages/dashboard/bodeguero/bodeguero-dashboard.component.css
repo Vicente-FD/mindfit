@@ -38,6 +38,43 @@
   text-transform: uppercase;
 }
 
+.stock-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.stock-badge--ok {
+  background: rgb(74 222 128 / 0.15);
+  color: #4ade80;
+}
+
+.stock-badge--warn {
+  background: rgb(251 191 36 / 0.15);
+  color: #fbbf24;
+}
+
+.stock-badge--crit {
+  background: rgb(248 113 113 / 0.15);
+  color: #f87171;
+}
+
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.filter-field--grow {
+  flex: 1;
+  min-width: 200px;
+}
+
 .maquina-precio-input {
   max-width: 8.5rem;
   padding: 0.35rem 0.5rem;

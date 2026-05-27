@@ -13,4 +13,5 @@ export declare class OportunidadesService {
     create(dto: CreateOportunidadDto, creadoPorId: number): Promise<Oportunidad>;
     update(id: number, dto: UpdateOportunidadDto): Promise<Oportunidad>;
     marcarGanada(id: number): Promise<Oportunidad>;
+    private checklistDefault;
 }

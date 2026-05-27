@@ -1,6 +1,6 @@
-<div class="modal-backdrop" (click)="cerrar.emit()" role="presentation">
+<div class="mf-modal-backdrop" (click)="cerrar.emit()" role="presentation">
   <div
-    class="modal-panel modal-panel--wide page-card"
+    class="mf-modal-panel mf-modal-panel--wide"
     role="dialog"
     aria-labelledby="cotiz-detalle-title"
     (click)="$event.stopPropagation()"
@@ -8,7 +8,7 @@
     @if (loading()) {
       <p class="text-sm text-slate-grey">Cargando detalle...</p>
     } @else if (cotizacion(); as c) {
-      <header class="modal-head">
+      <header class="mf-modal-head">
         <div>
           <p class="text-xs font-bold uppercase tracking-wide text-orange-energy">{{ c.folio }}</p>
           <h2 id="cotiz-detalle-title" class="page-title">{{ c.cliente?.razonSocial }}</h2>
@@ -48,7 +48,7 @@
         }
       </nav>
 
-      <div class="modal-body">
+      <div class="mf-modal-body">
         <div class="modal-meta">
           <span class="estado-badge" [class]="claseEstado(c.estado)">
             {{ estadoLabel[c.estado] }}
@@ -79,13 +79,18 @@
             <div class="grid gap-3 sm:grid-cols-2">
               <div>
                 <label class="field-label">Divisa</label>
-                <select class="field-input" [formControl]="form.controls.divisaCodigo">
-                  <option value="CLP">CLP (Peso chileno)</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="CAD">CAD</option>
-                </select>
-              </div>
+              <select class="field-input" [formControl]="form.controls.divisaCodigo">
+                <option value="CLP">CLP (Peso chileno)</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="CAD">CAD</option>
+              </select>
+              @if (tasas(); as t) {
+                <p class="mt-1 text-xs text-slate-grey">
+                  Tasa CLP: {{ tasaActual() | number:'1.2-4' }} · {{ t.fuente }}
+                </p>
+              }
+            </div>
               <div>
                 <label class="field-label">Comentarios comerciales</label>
                 <textarea
@@ -144,8 +149,8 @@
               </p>
             </div>
 
-            <div class="modal-actions">
-              <button type="button" class="btn-ghost" (click)="setVista('detalle')">Cancelar</button>
+          <div class="mf-modal-actions">
+            <button type="button" class="btn-ghost" (click)="setVista('detalle')">Cancelar</button>
               <button type="submit" class="btn-primary" [disabled]="saving()">
                 {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
               </button>
@@ -193,8 +198,8 @@
           </div>
 
           @if (puedeEditar()) {
-            <div class="modal-actions">
-              <button type="button" class="btn-primary inline-flex items-center gap-2" (click)="setVista('editar')">
+          <div class="mf-modal-actions">
+            <button type="button" class="btn-primary inline-flex items-center gap-2" (click)="setVista('editar')">
                 <lucide-icon name="pencil" [size]="14" /> Modificar cotización
               </button>
             </div>

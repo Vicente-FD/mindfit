@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   Component,
   OnDestroy,
@@ -27,7 +27,7 @@ const TICK_MS = 60_000;
 
 @Component({
   selector: 'app-sede-monitoreo',
-  imports: [DatePipe, LucideAngularModule],
+  imports: [DatePipe, DecimalPipe, LucideAngularModule],
   templateUrl: './sede-monitoreo.component.html',
   styleUrl: './sede-monitoreo.component.css',
 })
@@ -38,7 +38,8 @@ export class SedeMonitoreoComponent implements OnInit, OnDestroy {
   readonly sedes = signal<Sucursal[]>([]);
   readonly selectedKey = signal<string>(MONITOREO_GLOBAL_KEY);
   readonly data = signal<SucursalMonitoreoResponse | null>(null);
-  readonly loading = signal(false);
+  readonly loading = signal(true);
+  readonly activeTab = signal<'operaciones' | 'comercial'>('operaciones');
   readonly error = signal<string | null>(null);
   readonly lightboxUrl = signal<string | null>(null);
   readonly tick = signal(0);
@@ -80,6 +81,10 @@ export class SedeMonitoreoComponent implements OnInit, OnDestroy {
   onSedeChange(raw: string): void {
     this.selectedKey.set(raw);
     this.loadMonitoreo();
+  }
+
+  setTab(tab: 'operaciones' | 'comercial'): void {
+    this.activeTab.set(tab);
   }
 
   loadMonitoreo(showSpinner = true): void {

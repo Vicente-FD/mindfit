@@ -3,22 +3,25 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, IsNull } from 'typeorm';
+import { DataSource, In, IsNull } from 'typeorm';
 import { Activo } from '../entities/activo.entity';
 import { OrdenTrabajo } from '../entities/orden-trabajo.entity';
 import { Sucursal } from '../entities/sucursal.entity';
 import {
   ClasificacionOrden,
+  EstadoCotizacionVenta,
   EstadoOperacionalActivo,
   EstadoOrdenTrabajo,
   TipoEvidencia,
   TipoMantenimiento,
 } from '../common/enums';
+import { CotizacionVenta } from '../entities/cotizacion-venta.entity';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import { CreateSucursalDto } from './dto/create-sucursal.dto';
 import { UpdateSucursalDto } from './dto/update-sucursal.dto';
 import {
   BitacoraTimelineItemDto,
+  CotizacionPendienteMonitoreoDto,
   HistorialInfraDto,
   HistorialMaquinaDto,
   SucursalMonitoreoResponseDto,
@@ -102,67 +105,194 @@ export class SucursalesService {
 
   async getMonitoreo(sucursalId: number): Promise<SucursalMonitoreoResponseDto> {
     const sucursal = await this.findOne(sucursalId);
-    const activoRepo = this.dataSource.getRepository(Activo);
-    const otRepo = this.dataSource.getRepository(OrdenTrabajo);
-
-    const activos = await activoRepo.find({
-      where: { sucursalId, deletedAt: IsNull() },
-    });
-
-    const ordenes = await otRepo.find({
-      where: { sucursalId, deletedAt: IsNull() },
-      relations: {
-        asignadoA: true,
-        activo: true,
-        evidencias: true,
-        comentarios: true,
-        sucursal: true,
-      },
-      order: { updatedAt: 'DESC' },
-    });
-
-    return this.buildMonitoreoPayload(
+    return this.fetchMonitoreoPayload(
       {
         id: sucursal.id,
         nombre: sucursal.nombre,
         sigla: sucursal.sigla,
       },
-      activos,
-      ordenes,
+      sucursal.id,
       false,
     );
   }
 
   async getMonitoreoGlobal(): Promise<SucursalMonitoreoResponseDto> {
-    const activoRepo = this.dataSource.getRepository(Activo);
-    const otRepo = this.dataSource.getRepository(OrdenTrabajo);
-
-    const activos = await activoRepo.find({
-      where: { deletedAt: IsNull() },
-    });
-
-    const ordenes = await otRepo.find({
-      where: { deletedAt: IsNull() },
-      relations: {
-        asignadoA: true,
-        activo: true,
-        evidencias: true,
-        comentarios: true,
-        sucursal: true,
-      },
-      order: { updatedAt: 'DESC' },
-    });
-
-    return this.buildMonitoreoPayload(
+    return this.fetchMonitoreoPayload(
       {
         id: 0,
         nombre: 'Todas las sedes',
         sigla: 'GLOBAL',
       },
-      activos,
-      ordenes,
+      undefined,
       true,
     );
+  }
+
+  /** Carga paralela de datos de monitoreo (evita awaits secuenciales bloqueantes). */
+  private async fetchMonitoreoPayload(
+    sucursal: { id: number; nombre: string; sigla: string },
+    sucursalId: number | undefined,
+    incluirSedeEnItems: boolean,
+  ): Promise<SucursalMonitoreoResponseDto> {
+    const [
+      activos,
+      ordenesEnCurso,
+      cotizacionesPendientes,
+      ordenesHistorial,
+      otMetricas,
+    ] = await Promise.all([
+      this.loadActivosMonitoreo(sucursalId),
+      this.loadOrdenesEnCursoMonitoreo(sucursalId),
+      this.loadCotizacionesPendientes(sucursalId),
+      this.loadOrdenesHistorialMonitoreo(sucursalId),
+      this.loadOtMetricasMonitoreo(sucursalId),
+    ]);
+
+    const ordenes = this.mergeOrdenesUnicas(ordenesEnCurso, ordenesHistorial);
+
+    return this.buildMonitoreoPayload(
+      sucursal,
+      activos,
+      ordenes,
+      incluirSedeEnItems,
+      cotizacionesPendientes,
+      otMetricas,
+    );
+  }
+
+  private mergeOrdenesUnicas(
+    enCurso: OrdenTrabajo[],
+    historial: OrdenTrabajo[],
+  ): OrdenTrabajo[] {
+    const map = new Map<number, OrdenTrabajo>();
+    for (const o of [...enCurso, ...historial]) {
+      map.set(o.id, o);
+    }
+    return [...map.values()];
+  }
+
+  private loadActivosMonitoreo(sucursalId?: number): Promise<Activo[]> {
+    const repo = this.dataSource.getRepository(Activo);
+    return repo.find({
+      where: {
+        ...(sucursalId != null ? { sucursalId } : {}),
+        deletedAt: IsNull(),
+      },
+      select: {
+        id: true,
+        sucursalId: true,
+        estadoOperacional: true,
+        nombre: true,
+        codigoInventario: true,
+      },
+    });
+  }
+
+  private loadOrdenesEnCursoMonitoreo(
+    sucursalId?: number,
+  ): Promise<OrdenTrabajo[]> {
+    const repo = this.dataSource.getRepository(OrdenTrabajo);
+    return repo.find({
+      where: {
+        ...(sucursalId != null ? { sucursalId } : {}),
+        deletedAt: IsNull(),
+        estado: In([
+          EstadoOrdenTrabajo.ASIGNADA,
+          EstadoOrdenTrabajo.EN_PROCESO,
+        ]),
+      },
+      relations: {
+        asignadoA: true,
+        activo: true,
+        sucursal: true,
+      },
+      order: { updatedAt: 'DESC' },
+      take: 50,
+    });
+  }
+
+  private loadOrdenesHistorialMonitoreo(
+    sucursalId?: number,
+  ): Promise<OrdenTrabajo[]> {
+    const qb = this.dataSource
+      .getRepository(OrdenTrabajo)
+      .createQueryBuilder('o')
+      .leftJoinAndSelect('o.asignadoA', 'asignadoA')
+      .leftJoinAndSelect('o.activo', 'activo')
+      .leftJoinAndSelect('o.evidencias', 'evidencias')
+      .leftJoinAndSelect('o.comentarios', 'comentarios')
+      .leftJoinAndSelect('o.sucursal', 'sucursal')
+      .where('o.deleted_at IS NULL')
+      .andWhere('o.estado IN (:...estados)', {
+        estados: [
+          EstadoOrdenTrabajo.FINALIZADA,
+          EstadoOrdenTrabajo.APROBADA,
+        ],
+      })
+      .orderBy('o.updated_at', 'DESC')
+      .take(sucursalId != null ? 120 : 200);
+
+    if (sucursalId != null) {
+      qb.andWhere('o.sucursal_id = :sid', { sid: sucursalId });
+    }
+
+    return qb.getMany();
+  }
+
+  private async loadOtMetricasMonitoreo(sucursalId?: number): Promise<{
+    otsReportadas: number;
+    otsResueltas: number;
+  }> {
+    const repo = this.dataSource.getRepository(OrdenTrabajo);
+    const baseWhere = {
+      ...(sucursalId != null ? { sucursalId } : {}),
+      deletedAt: IsNull(),
+    };
+
+    const [otsReportadas, otsResueltas] = await Promise.all([
+      repo.count({ where: baseWhere }),
+      repo.count({
+        where: {
+          ...baseWhere,
+          estado: In([
+            EstadoOrdenTrabajo.FINALIZADA,
+            EstadoOrdenTrabajo.APROBADA,
+          ]),
+        },
+      }),
+    ]);
+
+    return { otsReportadas, otsResueltas };
+  }
+
+  private async loadCotizacionesPendientes(
+    sucursalId?: number,
+  ): Promise<CotizacionPendienteMonitoreoDto[]> {
+    const qb = this.dataSource
+      .getRepository(CotizacionVenta)
+      .createQueryBuilder('c')
+      .leftJoinAndSelect('c.cliente', 'cliente')
+      .leftJoinAndSelect('c.creadoPor', 'creadoPor')
+      .where('c.estado = :estado', {
+        estado: EstadoCotizacionVenta.PENDIENTE_APROBACION,
+      })
+      .orderBy('c.createdAt', 'DESC')
+      .take(30);
+
+    if (sucursalId != null && sucursalId > 0) {
+      qb.andWhere('creadoPor.sucursal_id = :sid', { sid: sucursalId });
+    }
+
+    const rows = await qb.getMany();
+    return rows.map((c) => ({
+      id: c.id,
+      folio: c.folio,
+      clienteRazonSocial: c.cliente?.razonSocial ?? '—',
+      ejecutivoNombre: c.creadoPor?.nombre ?? null,
+      montoBruto: Number(c.montoBruto),
+      divisaCodigo: c.divisaCodigo,
+      createdAt: c.createdAt.toISOString(),
+    }));
   }
 
   private buildMonitoreoPayload(
@@ -170,6 +300,8 @@ export class SucursalesService {
     activos: Activo[],
     ordenes: OrdenTrabajo[],
     incluirSedeEnItems: boolean,
+    cotizacionesPendientes: CotizacionPendienteMonitoreoDto[],
+    otMetricas?: { otsReportadas: number; otsResueltas: number },
   ): SucursalMonitoreoResponseDto {
     const activosOperativos = activos.filter(
       (a) => a.estadoOperacional === EstadoOperacionalActivo.OPERATIVO,
@@ -190,10 +322,10 @@ export class SucursalesService {
       EstadoOrdenTrabajo.EN_PROCESO,
     ];
 
-    const otsReportadas = ordenes.length;
-    const otsResueltas = ordenes.filter((o) =>
-      estadosResueltos.includes(o.estado),
-    ).length;
+    const otsReportadas = otMetricas?.otsReportadas ?? ordenes.length;
+    const otsResueltas =
+      otMetricas?.otsResueltas ??
+      ordenes.filter((o) => estadosResueltos.includes(o.estado)).length;
     const porcentajeEfectividad =
       otsReportadas > 0
         ? Math.round((otsResueltas / otsReportadas) * 1000) / 10
@@ -210,6 +342,8 @@ export class SucursalesService {
           clasificacion: o.clasificacion,
           estado: o.estado,
           tecnicoNombre: o.asignadoA?.nombre ?? null,
+          activoNombre: o.activo?.nombre ?? null,
+          activoCodigo: o.activo?.codigoInventario ?? null,
           fechaInicioReal: o.fechaInicioReal?.toISOString() ?? null,
           minutosTranscurridos: elapsed.minutos,
           tiempoTranscurridoLabel: elapsed.label,
@@ -298,6 +432,7 @@ export class SucursalesService {
         otsResueltas,
       },
       trabajosEnCurso,
+      cotizacionesPendientes,
       historialInfraestructura,
       historialMaquinas,
       bitacoraTimeline,

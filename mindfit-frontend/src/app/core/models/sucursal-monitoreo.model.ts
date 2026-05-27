@@ -15,6 +15,16 @@ export interface SucursalMonitoreoSalud {
   otsResueltas: number;
 }
 
+export interface CotizacionPendienteMonitoreo {
+  id: number;
+  folio: string;
+  clienteRazonSocial: string;
+  ejecutivoNombre: string | null;
+  montoBruto: number;
+  divisaCodigo: string;
+  createdAt: string;
+}
+
 export interface TrabajoEnCurso extends Partial<MonitoreoSedeRef> {
   ordenId: number;
   codigoOt: string;
@@ -22,6 +32,8 @@ export interface TrabajoEnCurso extends Partial<MonitoreoSedeRef> {
   clasificacion: string;
   estado: string;
   tecnicoNombre: string | null;
+  activoNombre: string | null;
+  activoCodigo: string | null;
   fechaInicioReal: string | null;
   minutosTranscurridos: number;
   tiempoTranscurridoLabel: string;
@@ -71,6 +83,7 @@ export interface SucursalMonitoreoResponse {
   sucursal: { id: number; nombre: string; sigla: string };
   salud: SucursalMonitoreoSalud;
   trabajosEnCurso: TrabajoEnCurso[];
+  cotizacionesPendientes: CotizacionPendienteMonitoreo[]; // siempre array (API)
   historialInfraestructura: HistorialInfra[];
   historialMaquinas: HistorialMaquina[];
   bitacoraTimeline: BitacoraTimelineItem[];

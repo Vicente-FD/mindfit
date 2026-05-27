@@ -11,7 +11,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { UsuariosService } from '../../../core/services/usuarios.service';
 import {
   getDefaultPermisosForRol,
-  PERMISO_LABEL_GROUPS,
+  PERMISO_ALL_ITEMS,
+  PERMISO_PLANTILLAS,
   PERMISOS_UI_KEYS,
   ROLES_SIN_MATRIZ_PERMISOS,
   resolvePermisosUi,
@@ -59,7 +60,9 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   readonly casaCentral = CASA_CENTRAL_VALUE;
   readonly roles = ROLES;
   readonly roleTabs = ROLE_TABS;
-  readonly permisoLabelGroups = PERMISO_LABEL_GROUPS;
+  readonly permisoAllItems = PERMISO_ALL_ITEMS;
+  readonly permisoPlantillas = PERMISO_PLANTILLAS;
+  readonly plantillaSeleccionada = signal('');
   readonly rolesSinMatriz = ROLES_SIN_MATRIZ_PERMISOS;
   readonly usuarios = signal<Usuario[]>([]);
   readonly sucursales = signal<Sucursal[]>([]);
@@ -195,6 +198,12 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
     const ctrl = this.permisosForm.get(key);
     if (!ctrl) return;
     ctrl.setValue(!ctrl.value);
+  }
+
+  cargarPlantillaPermisos(plantillaId: string): void {
+    this.plantillaSeleccionada.set(plantillaId);
+    if (!plantillaId) return;
+    this.applyPermisosDefaultsForRol(plantillaId as UserRole);
   }
 
   private applyPermisosDefaultsForRol(rol: UserRole): void {

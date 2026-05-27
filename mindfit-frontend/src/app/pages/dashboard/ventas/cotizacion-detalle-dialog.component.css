@@ -1,46 +1,8 @@
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 70;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgb(0 0 0 / 0.8);
-  padding: 1rem;
-}
-
-.modal-panel {
-  width: 100%;
-  max-width: 42rem;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-}
-
-.modal-panel.page-card {
-  padding: 0;
-}
-
-.modal-panel--wide {
-  max-width: 44rem;
-}
-
-.modal-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 1.25rem 1.25rem 0;
-}
-
 .modal-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
-  padding: 0.75rem 1.25rem 0;
+  padding: 0 1.5rem;
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
 }
 
@@ -51,23 +13,11 @@
   color: var(--color-slate-grey, #94a3b8);
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  border-radius: 0.35rem 0.35rem 0 0;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.modal-tab:hover {
-  color: var(--color-pure-white, #fff);
 }
 
 .modal-tab--active {
   color: var(--color-orange-energy, #ff6600);
   border-bottom-color: var(--color-orange-energy, #ff6600);
-}
-
-.modal-body {
-  padding: 1rem 1.25rem 1.25rem;
-  overflow-y: auto;
-  flex: 1;
 }
 
 .modal-meta {
@@ -78,30 +28,10 @@
   margin-bottom: 1rem;
 }
 
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgb(255 255 255 / 0.06);
-}
-
 .detalle-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-@media (max-width: 520px) {
-  .detalle-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.comentarios-box {
   margin-bottom: 1rem;
 }
 
@@ -207,16 +137,8 @@
   color: var(--color-slate-grey, #94a3b8);
 }
 
-.totales-box strong {
-  color: var(--color-pure-white, #fff);
-}
-
 .totales-bruto {
   margin-top: 0.35rem;
   font-size: 1rem;
-  color: var(--color-orange-energy, #ff6600);
-}
-
-.totales-bruto strong {
   color: var(--color-orange-energy, #ff6600);
 }

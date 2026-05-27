@@ -155,6 +155,10 @@ let CotizacionesVentasService = class CotizacionesVentasService {
             if (dto.comentariosComerciales !== undefined) {
                 comentarios = dto.comentariosComerciales?.trim() ?? null;
             }
+            const cambioDivisa = dto.divisaCodigo != null &&
+                dto.divisaCodigo !== cotizacion.divisaCodigo;
+            const cambioTasa = dto.tasaCambioClp != null &&
+                Number(dto.tasaCambioClp) !== Number(cotizacion.tasaCambioClp);
             if (dto.detalles != null) {
                 if (!dto.detalles.length) {
                     throw new common_1.BadRequestException('Debe incluir al menos una máquina');
@@ -168,6 +172,9 @@ let CotizacionesVentasService = class CotizacionesVentasService {
                     }
                 }
                 await this.actualizarDetalles(manager, cotizacion, dto.detalles);
+            }
+            else if (cambioDivisa || cambioTasa) {
+                await this.recalcularDetallesPorDivisa(manager, cotizacion.id, divisaCodigo, tasaCambio);
             }
             const refreshed = await this.findOneInTransaction(manager, id);
             subtotal =
@@ -381,6 +388,19 @@ let CotizacionesVentasService = class CotizacionesVentasService {
                 linea.cotizacionId = cotizacion.id;
                 await detalleRepo.save(linea);
             }
+        }
+    }
+    async recalcularDetallesPorDivisa(manager, cotizacionId, divisa, tasa) {
+        const detalleRepo = manager.getRepository(cotizacion_ventas_detalle_entity_1.CotizacionVentasDetalle);
+        const detalles = await detalleRepo.find({ where: { cotizacionId } });
+        for (const d of detalles) {
+            const costoClp = Number(d.costoHistoricoClp ?? 0);
+            const precio = divisa === enums_1.DivisaCodigo.CLP
+                ? Math.round(costoClp * 100) / 100
+                : Math.round((costoClp / tasa) * 100) / 100;
+            d.precioUnitarioPactado = String(precio);
+            d.totalLineaNeto = String(precio);
+            await detalleRepo.save(d);
         }
     }
     async liberarActivoReserva(manager, activoId) {

@@ -20,6 +20,7 @@ class CreateOportunidadDto {
     montoEstimado;
     divisaCodigo;
     notas;
+    fechaCierreEstimada;
 }
 exports.CreateOportunidadDto = CreateOportunidadDto;
 __decorate([
@@ -55,4 +56,9 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateOportunidadDto.prototype, "notas", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], CreateOportunidadDto.prototype, "fechaCierreEstimada", void 0);
 //# sourceMappingURL=create-oportunidad.dto.js.map

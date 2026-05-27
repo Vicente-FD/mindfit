@@ -11,6 +11,7 @@ import {
   CreateCotizacionPayload,
   UpdateCotizacionPayload,
   CreateOportunidadPayload,
+  UpdateOportunidadPayload,
   Oportunidad,
   TasasDivisa,
   DashboardComercial,
@@ -96,7 +97,7 @@ export class VentasService {
 
   updateOportunidad(
     id: number,
-    payload: Partial<CreateOportunidadPayload>,
+    payload: UpdateOportunidadPayload,
   ): Observable<Oportunidad> {
     return this.http.patch<Oportunidad>(
       `${this.oportunidadesUrl}/${id}`,

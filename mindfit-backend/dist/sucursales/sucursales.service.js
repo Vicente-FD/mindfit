@@ -16,6 +16,7 @@ const activo_entity_1 = require("../entities/activo.entity");
 const orden_trabajo_entity_1 = require("../entities/orden-trabajo.entity");
 const sucursal_entity_1 = require("../entities/sucursal.entity");
 const enums_1 = require("../common/enums");
+const cotizacion_venta_entity_1 = require("../entities/cotizacion-venta.entity");
 const transaction_context_service_1 = require("../common/database/transaction-context.service");
 let SucursalesService = class SucursalesService {
     dataSource;
@@ -72,52 +73,142 @@ let SucursalesService = class SucursalesService {
     }
     async getMonitoreo(sucursalId) {
         const sucursal = await this.findOne(sucursalId);
-        const activoRepo = this.dataSource.getRepository(activo_entity_1.Activo);
-        const otRepo = this.dataSource.getRepository(orden_trabajo_entity_1.OrdenTrabajo);
-        const activos = await activoRepo.find({
-            where: { sucursalId, deletedAt: (0, typeorm_1.IsNull)() },
-        });
-        const ordenes = await otRepo.find({
-            where: { sucursalId, deletedAt: (0, typeorm_1.IsNull)() },
-            relations: {
-                asignadoA: true,
-                activo: true,
-                evidencias: true,
-                comentarios: true,
-                sucursal: true,
-            },
-            order: { updatedAt: 'DESC' },
-        });
-        return this.buildMonitoreoPayload({
+        return this.fetchMonitoreoPayload({
             id: sucursal.id,
             nombre: sucursal.nombre,
             sigla: sucursal.sigla,
-        }, activos, ordenes, false);
+        }, sucursal.id, false);
     }
     async getMonitoreoGlobal() {
-        const activoRepo = this.dataSource.getRepository(activo_entity_1.Activo);
-        const otRepo = this.dataSource.getRepository(orden_trabajo_entity_1.OrdenTrabajo);
-        const activos = await activoRepo.find({
-            where: { deletedAt: (0, typeorm_1.IsNull)() },
-        });
-        const ordenes = await otRepo.find({
-            where: { deletedAt: (0, typeorm_1.IsNull)() },
-            relations: {
-                asignadoA: true,
-                activo: true,
-                evidencias: true,
-                comentarios: true,
-                sucursal: true,
-            },
-            order: { updatedAt: 'DESC' },
-        });
-        return this.buildMonitoreoPayload({
+        return this.fetchMonitoreoPayload({
             id: 0,
             nombre: 'Todas las sedes',
             sigla: 'GLOBAL',
-        }, activos, ordenes, true);
+        }, undefined, true);
     }
-    buildMonitoreoPayload(sucursal, activos, ordenes, incluirSedeEnItems) {
+    async fetchMonitoreoPayload(sucursal, sucursalId, incluirSedeEnItems) {
+        const [activos, ordenesEnCurso, cotizacionesPendientes, ordenesHistorial, otMetricas,] = await Promise.all([
+            this.loadActivosMonitoreo(sucursalId),
+            this.loadOrdenesEnCursoMonitoreo(sucursalId),
+            this.loadCotizacionesPendientes(sucursalId),
+            this.loadOrdenesHistorialMonitoreo(sucursalId),
+            this.loadOtMetricasMonitoreo(sucursalId),
+        ]);
+        const ordenes = this.mergeOrdenesUnicas(ordenesEnCurso, ordenesHistorial);
+        return this.buildMonitoreoPayload(sucursal, activos, ordenes, incluirSedeEnItems, cotizacionesPendientes, otMetricas);
+    }
+    mergeOrdenesUnicas(enCurso, historial) {
+        const map = new Map();
+        for (const o of [...enCurso, ...historial]) {
+            map.set(o.id, o);
+        }
+        return [...map.values()];
+    }
+    loadActivosMonitoreo(sucursalId) {
+        const repo = this.dataSource.getRepository(activo_entity_1.Activo);
+        return repo.find({
+            where: {
+                ...(sucursalId != null ? { sucursalId } : {}),
+                deletedAt: (0, typeorm_1.IsNull)(),
+            },
+            select: {
+                id: true,
+                sucursalId: true,
+                estadoOperacional: true,
+                nombre: true,
+                codigoInventario: true,
+            },
+        });
+    }
+    loadOrdenesEnCursoMonitoreo(sucursalId) {
+        const repo = this.dataSource.getRepository(orden_trabajo_entity_1.OrdenTrabajo);
+        return repo.find({
+            where: {
+                ...(sucursalId != null ? { sucursalId } : {}),
+                deletedAt: (0, typeorm_1.IsNull)(),
+                estado: (0, typeorm_1.In)([
+                    enums_1.EstadoOrdenTrabajo.ASIGNADA,
+                    enums_1.EstadoOrdenTrabajo.EN_PROCESO,
+                ]),
+            },
+            relations: {
+                asignadoA: true,
+                activo: true,
+                sucursal: true,
+            },
+            order: { updatedAt: 'DESC' },
+            take: 50,
+        });
+    }
+    loadOrdenesHistorialMonitoreo(sucursalId) {
+        const qb = this.dataSource
+            .getRepository(orden_trabajo_entity_1.OrdenTrabajo)
+            .createQueryBuilder('o')
+            .leftJoinAndSelect('o.asignadoA', 'asignadoA')
+            .leftJoinAndSelect('o.activo', 'activo')
+            .leftJoinAndSelect('o.evidencias', 'evidencias')
+            .leftJoinAndSelect('o.comentarios', 'comentarios')
+            .leftJoinAndSelect('o.sucursal', 'sucursal')
+            .where('o.deleted_at IS NULL')
+            .andWhere('o.estado IN (:...estados)', {
+            estados: [
+                enums_1.EstadoOrdenTrabajo.FINALIZADA,
+                enums_1.EstadoOrdenTrabajo.APROBADA,
+            ],
+        })
+            .orderBy('o.updated_at', 'DESC')
+            .take(sucursalId != null ? 120 : 200);
+        if (sucursalId != null) {
+            qb.andWhere('o.sucursal_id = :sid', { sid: sucursalId });
+        }
+        return qb.getMany();
+    }
+    async loadOtMetricasMonitoreo(sucursalId) {
+        const repo = this.dataSource.getRepository(orden_trabajo_entity_1.OrdenTrabajo);
+        const baseWhere = {
+            ...(sucursalId != null ? { sucursalId } : {}),
+            deletedAt: (0, typeorm_1.IsNull)(),
+        };
+        const [otsReportadas, otsResueltas] = await Promise.all([
+            repo.count({ where: baseWhere }),
+            repo.count({
+                where: {
+                    ...baseWhere,
+                    estado: (0, typeorm_1.In)([
+                        enums_1.EstadoOrdenTrabajo.FINALIZADA,
+                        enums_1.EstadoOrdenTrabajo.APROBADA,
+                    ]),
+                },
+            }),
+        ]);
+        return { otsReportadas, otsResueltas };
+    }
+    async loadCotizacionesPendientes(sucursalId) {
+        const qb = this.dataSource
+            .getRepository(cotizacion_venta_entity_1.CotizacionVenta)
+            .createQueryBuilder('c')
+            .leftJoinAndSelect('c.cliente', 'cliente')
+            .leftJoinAndSelect('c.creadoPor', 'creadoPor')
+            .where('c.estado = :estado', {
+            estado: enums_1.EstadoCotizacionVenta.PENDIENTE_APROBACION,
+        })
+            .orderBy('c.createdAt', 'DESC')
+            .take(30);
+        if (sucursalId != null && sucursalId > 0) {
+            qb.andWhere('creadoPor.sucursal_id = :sid', { sid: sucursalId });
+        }
+        const rows = await qb.getMany();
+        return rows.map((c) => ({
+            id: c.id,
+            folio: c.folio,
+            clienteRazonSocial: c.cliente?.razonSocial ?? '—',
+            ejecutivoNombre: c.creadoPor?.nombre ?? null,
+            montoBruto: Number(c.montoBruto),
+            divisaCodigo: c.divisaCodigo,
+            createdAt: c.createdAt.toISOString(),
+        }));
+    }
+    buildMonitoreoPayload(sucursal, activos, ordenes, incluirSedeEnItems, cotizacionesPendientes, otMetricas) {
         const activosOperativos = activos.filter((a) => a.estadoOperacional === enums_1.EstadoOperacionalActivo.OPERATIVO).length;
         const activosFueraServicio = activos.filter((a) => a.estadoOperacional === enums_1.EstadoOperacionalActivo.FUERA_SERVICIO).length;
         const activosEnReparacion = activos.filter((a) => a.estadoOperacional === enums_1.EstadoOperacionalActivo.EN_REPARACION).length;
@@ -129,8 +220,9 @@ let SucursalesService = class SucursalesService {
             enums_1.EstadoOrdenTrabajo.ASIGNADA,
             enums_1.EstadoOrdenTrabajo.EN_PROCESO,
         ];
-        const otsReportadas = ordenes.length;
-        const otsResueltas = ordenes.filter((o) => estadosResueltos.includes(o.estado)).length;
+        const otsReportadas = otMetricas?.otsReportadas ?? ordenes.length;
+        const otsResueltas = otMetricas?.otsResueltas ??
+            ordenes.filter((o) => estadosResueltos.includes(o.estado)).length;
         const porcentajeEfectividad = otsReportadas > 0
             ? Math.round((otsResueltas / otsReportadas) * 1000) / 10
             : 0;
@@ -145,6 +237,8 @@ let SucursalesService = class SucursalesService {
                 clasificacion: o.clasificacion,
                 estado: o.estado,
                 tecnicoNombre: o.asignadoA?.nombre ?? null,
+                activoNombre: o.activo?.nombre ?? null,
+                activoCodigo: o.activo?.codigoInventario ?? null,
                 fechaInicioReal: o.fechaInicioReal?.toISOString() ?? null,
                 minutosTranscurridos: elapsed.minutos,
                 tiempoTranscurridoLabel: elapsed.label,
@@ -220,6 +314,7 @@ let SucursalesService = class SucursalesService {
                 otsResueltas,
             },
             trabajosEnCurso,
+            cotizacionesPendientes,
             historialInfraestructura,
             historialMaquinas,
             bitacoraTimeline,

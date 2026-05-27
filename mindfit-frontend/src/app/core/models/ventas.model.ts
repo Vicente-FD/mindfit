@@ -30,6 +30,18 @@ export interface CreateClientePayload {
   ciudad: string;
 }
 
+export interface OportunidadChecklistItem {
+  id: string;
+  texto: string;
+  completado: boolean;
+}
+
+export interface OportunidadActividad {
+  id: string;
+  texto: string;
+  createdAt: string;
+}
+
 export interface Oportunidad {
   id: number;
   clienteId: number;
@@ -39,6 +51,9 @@ export interface Oportunidad {
   montoEstimado: string | number;
   divisaCodigo: string;
   notas: string | null;
+  fechaCierreEstimada: string | null;
+  checklist: OportunidadChecklistItem[];
+  actividades: OportunidadActividad[];
   createdAt: string;
   updatedAt: string;
   cliente?: Cliente;
@@ -52,6 +67,18 @@ export interface CreateOportunidadPayload {
   montoEstimado?: number;
   divisaCodigo?: string;
   notas?: string;
+  fechaCierreEstimada?: string | null;
+}
+
+export interface UpdateOportunidadPayload {
+  titulo?: string;
+  etapa?: EtapaOportunidad;
+  montoEstimado?: number;
+  divisaCodigo?: string;
+  notas?: string;
+  fechaCierreEstimada?: string | null;
+  checklist?: OportunidadChecklistItem[];
+  actividades?: OportunidadActividad[];
 }
 
 export interface TasasDivisa {
