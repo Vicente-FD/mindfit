@@ -126,4 +126,40 @@
       </form>
     </section>
   </div>
+
+  <section class="parametros-emergencia">
+    <div class="parametros-emergencia__head">
+      <div>
+        <h3 class="parametros-col__title">Operatividad de facilidades críticas (emergencia)</h3>
+        <p class="text-xs text-slate-grey mt-1">
+          Uso excepcional para administración. El flujo normal debe actualizarse automáticamente por resolución/rechazo de OTs.
+        </p>
+      </div>
+      <div class="parametros-emergencia__selector">
+        <label class="field-label" for="operatividad-sucursal">Sede</label>
+        <select
+          id="operatividad-sucursal"
+          class="field-input"
+          [value]="operatividadSucursalId() ?? ''"
+          [disabled]="loadingSucursales()"
+          (change)="onChangeOperatividadSucursal($any($event.target).value)"
+        >
+          <option value="" disabled>Seleccionar sede</option>
+          @for (s of sucursales(); track s.id) {
+            <option [value]="s.id">{{ s.nombre }} ({{ s.sigla }})</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (operatividadSucursalId(); as sucursalId) {
+      <app-facilidades-sucursal-panel
+        [sucursalId]="sucursalId"
+        [allowResolve]="true"
+        [showDetailList]="true"
+      />
+    } @else {
+      <p class="text-sm text-slate-grey">Seleccione una sede para gestionar operatividad de servicios.</p>
+    }
+  </section>
 </div>

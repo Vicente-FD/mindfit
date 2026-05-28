@@ -25,6 +25,7 @@ const schema_fix_service_1 = require("./database/schema-fix.service");
 const entities_1 = require("./entities");
 const vehiculos_module_1 = require("./vehiculos/vehiculos.module");
 const licencias_module_1 = require("./licencias/licencias.module");
+const facilidades_criticas_module_1 = require("./facilidades-criticas/facilidades-criticas.module");
 const rendiciones_gastos_module_1 = require("./rendiciones-gastos/rendiciones-gastos.module");
 const divisas_module_1 = require("./divisas/divisas.module");
 const clientes_module_1 = require("./clientes/clientes.module");
@@ -99,6 +100,8 @@ exports.AppModule = AppModule = __decorate([
                             entities_1.CotizacionVentaHistorial,
                             entities_1.Vehiculo,
                             entities_1.LicenciaTecnico,
+                            entities_1.FacilidadCritica,
+                            entities_1.FacilidadCriticaHistorial,
                         ],
                         synchronize: configService.get('NODE_ENV') !== 'production',
                         retryAttempts: 10,
@@ -138,6 +141,7 @@ exports.AppModule = AppModule = __decorate([
             ventas_module_1.VentasModule,
             vehiculos_module_1.VehiculosModule,
             licencias_module_1.LicenciasModule,
+            facilidades_criticas_module_1.FacilidadesCriticasModule,
         ],
         controllers: [app_controller_1.AppController, debug_controller_1.DebugController],
         providers: [

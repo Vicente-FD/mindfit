@@ -25,6 +25,9 @@ const ot_codigo_sequence_1 = require("./ot-codigo.sequence");
 const agent_debug_log_1 = require("../common/agent-debug-log");
 const inventario_service_1 = require("../inventario/inventario.service");
 const evidencias_storage_1 = require("./storage/evidencias.storage");
+const facilidades_criticas_util_1 = require("../common/utils/facilidades-criticas.util");
+const facilidad_critica_entity_1 = require("../entities/facilidad-critica.entity");
+const facilidad_critica_historial_entity_1 = require("../entities/facilidad-critica-historial.entity");
 let OrdenesTrabajoService = class OrdenesTrabajoService {
     static { OrdenesTrabajoService_1 = this; }
     dataSource;
@@ -274,6 +277,7 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
     async reportarFalla(dto, creadoPorId, sucursalId, fotoUrl) {
         const tipo = dto.tipoReporte ?? 'maquina';
         const esMaquina = tipo === 'maquina';
+        const serviciosAfectados = this.resolveServiciosAfectados(dto);
         if (esMaquina && (dto.activoId == null || Number.isNaN(Number(dto.activoId)))) {
             throw new common_1.BadRequestException('Debe seleccionar un activo para reportes de máquina');
         }
@@ -295,6 +299,11 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
             descripcion: dto.descripcion,
             prioridad: dto.prioridad,
             tipoMantenimiento: enums_1.TipoMantenimiento.CORRECTIVO,
+            facilidadCriticaId: dto.facilidadCriticaId,
+            areaServicios: dto.areaServicios,
+            generoServicios: dto.generoServicios,
+            fallaGeneralServicios: ['true', '1'].includes(String(dto.fallaGeneralServicios ?? '').toLowerCase()),
+            serviciosAfectados,
         }, creadoPorId);
         if (fotoUrl) {
             await this.agregarEvidencia(orden.id, creadoPorId, {
@@ -305,7 +314,79 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         if (dto.asignadoAId != null && !Number.isNaN(Number(dto.asignadoAId))) {
             await this.asignar(orden.id, { tecnicoId: Number(dto.asignadoAId) });
         }
+        await this.syncAreaServiciosDesdeReporte({
+            tipoReporte: tipo,
+            areaServicios: dto.areaServicios,
+            generoServicios: dto.generoServicios,
+            generosServicios: dto.generosServicios,
+            fallaGeneralServicios: dto.fallaGeneralServicios,
+            descripcion: dto.descripcion,
+            serviciosAfectados,
+        }, creadoPorId, sucursalId, orden.id);
         return this.findOne(orden.id);
+    }
+    async syncAreaServiciosDesdeReporte(dto, userId, sucursalId, ordenId) {
+        const esGeneral = ['true', '1'].includes(String(dto.fallaGeneralServicios ?? '').toLowerCase());
+        const esServicios = dto.tipoReporte === 'infraestructura' &&
+            (esGeneral || (!!dto.areaServicios && !!dto.serviciosAfectados.length));
+        if (!esServicios)
+            return;
+        const manager = this.manager();
+        const repo = manager.getRepository(facilidad_critica_entity_1.FacilidadCritica);
+        const historialRepo = manager.getRepository(facilidad_critica_historial_entity_1.FacilidadCriticaHistorial);
+        const tiposObjetivo = dto.serviciosAfectados;
+        for (const tipo of tiposObjetivo) {
+            let facilidad = await repo.findOne({ where: { sucursalId, tipo } });
+            if (!facilidad) {
+                facilidad = await repo.save(repo.create({
+                    sucursalId,
+                    tipo,
+                    estado: enums_1.EstadoFacilidadCritica.OPERATIVO,
+                }));
+            }
+            const estadoAnterior = facilidad.estado;
+            facilidad.estado = enums_1.EstadoFacilidadCritica.FUERA_DE_SERVICIO;
+            facilidad.notasTecnicas = dto.descripcion;
+            facilidad.actualizadoPorId = userId;
+            await repo.save(facilidad);
+            await historialRepo.save({
+                facilidadCriticaId: facilidad.id,
+                estadoAnterior,
+                estadoNuevo: enums_1.EstadoFacilidadCritica.FUERA_DE_SERVICIO,
+                descripcionProblema: dto.descripcion,
+                reportadoPorId: userId,
+            });
+            if (!esGeneral && tiposObjetivo.length === 1) {
+                await manager.update(orden_trabajo_entity_1.OrdenTrabajo, ordenId, {
+                    facilidadCriticaId: facilidad.id,
+                });
+                break;
+            }
+        }
+    }
+    resolveServiciosAfectados(dto) {
+        const esServicios = dto.tipoReporte === 'infraestructura';
+        if (!esServicios)
+            return [];
+        const esGeneral = ['true', '1'].includes(String(dto.fallaGeneralServicios ?? '').toLowerCase());
+        if (esGeneral) {
+            return [
+                enums_1.TipoFacilidadCritica.BANO_HOMBRES,
+                enums_1.TipoFacilidadCritica.BANO_MUJERES,
+                enums_1.TipoFacilidadCritica.CAMARIN_HOMBRES,
+                enums_1.TipoFacilidadCritica.CAMARIN_MUJERES,
+                enums_1.TipoFacilidadCritica.DUCHAS_HOMBRES,
+                enums_1.TipoFacilidadCritica.DUCHAS_MUJERES,
+            ];
+        }
+        if (!dto.areaServicios)
+            return [];
+        const generos = (dto.generosServicios ?? dto.generoServicios ?? '')
+            .split(',')
+            .map((g) => g.trim())
+            .filter((g) => g === 'hombres' || g === 'mujeres');
+        const finalGeneros = generos.length > 0 ? generos : ['hombres'];
+        return finalGeneros.map((g) => (0, facilidades_criticas_util_1.resolveTipoFacilidad)(dto.areaServicios, g));
     }
     async eliminarEvidenciasDespues(manager, ordenId) {
         const repo = manager.getRepository(evidencia_ot_entity_1.EvidenciaOt);
@@ -402,6 +483,10 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
             activoId: clasificacion === enums_1.ClasificacionOrden.MAQUINA
                 ? (dto.activoId ?? null)
                 : null,
+            facilidadCriticaId: dto.facilidadCriticaId ?? null,
+            areaServicios: dto.areaServicios ?? null,
+            generoServicios: dto.generoServicios ?? null,
+            fallaGeneralServicios: dto.fallaGeneralServicios ?? false,
             sucursalId: dto.sucursalId,
             creadoPorId,
             asignadoAId,
@@ -661,6 +746,7 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         orden.fechaAprobacion = new Date();
         await manager.save(orden_trabajo_entity_1.OrdenTrabajo, orden);
         await this.syncActivoTrasCierreOt(manager, orden);
+        await this.actualizarServiciosOt(manager, orden);
         return this.findOne(id);
     }
     static REVERTIR_APROBACION_MS = 2 * 60 * 1000;
@@ -685,7 +771,7 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
         }
         return this.findOne(id);
     }
-    async rechazar(id, motivo) {
+    async rechazar(id, motivo, _actualizarServiciosOperativo = false) {
         const orden = await this.findOne(id);
         const motivoRechazo = motivo.trim();
         if (motivoRechazo.length < 3) {
@@ -707,9 +793,90 @@ let OrdenesTrabajoService = class OrdenesTrabajoService {
             orden.asignadoAId = null;
             await manager.save(orden_trabajo_entity_1.OrdenTrabajo, orden);
             await this.syncActivoTrasCierreOt(manager, orden);
+            await this.actualizarServiciosOt(manager, orden);
             return this.findOne(id);
         }
         throw new common_1.BadRequestException('Solo se pueden rechazar tickets en estado pendiente o cierres en estado finalizada');
+    }
+    async actualizarServiciosOt(manager, orden) {
+        const servicios = this.inferServiciosAfectadosOrden(orden);
+        if (!servicios.length)
+            return;
+        const estadosObjetivo = await this.resolverEstadoServiciosTrasCierreOt(manager, orden, servicios);
+        const repo = manager.getRepository(facilidad_critica_entity_1.FacilidadCritica);
+        const historialRepo = manager.getRepository(facilidad_critica_historial_entity_1.FacilidadCriticaHistorial);
+        const facilidades = await repo.find({
+            where: { sucursalId: orden.sucursalId },
+        });
+        for (const f of facilidades) {
+            if (!servicios.includes(f.tipo))
+                continue;
+            const estadoDestino = estadosObjetivo.get(f.tipo);
+            if (!estadoDestino || estadoDestino === f.estado)
+                continue;
+            const estadoAnterior = f.estado;
+            f.estado = estadoDestino;
+            await repo.save(f);
+            await historialRepo.save({
+                facilidadCriticaId: f.id,
+                estadoAnterior,
+                estadoNuevo: estadoDestino,
+                descripcionProblema: `Sincronizado por OT ${orden.codigoOt} (${orden.estado})`,
+                reportadoPorId: orden.creadoPorId,
+            });
+        }
+    }
+    async resolverEstadoServiciosTrasCierreOt(manager, orden, serviciosObjetivo) {
+        const estados = new Map(serviciosObjetivo.map((servicio) => [
+            servicio,
+            enums_1.EstadoFacilidadCritica.OPERATIVO,
+        ]));
+        const otsAbiertas = await manager.getRepository(orden_trabajo_entity_1.OrdenTrabajo).find({
+            where: {
+                sucursalId: orden.sucursalId,
+                clasificacion: enums_1.ClasificacionOrden.INFRAESTRUCTURA,
+                estado: (0, typeorm_1.In)(OrdenesTrabajoService_1.ESTADOS_OT_BLOQUEAN_OPERATIVO),
+            },
+            select: {
+                id: true,
+                clasificacion: true,
+                estado: true,
+                serviciosAfectados: true,
+                fallaGeneralServicios: true,
+                areaServicios: true,
+                generoServicios: true,
+            },
+        });
+        for (const otAbierta of otsAbiertas) {
+            if (otAbierta.id === orden.id)
+                continue;
+            const serviciosOt = this.inferServiciosAfectadosOrden(otAbierta);
+            for (const servicio of serviciosOt) {
+                if (!estados.has(servicio))
+                    continue;
+                estados.set(servicio, enums_1.EstadoFacilidadCritica.FUERA_DE_SERVICIO);
+            }
+        }
+        return estados;
+    }
+    inferServiciosAfectadosOrden(orden) {
+        const explicitos = (orden.serviciosAfectados ?? []).filter(Boolean);
+        if (explicitos.length)
+            return explicitos;
+        if (orden.fallaGeneralServicios) {
+            return [
+                enums_1.TipoFacilidadCritica.BANO_HOMBRES,
+                enums_1.TipoFacilidadCritica.BANO_MUJERES,
+                enums_1.TipoFacilidadCritica.CAMARIN_HOMBRES,
+                enums_1.TipoFacilidadCritica.CAMARIN_MUJERES,
+                enums_1.TipoFacilidadCritica.DUCHAS_HOMBRES,
+                enums_1.TipoFacilidadCritica.DUCHAS_MUJERES,
+            ];
+        }
+        if (orden.areaServicios && orden.generoServicios) {
+            return [(0, facilidades_criticas_util_1.resolveTipoFacilidad)(orden.areaServicios, orden.generoServicios)];
+        }
+        return [];
     }
 };
 exports.OrdenesTrabajoService = OrdenesTrabajoService;

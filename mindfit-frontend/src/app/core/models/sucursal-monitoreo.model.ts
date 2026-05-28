@@ -79,9 +79,36 @@ export interface BitacoraTimelineItem extends Partial<MonitoreoSedeRef> {
   activoNombre: string | null;
 }
 
+export interface FacilidadesCriticasMonitoreo {
+  semaforo: string;
+  operativas: number;
+  enMantenimiento: number;
+  fueraDeServicio: number;
+  items: {
+    id: number;
+    tipo: string;
+    tipoLabel: string;
+    estado: string;
+    notasTecnicas: string | null;
+    fallosHistoricos: number;
+  }[];
+}
+
+export interface SedeSemaforoMonitoreo {
+  sucursalId: number;
+  sucursalNombre: string;
+  sucursalSigla: string;
+  semaforo: string;
+  operativas: number;
+  enMantenimiento: number;
+  fueraDeServicio: number;
+}
+
 export interface SucursalMonitoreoResponse {
   sucursal: { id: number; nombre: string; sigla: string };
   salud: SucursalMonitoreoSalud;
+  facilidadesCriticas: FacilidadesCriticasMonitoreo | null;
+  sedesSemaforoFacilidades: SedeSemaforoMonitoreo[];
   trabajosEnCurso: TrabajoEnCurso[];
   cotizacionesPendientes: CotizacionPendienteMonitoreo[]; // siempre array (API)
   historialInfraestructura: HistorialInfra[];

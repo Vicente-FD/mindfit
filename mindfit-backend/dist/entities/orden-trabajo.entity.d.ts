@@ -5,11 +5,18 @@ import { Usuario } from './usuario.entity';
 import { EvidenciaOt } from './evidencia-ot.entity';
 import { ComentarioOt } from './comentario-ot.entity';
 import { OrdenTrabajoRepuesto } from './orden-trabajo-repuesto.entity';
+import { FacilidadCritica } from './facilidad-critica.entity';
 export declare class OrdenTrabajo {
     id: number;
     codigoOt: string;
     clasificacion: ClasificacionOrden;
     activoId: number | null;
+    facilidadCriticaId: number | null;
+    areaServicios: 'bano' | 'camarin' | 'ducha' | null;
+    generoServicios: 'hombres' | 'mujeres' | null;
+    fallaGeneralServicios: boolean;
+    serviciosAfectados: string[] | null;
+    facilidadCritica: FacilidadCritica | null;
     activo: Activo | null;
     sucursalId: number;
     sucursal: Sucursal;

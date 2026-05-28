@@ -37,9 +37,12 @@ import {
   CotizacionVentaHistorial,
   Vehiculo,
   LicenciaTecnico,
+  FacilidadCritica,
+  FacilidadCriticaHistorial,
 } from './entities';
 import { VehiculosModule } from './vehiculos/vehiculos.module';
 import { LicenciasModule } from './licencias/licencias.module';
+import { FacilidadesCriticasModule } from './facilidades-criticas/facilidades-criticas.module';
 import { RendicionesGastosModule } from './rendiciones-gastos/rendiciones-gastos.module';
 import { DivisasModule } from './divisas/divisas.module';
 import { ClientesModule } from './clientes/clientes.module';
@@ -116,6 +119,8 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
             CotizacionVentaHistorial,
             Vehiculo,
             LicenciaTecnico,
+            FacilidadCritica,
+            FacilidadCriticaHistorial,
           ],
           synchronize: configService.get<string>('NODE_ENV') !== 'production',
           retryAttempts: 10,
@@ -155,6 +160,7 @@ import { runBodegaGlobalPreMigrate } from './database/bodega-global-migrate';
     VentasModule,
     VehiculosModule,
     LicenciasModule,
+    FacilidadesCriticasModule,
   ],
   controllers: [AppController, DebugController],
   providers: [

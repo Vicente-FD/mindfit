@@ -4,13 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { unlink } from 'fs/promises';
-import { Brackets, DataSource, EntityManager } from 'typeorm';
+import { Brackets, DataSource, EntityManager, In } from 'typeorm';
 import {
   ClasificacionOrden,
+  EstadoFacilidadCritica,
   EstadoOperacionalActivo,
   EstadoOrdenTrabajo,
   PrioridadOrden,
   RolUsuario,
+  TipoFacilidadCritica,
   TipoEvidencia,
   TipoMantenimiento,
 } from '../common/enums';
@@ -33,6 +35,9 @@ import { InventarioService } from '../inventario/inventario.service';
 import { RepuestoConsumoItemDto } from '../inventario/dto/repuesto-consumo.dto';
 import { resolveEvidenciaDiskPath } from './storage/evidencias.storage';
 import { TipoReporteSucursal } from './dto/tipo-reporte-sucursal';
+import { resolveTipoFacilidad } from '../common/utils/facilidades-criticas.util';
+import { FacilidadCritica } from '../entities/facilidad-critica.entity';
+import { FacilidadCriticaHistorial } from '../entities/facilidad-critica-historial.entity';
 import {
   CalendarioOrdenesResponseDto,
   OrdenTrabajoCalendarioItem,
@@ -395,6 +400,11 @@ export class OrdenesTrabajoService {
       prioridad: PrioridadOrden;
       titulo?: string;
       asignadoAId?: number;
+      facilidadCriticaId?: number;
+      areaServicios?: 'bano' | 'camarin' | 'ducha';
+      generoServicios?: 'hombres' | 'mujeres';
+      generosServicios?: string;
+      fallaGeneralServicios?: string;
     },
     creadoPorId: number,
     sucursalId: number,
@@ -402,6 +412,7 @@ export class OrdenesTrabajoService {
   ) {
     const tipo = dto.tipoReporte ?? 'maquina';
     const esMaquina = tipo === 'maquina';
+    const serviciosAfectados = this.resolveServiciosAfectados(dto);
 
     if (esMaquina && (dto.activoId == null || Number.isNaN(Number(dto.activoId)))) {
       throw new BadRequestException(
@@ -431,6 +442,13 @@ export class OrdenesTrabajoService {
         descripcion: dto.descripcion,
         prioridad: dto.prioridad,
         tipoMantenimiento: TipoMantenimiento.CORRECTIVO,
+        facilidadCriticaId: dto.facilidadCriticaId,
+        areaServicios: dto.areaServicios,
+        generoServicios: dto.generoServicios,
+        fallaGeneralServicios: ['true', '1'].includes(
+          String(dto.fallaGeneralServicios ?? '').toLowerCase(),
+        ),
+        serviciosAfectados,
       },
       creadoPorId,
     );
@@ -446,7 +464,119 @@ export class OrdenesTrabajoService {
       await this.asignar(orden.id, { tecnicoId: Number(dto.asignadoAId) });
     }
 
+    await this.syncAreaServiciosDesdeReporte(
+      {
+        tipoReporte: tipo,
+        areaServicios: dto.areaServicios,
+        generoServicios: dto.generoServicios,
+        generosServicios: dto.generosServicios,
+        fallaGeneralServicios: dto.fallaGeneralServicios,
+        descripcion: dto.descripcion,
+        serviciosAfectados,
+      },
+      creadoPorId,
+      sucursalId,
+      orden.id,
+    );
+
     return this.findOne(orden.id);
+  }
+
+  private async syncAreaServiciosDesdeReporte(
+    dto: {
+      tipoReporte: TipoReporteSucursal;
+      areaServicios?: 'bano' | 'camarin' | 'ducha';
+      generoServicios?: 'hombres' | 'mujeres';
+      generosServicios?: string;
+      fallaGeneralServicios?: string;
+      descripcion: string;
+      serviciosAfectados: string[];
+    },
+    userId: number,
+    sucursalId: number,
+    ordenId: number,
+  ): Promise<void> {
+    const esGeneral = ['true', '1'].includes(
+      String(dto.fallaGeneralServicios ?? '').toLowerCase(),
+    );
+    const esServicios =
+      dto.tipoReporte === 'infraestructura' &&
+      (esGeneral || (!!dto.areaServicios && !!dto.serviciosAfectados.length));
+    if (!esServicios) return;
+
+    const manager = this.manager();
+    const repo = manager.getRepository(FacilidadCritica);
+    const historialRepo = manager.getRepository(FacilidadCriticaHistorial);
+
+    const tiposObjetivo = dto.serviciosAfectados as TipoFacilidadCritica[];
+
+    for (const tipo of tiposObjetivo) {
+      let facilidad = await repo.findOne({ where: { sucursalId, tipo } });
+      if (!facilidad) {
+        facilidad = await repo.save(
+          repo.create({
+            sucursalId,
+            tipo,
+            estado: EstadoFacilidadCritica.OPERATIVO,
+          }),
+        );
+      }
+
+      const estadoAnterior = facilidad.estado;
+      facilidad.estado = EstadoFacilidadCritica.FUERA_DE_SERVICIO;
+      facilidad.notasTecnicas = dto.descripcion;
+      facilidad.actualizadoPorId = userId;
+      await repo.save(facilidad);
+
+      await historialRepo.save({
+        facilidadCriticaId: facilidad.id,
+        estadoAnterior,
+        estadoNuevo: EstadoFacilidadCritica.FUERA_DE_SERVICIO,
+        descripcionProblema: dto.descripcion,
+        reportadoPorId: userId,
+      });
+
+      if (!esGeneral && tiposObjetivo.length === 1) {
+        await manager.update(OrdenTrabajo, ordenId, {
+          facilidadCriticaId: facilidad.id,
+        });
+        break;
+      }
+    }
+  }
+
+  private resolveServiciosAfectados(dto: {
+    tipoReporte: TipoReporteSucursal;
+    areaServicios?: 'bano' | 'camarin' | 'ducha';
+    generoServicios?: 'hombres' | 'mujeres';
+    generosServicios?: string;
+    fallaGeneralServicios?: string;
+  }): string[] {
+    const esServicios = dto.tipoReporte === 'infraestructura';
+    if (!esServicios) return [];
+    const esGeneral = ['true', '1'].includes(
+      String(dto.fallaGeneralServicios ?? '').toLowerCase(),
+    );
+    if (esGeneral) {
+      return [
+        TipoFacilidadCritica.BANO_HOMBRES,
+        TipoFacilidadCritica.BANO_MUJERES,
+        TipoFacilidadCritica.CAMARIN_HOMBRES,
+        TipoFacilidadCritica.CAMARIN_MUJERES,
+        TipoFacilidadCritica.DUCHAS_HOMBRES,
+        TipoFacilidadCritica.DUCHAS_MUJERES,
+      ];
+    }
+    if (!dto.areaServicios) return [];
+    const generos = (dto.generosServicios ?? dto.generoServicios ?? '')
+      .split(',')
+      .map((g) => g.trim())
+      .filter((g) => g === 'hombres' || g === 'mujeres') as Array<
+      'hombres' | 'mujeres'
+    >;
+    const finalGeneros =
+      generos.length > 0 ? generos : (['hombres'] as Array<'hombres' | 'mujeres'>);
+    return finalGeneros.map((g) => resolveTipoFacilidad(dto.areaServicios!, g));
   }
 
   /**
@@ -585,6 +715,10 @@ export class OrdenesTrabajoService {
         clasificacion === ClasificacionOrden.MAQUINA
           ? (dto.activoId ?? null)
           : null,
+      facilidadCriticaId: dto.facilidadCriticaId ?? null,
+      areaServicios: dto.areaServicios ?? null,
+      generoServicios: dto.generoServicios ?? null,
+      fallaGeneralServicios: dto.fallaGeneralServicios ?? false,
       sucursalId: dto.sucursalId,
       creadoPorId,
       asignadoAId,
@@ -967,6 +1101,7 @@ export class OrdenesTrabajoService {
     orden.fechaAprobacion = new Date();
     await manager.save(OrdenTrabajo, orden);
     await this.syncActivoTrasCierreOt(manager, orden);
+    await this.actualizarServiciosOt(manager, orden);
     return this.findOne(id);
   }
 
@@ -1006,7 +1141,11 @@ export class OrdenesTrabajoService {
     return this.findOne(id);
   }
 
-  async rechazar(id: number, motivo: string) {
+  async rechazar(
+    id: number,
+    motivo: string,
+    _actualizarServiciosOperativo = false,
+  ) {
     const orden = await this.findOne(id);
     const motivoRechazo = motivo.trim();
     if (motivoRechazo.length < 3) {
@@ -1033,11 +1172,104 @@ export class OrdenesTrabajoService {
       orden.asignadoAId = null;
       await manager.save(OrdenTrabajo, orden);
       await this.syncActivoTrasCierreOt(manager, orden);
+      await this.actualizarServiciosOt(manager, orden);
       return this.findOne(id);
     }
 
     throw new BadRequestException(
       'Solo se pueden rechazar tickets en estado pendiente o cierres en estado finalizada',
     );
+  }
+
+  private async actualizarServiciosOt(
+    manager: EntityManager,
+    orden: OrdenTrabajo,
+  ): Promise<void> {
+    const servicios = this.inferServiciosAfectadosOrden(orden);
+    if (!servicios.length) return;
+    const estadosObjetivo = await this.resolverEstadoServiciosTrasCierreOt(
+      manager,
+      orden,
+      servicios,
+    );
+    const repo = manager.getRepository(FacilidadCritica);
+    const historialRepo = manager.getRepository(FacilidadCriticaHistorial);
+    const facilidades = await repo.find({
+      where: { sucursalId: orden.sucursalId },
+    });
+    for (const f of facilidades) {
+      if (!servicios.includes(f.tipo)) continue;
+      const estadoDestino = estadosObjetivo.get(f.tipo);
+      if (!estadoDestino || estadoDestino === f.estado) continue;
+      const estadoAnterior = f.estado;
+      f.estado = estadoDestino;
+      await repo.save(f);
+      await historialRepo.save({
+        facilidadCriticaId: f.id,
+        estadoAnterior,
+        estadoNuevo: estadoDestino,
+        descripcionProblema: `Sincronizado por OT ${orden.codigoOt} (${orden.estado})`,
+        reportadoPorId: orden.creadoPorId,
+      });
+    }
+  }
+
+  private async resolverEstadoServiciosTrasCierreOt(
+    manager: EntityManager,
+    orden: OrdenTrabajo,
+    serviciosObjetivo: string[],
+  ): Promise<Map<string, EstadoFacilidadCritica>> {
+    const estados = new Map<string, EstadoFacilidadCritica>(
+      serviciosObjetivo.map((servicio) => [
+        servicio,
+        EstadoFacilidadCritica.OPERATIVO,
+      ]),
+    );
+    const otsAbiertas = await manager.getRepository(OrdenTrabajo).find({
+      where: {
+        sucursalId: orden.sucursalId,
+        clasificacion: ClasificacionOrden.INFRAESTRUCTURA,
+        estado: In(OrdenesTrabajoService.ESTADOS_OT_BLOQUEAN_OPERATIVO),
+      },
+      select: {
+        id: true,
+        clasificacion: true,
+        estado: true,
+        serviciosAfectados: true,
+        fallaGeneralServicios: true,
+        areaServicios: true,
+        generoServicios: true,
+      },
+    });
+
+    for (const otAbierta of otsAbiertas) {
+      if (otAbierta.id === orden.id) continue;
+      const serviciosOt = this.inferServiciosAfectadosOrden(otAbierta);
+      for (const servicio of serviciosOt) {
+        if (!estados.has(servicio)) continue;
+        estados.set(servicio, EstadoFacilidadCritica.FUERA_DE_SERVICIO);
+      }
+    }
+
+    return estados;
+  }
+
+  private inferServiciosAfectadosOrden(orden: OrdenTrabajo): string[] {
+    const explicitos = (orden.serviciosAfectados ?? []).filter(Boolean);
+    if (explicitos.length) return explicitos;
+    if (orden.fallaGeneralServicios) {
+      return [
+        TipoFacilidadCritica.BANO_HOMBRES,
+        TipoFacilidadCritica.BANO_MUJERES,
+        TipoFacilidadCritica.CAMARIN_HOMBRES,
+        TipoFacilidadCritica.CAMARIN_MUJERES,
+        TipoFacilidadCritica.DUCHAS_HOMBRES,
+        TipoFacilidadCritica.DUCHAS_MUJERES,
+      ];
+    }
+    if (orden.areaServicios && orden.generoServicios) {
+      return [resolveTipoFacilidad(orden.areaServicios, orden.generoServicios)];
+    }
+    return [];
   }
 }

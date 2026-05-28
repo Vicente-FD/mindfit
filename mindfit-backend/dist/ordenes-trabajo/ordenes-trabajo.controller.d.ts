@@ -38,6 +38,12 @@ export declare class OrdenesTrabajoController {
         codigoOt: string;
         clasificacion: import("../common/enums").ClasificacionOrden;
         activoId: number | null;
+        facilidadCriticaId: number | null;
+        areaServicios: "bano" | "camarin" | "ducha" | null;
+        generoServicios: "hombres" | "mujeres" | null;
+        fallaGeneralServicios: boolean;
+        serviciosAfectados: string[] | null;
+        facilidadCritica: import("../entities").FacilidadCritica | null;
         activo: import("../entities").Activo | null;
         sucursalId: number;
         sucursal: import("../entities").Sucursal;

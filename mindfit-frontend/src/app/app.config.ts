@@ -53,6 +53,7 @@ import {
   AlertCircle,
   Cpu,
   Key,
+  Droplets,
 } from 'lucide-angular';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -112,6 +113,7 @@ export const appConfig: ApplicationConfig = {
         AlertCircle,
         Cpu,
         Key,
+        Droplets,
       }),
     ),
     provideRouter(routes),

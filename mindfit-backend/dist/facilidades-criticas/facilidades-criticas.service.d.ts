@@ -1,0 +1,34 @@
+import { DataSource, EntityManager } from 'typeorm';
+import { OrdenesTrabajoService } from '../ordenes-trabajo/ordenes-trabajo.service';
+import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
+import { ActualizarEstadoFacilidadDto } from './dto/actualizar-estado-facilidad.dto';
+import { FacilidadCriticaItemDto, FacilidadHistorialItemDto, FacilidadesResumenDto, ReportarAreaServiciosResultDto, SedeSemaforoResumenDto } from './dto/facilidad-critica-response.dto';
+import { ReportarAreaServiciosDto } from './dto/reportar-area-servicios.dto';
+import { ReportarFallaFacilidadDto } from './dto/reportar-falla-facilidad.dto';
+export declare class FacilidadesCriticasService {
+    private readonly dataSource;
+    private readonly ordenesTrabajoService;
+    constructor(dataSource: DataSource, ordenesTrabajoService: OrdenesTrabajoService);
+    ensurePlantillaSucursal(sucursalId: number, manager?: EntityManager): Promise<void>;
+    backfillTodasLasSucursales(): Promise<void>;
+    getResumenSucursal(sucursalId: number): Promise<FacilidadesResumenDto>;
+    getResumenGlobalSedes(): Promise<SedeSemaforoResumenDto[]>;
+    findMiSucursal(user: JwtPayload): Promise<FacilidadesResumenDto>;
+    findBySucursalForUser(sucursalId: number, user: JwtPayload): Promise<FacilidadesResumenDto>;
+    getHistorial(facilidadId: number, user: JwtPayload): Promise<FacilidadHistorialItemDto[]>;
+    reportarAreaServicios(dto: ReportarAreaServiciosDto, user: JwtPayload, fotoUrl: string): Promise<ReportarAreaServiciosResultDto>;
+    reportarFalla(facilidadId: number, dto: ReportarFallaFacilidadDto, user: JwtPayload): Promise<FacilidadCriticaItemDto>;
+    actualizarEstado(facilidadId: number, dto: ActualizarEstadoFacilidadDto, user: JwtPayload): Promise<FacilidadCriticaItemDto>;
+    private loadItemsConConteo;
+    private buildResumen;
+    private mapItem;
+    private countHistorialFallas;
+    private findFacilidadOrFail;
+    private aplicarFallaFacilidad;
+    private marcarFallaEnTodasLasFacilidades;
+    private resolveSucursalIdParaReporte;
+    private resolveSucursalIdUsuario;
+    private assertPuedeVerSucursal;
+    private assertPuedeModificarSucursal;
+    private assertPuedeResolverEstado;
+}

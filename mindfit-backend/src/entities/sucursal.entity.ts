@@ -10,6 +10,7 @@ import {
 import { Usuario } from './usuario.entity';
 import { Activo } from './activo.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
+import { FacilidadCritica } from './facilidad-critica.entity';
 
 @Entity('sucursales')
 export class Sucursal {
@@ -54,4 +55,7 @@ export class Sucursal {
 
   @OneToMany(() => OrdenTrabajo, (orden) => orden.sucursal)
   ordenesTrabajo: OrdenTrabajo[];
+
+  @OneToMany(() => FacilidadCritica, (f) => f.sucursal)
+  facilidadesCriticas: FacilidadCritica[];
 }

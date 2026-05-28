@@ -22,10 +22,20 @@
       >
         Infraestructura / petición
       </button>
+      <button
+        type="button"
+        role="tab"
+        class="tipo-pill"
+        [class.tipo-pill--active]="esAreaServicios"
+        [attr.aria-selected]="esAreaServicios"
+        (click)="setModoAreaServicios()"
+      >
+        Área de servicios
+      </button>
     </div>
   </div>
 
-  @if (!esReporteMaquina) {
+  @if (!esReporteMaquina && !esAreaServicios) {
     <div>
       <label class="field-label">Detalle del reporte *</label>
       <div class="tipo-reporte-pills tipo-reporte-pills--sub" role="group">
@@ -40,6 +50,79 @@
           </button>
         }
       </div>
+    </div>
+  }
+
+  @if (esAreaServicios) {
+    <div class="space-y-3 rounded-xl border border-white/10 bg-black/20 p-3">
+      <div>
+        <label class="field-label">Área *</label>
+        <div class="tipo-reporte-pills tipo-reporte-pills--sub" role="group">
+          <button
+            type="button"
+            class="tipo-pill tipo-pill--sub"
+            [class.tipo-pill--active]="form.controls.areaServicios.value === 'bano'"
+            [disabled]="form.controls.fallaGeneralServicios.value"
+            (click)="form.controls.areaServicios.setValue('bano')"
+          >
+            Baños
+          </button>
+          <button
+            type="button"
+            class="tipo-pill tipo-pill--sub"
+            [class.tipo-pill--active]="form.controls.areaServicios.value === 'camarin'"
+            [disabled]="form.controls.fallaGeneralServicios.value"
+            (click)="form.controls.areaServicios.setValue('camarin')"
+          >
+            Camarines
+          </button>
+          <button
+            type="button"
+            class="tipo-pill tipo-pill--sub"
+            [class.tipo-pill--active]="form.controls.areaServicios.value === 'ducha'"
+            [disabled]="form.controls.fallaGeneralServicios.value"
+            (click)="form.controls.areaServicios.setValue('ducha')"
+          >
+            Duchas
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="tipo-pill tipo-pill--sub w-full text-left"
+        [class.tipo-pill--active]="form.controls.fallaGeneralServicios.value"
+        (click)="toggleFallaGeneralServicios()"
+      >
+        Falla general en área de servicios
+      </button>
+
+      @if (!form.controls.fallaGeneralServicios.value) {
+        <div>
+          <label class="field-label">Género *</label>
+          <div class="tipo-reporte-pills tipo-reporte-pills--sub" role="group">
+            <button
+              type="button"
+              class="tipo-pill tipo-pill--sub"
+              [class.tipo-pill--active]="form.controls.generoServiciosHombres.value"
+              (click)="toggleGeneroServicio('hombres')"
+            >
+              Hombres
+            </button>
+            <button
+              type="button"
+              class="tipo-pill tipo-pill--sub"
+              [class.tipo-pill--active]="form.controls.generoServiciosMujeres.value"
+              (click)="toggleGeneroServicio('mujeres')"
+            >
+              Mujeres
+            </button>
+          </div>
+          @if (form.controls.generoServicios.invalid && form.controls.generoServicios.touched) {
+            <p class="mt-1 text-xs text-orange-energy">Seleccione al menos un género.</p>
+          }
+        </div>
+      }
     </div>
   }
 

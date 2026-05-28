@@ -23,6 +23,12 @@
     }
 
     <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+      @if (mode() === 'ticket' && isServicios()) {
+        <p class="rounded-lg border border-white/10 bg-black/20 p-2.5 text-xs text-slate-grey">
+          Al rechazar este ticket, el estado de operatividad de servicios se
+          recalcula automáticamente según las OTs aún abiertas en la sede.
+        </p>
+      }
       <div>
         <label class="field-label" for="motivo">Motivo de rechazo *</label>
         <textarea

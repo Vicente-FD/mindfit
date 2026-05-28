@@ -17,6 +17,7 @@ export class SchemaFixService implements OnModuleInit {
     await this.ensureCotizacionHistorial();
     await this.ensureOportunidadesCrm();
     await this.ensureMonitoreoIndexes();
+    await this.ensureFacilidadesCriticas();
     await this.ensureSolicitudesPassword();
     await this.ensureRendicionesGastos();
     await this.ensureOtSchema();
@@ -98,6 +99,85 @@ export class SchemaFixService implements OnModuleInit {
       ON usuarios (sucursal_id);
     `);
     this.logger.log('Índices de monitoreo verificados');
+  }
+
+  private async ensureFacilidadesCriticas(): Promise<void> {
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS facilidades_criticas (
+        id SERIAL PRIMARY KEY,
+        sucursal_id INT NOT NULL REFERENCES sucursales(id) ON DELETE CASCADE,
+        tipo VARCHAR(40) NOT NULL,
+        estado VARCHAR(24) NOT NULL DEFAULT 'operativo'
+          CHECK (estado IN ('operativo', 'mantenimiento', 'fuera_de_servicio')),
+        notas_tecnicas TEXT NULL,
+        actualizado_por_id INT NULL REFERENCES usuarios(id) ON DELETE SET NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (sucursal_id, tipo)
+      );
+    `);
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS facilidades_criticas_historial (
+        id SERIAL PRIMARY KEY,
+        facilidad_critica_id INT NOT NULL REFERENCES facilidades_criticas(id) ON DELETE CASCADE,
+        estado_anterior VARCHAR(24) NOT NULL,
+        estado_nuevo VARCHAR(24) NOT NULL,
+        descripcion_problema TEXT NULL,
+        reportado_por_id INT NULL REFERENCES usuarios(id) ON DELETE SET NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_facilidades_sucursal
+      ON facilidades_criticas (sucursal_id);
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_facilidades_historial_facilidad
+      ON facilidades_criticas_historial (facilidad_critica_id, created_at DESC);
+    `);
+    await this.dataSource.query(`
+      UPDATE facilidades_criticas
+      SET tipo = 'duchas_hombres'
+      WHERE tipo = 'duchas';
+    `);
+    await this.dataSource.query(`
+      INSERT INTO facilidades_criticas (sucursal_id, tipo, estado)
+      SELECT s.id, t.tipo, 'operativo'
+      FROM sucursales s
+      CROSS JOIN (
+        VALUES
+          ('bano_hombres'),
+          ('bano_mujeres'),
+          ('camarin_hombres'),
+          ('camarin_mujeres'),
+          ('duchas_hombres'),
+          ('duchas_mujeres')
+      ) AS t(tipo)
+      WHERE s.deleted_at IS NULL
+      ON CONFLICT (sucursal_id, tipo) DO NOTHING;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS facilidad_critica_id INT NULL
+      REFERENCES facilidades_criticas(id) ON DELETE SET NULL;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS area_servicios VARCHAR(20) NULL;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS genero_servicios VARCHAR(20) NULL;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS falla_general_servicios BOOLEAN NOT NULL DEFAULT false;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE ordenes_trabajo
+      ADD COLUMN IF NOT EXISTS servicios_afectados JSONB NULL;
+    `);
+    this.logger.log('Facilidades críticas verificadas');
   }
 
   private async ensureSolicitudesPassword(): Promise<void> {

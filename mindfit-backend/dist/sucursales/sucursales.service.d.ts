@@ -3,6 +3,7 @@ import { Sucursal } from '../entities/sucursal.entity';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import { CreateSucursalDto } from './dto/create-sucursal.dto';
 import { UpdateSucursalDto } from './dto/update-sucursal.dto';
+import { FacilidadesCriticasService } from '../facilidades-criticas/facilidades-criticas.service';
 import { SucursalMonitoreoResponseDto } from './dto/sucursal-monitoreo.dto';
 export interface SucursalListItem {
     id: number;
@@ -20,7 +21,8 @@ export interface SucursalListItem {
 export declare class SucursalesService {
     private readonly dataSource;
     private readonly transactionContext;
-    constructor(dataSource: DataSource, transactionContext: TransactionContextService);
+    private readonly facilidadesCriticasService;
+    constructor(dataSource: DataSource, transactionContext: TransactionContextService, facilidadesCriticasService: FacilidadesCriticasService);
     private repo;
     findAll(): Promise<SucursalListItem[]>;
     findOne(id: number): Promise<Sucursal>;

@@ -9,4 +9,9 @@ export declare class CreateOrdenTrabajoDto {
     tipoMantenimiento: TipoMantenimiento;
     tiempoEstimadoMinutos?: number;
     fechaProgramacion?: string;
+    facilidadCriticaId?: number;
+    areaServicios?: 'bano' | 'camarin' | 'ducha';
+    generoServicios?: 'hombres' | 'mujeres';
+    fallaGeneralServicios?: boolean;
+    serviciosAfectados?: string[];
 }

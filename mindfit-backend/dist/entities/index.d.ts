@@ -21,3 +21,5 @@ export { CotizacionVentasDetalle } from './cotizacion-ventas-detalle.entity';
 export { CotizacionVentaHistorial } from './cotizacion-venta-historial.entity';
 export { Vehiculo } from './vehiculo.entity';
 export { LicenciaTecnico } from './licencia-tecnico.entity';
+export { FacilidadCritica } from './facilidad-critica.entity';
+export { FacilidadCriticaHistorial } from './facilidad-critica-historial.entity';

@@ -8,4 +8,8 @@ export declare class ReportarFallaDto {
     titulo?: string;
     sucursalId?: number;
     asignadoAId?: number;
+    areaServicios?: 'bano' | 'camarin' | 'ducha';
+    generoServicios?: 'hombres' | 'mujeres' | string;
+    generosServicios?: string;
+    fallaGeneralServicios?: string;
 }

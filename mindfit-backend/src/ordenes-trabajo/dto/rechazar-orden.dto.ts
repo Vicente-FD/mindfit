@@ -12,4 +12,7 @@ export class RechazarOrdenDto {
   @IsNotEmpty()
   @MinLength(3)
   motivo_rechazo?: string;
+
+  @IsOptional()
+  actualizarServiciosOperativo?: boolean;
 }

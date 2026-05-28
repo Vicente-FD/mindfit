@@ -7,8 +7,11 @@ import {
 import { LucideAngularModule } from 'lucide-angular';
 import { CategoriasService } from '../../../core/services/categorias.service';
 import { MarcasService } from '../../../core/services/marcas.service';
+import { Sucursal } from '../../../core/models/sucursal.model';
+import { SucursalesService } from '../../../core/services/sucursales.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { FacilidadesSucursalPanelComponent } from '../../../shared/facilidades-sucursal-panel/facilidades-sucursal-panel.component';
 import { Categoria } from '../../../core/models/categoria.model';
 import { Marca } from '../../../core/models/marca.model';
 
@@ -16,7 +19,11 @@ const SIGLA_PATTERN = /^[A-Z]{2,5}$/;
 
 @Component({
   selector: 'app-parametros-admin',
-  imports: [ReactiveFormsModule, LucideAngularModule],
+  imports: [
+    ReactiveFormsModule,
+    LucideAngularModule,
+    FacilidadesSucursalPanelComponent,
+  ],
   templateUrl: './parametros-admin.component.html',
   styleUrl: './parametros-admin.component.css',
 })
@@ -24,18 +31,22 @@ export class ParametrosAdminComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly categoriasService = inject(CategoriasService);
   private readonly marcasService = inject(MarcasService);
+  private readonly sucursalesService = inject(SucursalesService);
   private readonly toast = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
 
   readonly categorias = signal<Categoria[]>([]);
   readonly marcas = signal<Marca[]>([]);
+  readonly sucursales = signal<Sucursal[]>([]);
   readonly loadingCat = signal(false);
   readonly loadingMarca = signal(false);
+  readonly loadingSucursales = signal(false);
   readonly savingCat = signal(false);
   readonly savingMarca = signal(false);
   readonly editingCategoria = signal<Categoria | null>(null);
   readonly editingMarca = signal<Marca | null>(null);
   readonly marcaLogoFile = signal<File | null>(null);
+  readonly operatividadSucursalId = signal<number | null>(null);
 
   readonly categoriaForm = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
@@ -50,6 +61,29 @@ export class ParametrosAdminComponent implements OnInit {
   ngOnInit(): void {
     this.reloadCategorias();
     this.reloadMarcas();
+    this.reloadSucursales();
+  }
+
+  reloadSucursales(): void {
+    this.loadingSucursales.set(true);
+    this.sucursalesService.list().subscribe({
+      next: (rows) => {
+        this.sucursales.set(rows);
+        this.loadingSucursales.set(false);
+        if (rows.length > 0 && this.operatividadSucursalId() == null) {
+          this.operatividadSucursalId.set(rows[0]!.id);
+        }
+      },
+      error: () => {
+        this.loadingSucursales.set(false);
+        this.toast.error('No se pudieron cargar las sedes');
+      },
+    });
+  }
+
+  onChangeOperatividadSucursal(raw: string): void {
+    const value = Number(raw);
+    this.operatividadSucursalId.set(Number.isNaN(value) ? null : value);
   }
 
   reloadCategorias(): void {

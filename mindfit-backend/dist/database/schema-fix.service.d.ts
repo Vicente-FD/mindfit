@@ -7,6 +7,7 @@ export declare class SchemaFixService implements OnModuleInit {
     onModuleInit(): Promise<void>;
     private ensureFlotaLicencias;
     private ensureMonitoreoIndexes;
+    private ensureFacilidadesCriticas;
     private ensureSolicitudesPassword;
     private ensureOportunidadesCrm;
     private ensureCotizacionHistorial;

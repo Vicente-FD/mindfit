@@ -12,6 +12,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const activo_entity_1 = require("../entities/activo.entity");
 const orden_trabajo_entity_1 = require("../entities/orden-trabajo.entity");
 const sucursal_entity_1 = require("../entities/sucursal.entity");
+const facilidades_criticas_module_1 = require("../facilidades-criticas/facilidades-criticas.module");
 const sucursales_controller_1 = require("./sucursales.controller");
 const sucursales_service_1 = require("./sucursales.service");
 let SucursalesModule = class SucursalesModule {
@@ -21,6 +22,7 @@ exports.SucursalesModule = SucursalesModule = __decorate([
     (0, common_1.Module)({
         imports: [
             typeorm_1.TypeOrmModule.forFeature([sucursal_entity_1.Sucursal, activo_entity_1.Activo, orden_trabajo_entity_1.OrdenTrabajo]),
+            facilidades_criticas_module_1.FacilidadesCriticasModule,
         ],
         controllers: [sucursales_controller_1.SucursalesController],
         providers: [sucursales_service_1.SucursalesService],

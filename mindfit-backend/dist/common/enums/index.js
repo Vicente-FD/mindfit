@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EstadoSolicitudPassword = exports.EstadoRendicionGasto = exports.TipoMovimientoInventario = exports.OperacionAuditoria = exports.TipoEvidencia = exports.ClasificacionOrden = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoCotizacionVenta = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.DivisaCodigo = exports.EtapaOportunidad = exports.RolUsuario = void 0;
+exports.SemaforoOperatividadSede = exports.TipoFacilidadCritica = exports.EstadoFacilidadCritica = exports.EstadoSolicitudPassword = exports.EstadoRendicionGasto = exports.TipoMovimientoInventario = exports.OperacionAuditoria = exports.TipoEvidencia = exports.ClasificacionOrden = exports.EstadoOrdenTrabajo = exports.TipoMantenimiento = exports.PrioridadOrden = exports.EstadoCotizacionVenta = exports.EstadoOperacionalActivo = exports.CategoriaActivo = exports.EstadoSesionUsuario = exports.DivisaCodigo = exports.EtapaOportunidad = exports.RolUsuario = void 0;
 var RolUsuario;
 (function (RolUsuario) {
     RolUsuario["ADMIN"] = "admin";
@@ -104,4 +104,10 @@ var estado_rendicion_gasto_enum_1 = require("./estado-rendicion-gasto.enum");
 Object.defineProperty(exports, "EstadoRendicionGasto", { enumerable: true, get: function () { return estado_rendicion_gasto_enum_1.EstadoRendicionGasto; } });
 var estado_solicitud_password_enum_1 = require("./estado-solicitud-password.enum");
 Object.defineProperty(exports, "EstadoSolicitudPassword", { enumerable: true, get: function () { return estado_solicitud_password_enum_1.EstadoSolicitudPassword; } });
+var estado_facilidad_critica_enum_1 = require("./estado-facilidad-critica.enum");
+Object.defineProperty(exports, "EstadoFacilidadCritica", { enumerable: true, get: function () { return estado_facilidad_critica_enum_1.EstadoFacilidadCritica; } });
+var tipo_facilidad_critica_enum_1 = require("./tipo-facilidad-critica.enum");
+Object.defineProperty(exports, "TipoFacilidadCritica", { enumerable: true, get: function () { return tipo_facilidad_critica_enum_1.TipoFacilidadCritica; } });
+var semaforo_operatividad_sede_enum_1 = require("./semaforo-operatividad-sede.enum");
+Object.defineProperty(exports, "SemaforoOperatividadSede", { enumerable: true, get: function () { return semaforo_operatividad_sede_enum_1.SemaforoOperatividadSede; } });
 //# sourceMappingURL=index.js.map

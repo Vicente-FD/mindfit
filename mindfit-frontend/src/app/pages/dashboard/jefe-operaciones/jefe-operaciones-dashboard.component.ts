@@ -129,6 +129,10 @@ export class JefeOperacionesDashboardComponent implements OnInit {
         sucursalId: payload.sucursalId,
         titulo: payload.titulo,
         asignadoAId: payload.asignadoAId,
+        areaServicios: payload.areaServicios,
+        generoServicios: payload.generoServicios,
+        generosServicios: payload.generosServicios,
+        fallaGeneralServicios: payload.fallaGeneralServicios,
       })
       .subscribe({
         next: () => {
@@ -271,9 +275,46 @@ export class JefeOperacionesDashboardComponent implements OnInit {
   }
 
   clasificacionReporteLabel(orden: WorkOrder): string {
+    if (this.esReporteAreaServicios(orden)) return 'Área de servicios';
     if (orden.clasificacion === 'infraestructura') return 'Infraestructura';
     if (orden.clasificacion === 'peticion') return 'Petición';
     return 'Máquina / equipo';
+  }
+
+  esReporteAreaServicios(orden: WorkOrder): boolean {
+    return (
+      orden.clasificacion === 'infraestructura' &&
+      (orden.fallaGeneralServicios === true ||
+        !!orden.areaServicios ||
+        (orden.serviciosAfectados?.length ?? 0) > 0)
+    );
+  }
+
+  areaServiciosLabel(orden: WorkOrder): string | null {
+    if (!this.esReporteAreaServicios(orden)) return null;
+    if (orden.fallaGeneralServicios) return 'Falla general';
+    const afectados = orden.serviciosAfectados ?? [];
+    if (afectados.length > 1) {
+      const first = afectados[0] ?? '';
+      if (first.startsWith('bano_')) return 'Baños · Hombres y Mujeres';
+      if (first.startsWith('camarin_')) return 'Camarines · Hombres y Mujeres';
+      if (first.startsWith('duchas_')) return 'Duchas · Hombres y Mujeres';
+    }
+    const areaMap: Record<string, string> = {
+      bano: 'Baños',
+      camarin: 'Camarines',
+      ducha: 'Duchas',
+    };
+    const generoMap: Record<string, string> = {
+      hombres: 'Hombres',
+      mujeres: 'Mujeres',
+    };
+    const area = orden.areaServicios ? areaMap[orden.areaServicios] : null;
+    const genero = orden.generoServicios
+      ? generoMap[orden.generoServicios]
+      : null;
+    if (area && genero) return `${area} · ${genero}`;
+    return area ?? 'Área de servicios';
   }
 
   openPreview(url: string): void {
@@ -351,12 +392,14 @@ export class JefeOperacionesDashboardComponent implements OnInit {
     this.rejectTarget.set(null);
   }
 
-  confirmReject(motivo: string): void {
+  confirmReject(payload: { motivo: string }): void {
     const orden = this.rejectTarget();
     if (!orden) return;
     const esTicket = orden.estado === 'pendiente';
     this.rejecting.set(true);
-    this.workOrders.rechazar(orden.id, motivo).subscribe({
+    this.workOrders
+      .rechazar(orden.id, payload.motivo)
+      .subscribe({
       next: () => {
         this.rejecting.set(false);
         this.rejectTarget.set(null);

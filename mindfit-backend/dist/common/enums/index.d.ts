@@ -85,3 +85,6 @@ export declare enum TipoMovimientoInventario {
 }
 export { EstadoRendicionGasto } from './estado-rendicion-gasto.enum';
 export { EstadoSolicitudPassword } from './estado-solicitud-password.enum';
+export { EstadoFacilidadCritica } from './estado-facilidad-critica.enum';
+export { TipoFacilidadCritica } from './tipo-facilidad-critica.enum';
+export { SemaforoOperatividadSede } from './semaforo-operatividad-sede.enum';

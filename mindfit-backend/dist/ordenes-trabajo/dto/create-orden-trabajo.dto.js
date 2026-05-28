@@ -22,6 +22,11 @@ class CreateOrdenTrabajoDto {
     tipoMantenimiento;
     tiempoEstimadoMinutos;
     fechaProgramacion;
+    facilidadCriticaId;
+    areaServicios;
+    generoServicios;
+    fallaGeneralServicios;
+    serviciosAfectados;
 }
 exports.CreateOrdenTrabajoDto = CreateOrdenTrabajoDto;
 __decorate([
@@ -67,4 +72,27 @@ __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateOrdenTrabajoDto.prototype, "fechaProgramacion", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], CreateOrdenTrabajoDto.prototype, "facilidadCriticaId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['bano', 'camarin', 'ducha']),
+    __metadata("design:type", String)
+], CreateOrdenTrabajoDto.prototype, "areaServicios", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['hombres', 'mujeres']),
+    __metadata("design:type", String)
+], CreateOrdenTrabajoDto.prototype, "generoServicios", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateOrdenTrabajoDto.prototype, "fallaGeneralServicios", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreateOrdenTrabajoDto.prototype, "serviciosAfectados", void 0);
 //# sourceMappingURL=create-orden-trabajo.dto.js.map

@@ -46,6 +46,10 @@ export interface ReportarFallaPayload {
   fotoFalla?: File;
   sucursalId?: number;
   asignadoAId?: number | null;
+  areaServicios?: 'bano' | 'camarin' | 'ducha';
+  generoServicios?: 'hombres' | 'mujeres';
+  generosServicios?: Array<'hombres' | 'mujeres'>;
+  fallaGeneralServicios?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -154,6 +158,21 @@ export class WorkOrdersService {
     }
     if (payload.asignadoAId != null) {
       formData.append('asignadoAId', String(payload.asignadoAId));
+    }
+    if (payload.areaServicios) {
+      formData.append('areaServicios', payload.areaServicios);
+    }
+    if (payload.generoServicios) {
+      formData.append('generoServicios', payload.generoServicios);
+    }
+    if (payload.generosServicios?.length) {
+      formData.append('generosServicios', payload.generosServicios.join(','));
+    }
+    if (payload.fallaGeneralServicios != null) {
+      formData.append(
+        'fallaGeneralServicios',
+        payload.fallaGeneralServicios ? 'true' : 'false',
+      );
     }
     if (payload.tipoReporte === 'maquina' && payload.activoId != null) {
       formData.append('activoId', String(payload.activoId));

@@ -19,11 +19,14 @@ import { CotizacionVenta } from '../entities/cotizacion-venta.entity';
 import { TransactionContextService } from '../common/database/transaction-context.service';
 import { CreateSucursalDto } from './dto/create-sucursal.dto';
 import { UpdateSucursalDto } from './dto/update-sucursal.dto';
+import { FacilidadesCriticasService } from '../facilidades-criticas/facilidades-criticas.service';
+import type { FacilidadesResumenDto } from '../facilidades-criticas/dto/facilidad-critica-response.dto';
 import {
   BitacoraTimelineItemDto,
   CotizacionPendienteMonitoreoDto,
   HistorialInfraDto,
   HistorialMaquinaDto,
+  SedeSemaforoMonitoreoDto,
   SucursalMonitoreoResponseDto,
   TrabajoEnCursoDto,
 } from './dto/sucursal-monitoreo.dto';
@@ -47,6 +50,7 @@ export class SucursalesService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly transactionContext: TransactionContextService,
+    private readonly facilidadesCriticasService: FacilidadesCriticasService,
   ) {}
 
   private repo() {
@@ -140,12 +144,20 @@ export class SucursalesService {
       cotizacionesPendientes,
       ordenesHistorial,
       otMetricas,
+      facilidadesDetalle,
+      sedesSemaforo,
     ] = await Promise.all([
       this.loadActivosMonitoreo(sucursalId),
       this.loadOrdenesEnCursoMonitoreo(sucursalId),
       this.loadCotizacionesPendientes(sucursalId),
       this.loadOrdenesHistorialMonitoreo(sucursalId),
       this.loadOtMetricasMonitoreo(sucursalId),
+      sucursalId != null
+        ? this.facilidadesCriticasService.getResumenSucursal(sucursalId)
+        : Promise.resolve(null),
+      sucursalId == null
+        ? this.facilidadesCriticasService.getResumenGlobalSedes()
+        : Promise.resolve([] as SedeSemaforoMonitoreoDto[]),
     ]);
 
     const ordenes = this.mergeOrdenesUnicas(ordenesEnCurso, ordenesHistorial);
@@ -157,6 +169,8 @@ export class SucursalesService {
       incluirSedeEnItems,
       cotizacionesPendientes,
       otMetricas,
+      facilidadesDetalle,
+      sedesSemaforo,
     );
   }
 
@@ -302,6 +316,8 @@ export class SucursalesService {
     incluirSedeEnItems: boolean,
     cotizacionesPendientes: CotizacionPendienteMonitoreoDto[],
     otMetricas?: { otsReportadas: number; otsResueltas: number },
+    facilidadesDetalle?: FacilidadesResumenDto | null,
+    sedesSemaforo: SedeSemaforoMonitoreoDto[] = [],
   ): SucursalMonitoreoResponseDto {
     const activosOperativos = activos.filter(
       (a) => a.estadoOperacional === EstadoOperacionalActivo.OPERATIVO,
@@ -431,6 +447,23 @@ export class SucursalesService {
         otsReportadas,
         otsResueltas,
       },
+      facilidadesCriticas: facilidadesDetalle
+        ? {
+            semaforo: facilidadesDetalle.semaforo,
+            operativas: facilidadesDetalle.operativas,
+            enMantenimiento: facilidadesDetalle.enMantenimiento,
+            fueraDeServicio: facilidadesDetalle.fueraDeServicio,
+            items: facilidadesDetalle.items.map((i) => ({
+              id: i.id,
+              tipo: i.tipo,
+              tipoLabel: i.tipoLabel,
+              estado: i.estado,
+              notasTecnicas: i.notasTecnicas,
+              fallosHistoricos: i.fallosHistoricos,
+            })),
+          }
+        : null,
+      sedesSemaforoFacilidades: sedesSemaforo,
       trabajosEnCurso,
       cotizacionesPendientes,
       historialInfraestructura,
@@ -542,7 +575,9 @@ export class SucursalesService {
     });
 
     try {
-      return await this.repo().save(sucursal);
+      const saved = await this.repo().save(sucursal);
+      await this.facilidadesCriticasService.ensurePlantillaSucursal(saved.id);
+      return saved;
     } catch (err) {
       this.handleUniqueViolation(err);
       throw err;

@@ -16,6 +16,7 @@ import { CerrarOrdenDto } from './dto/cerrar-orden.dto';
 import { InventarioService } from '../inventario/inventario.service';
 import { RepuestoConsumoItemDto } from '../inventario/dto/repuesto-consumo.dto';
 import { TipoReporteSucursal } from './dto/tipo-reporte-sucursal';
+import { FacilidadCritica } from '../entities/facilidad-critica.entity';
 import { CalendarioOrdenesResponseDto } from './dto/calendario-ordenes-response.dto';
 export declare class OrdenesTrabajoService {
     private readonly dataSource;
@@ -57,7 +58,14 @@ export declare class OrdenesTrabajoService {
         prioridad: PrioridadOrden;
         titulo?: string;
         asignadoAId?: number;
+        facilidadCriticaId?: number;
+        areaServicios?: 'bano' | 'camarin' | 'ducha';
+        generoServicios?: 'hombres' | 'mujeres';
+        generosServicios?: string;
+        fallaGeneralServicios?: string;
     }, creadoPorId: number, sucursalId: number, fotoUrl?: string): Promise<OrdenTrabajo>;
+    private syncAreaServiciosDesdeReporte;
+    private resolveServiciosAfectados;
     private eliminarEvidenciasDespues;
     create(dto: CreateOrdenTrabajoDto, creadoPorId: number): Promise<OrdenTrabajo>;
     createBulk(tasks: BulkOrdenTrabajoItemDto[], creadoPorId: number): Promise<{
@@ -74,6 +82,12 @@ export declare class OrdenesTrabajoService {
         codigoOt: string;
         clasificacion: ClasificacionOrden;
         activoId: number | null;
+        facilidadCriticaId: number | null;
+        areaServicios: "bano" | "camarin" | "ducha" | null;
+        generoServicios: "hombres" | "mujeres" | null;
+        fallaGeneralServicios: boolean;
+        serviciosAfectados: string[] | null;
+        facilidadCritica: FacilidadCritica | null;
         activo: Activo | null;
         sucursalId: number;
         sucursal: import("../entities").Sucursal;
@@ -111,5 +125,8 @@ export declare class OrdenesTrabajoService {
     aprobar(id: number): Promise<OrdenTrabajo>;
     private static readonly REVERTIR_APROBACION_MS;
     revertirAprobacion(id: number): Promise<OrdenTrabajo>;
-    rechazar(id: number, motivo: string): Promise<OrdenTrabajo>;
+    rechazar(id: number, motivo: string, _actualizarServiciosOperativo?: boolean): Promise<OrdenTrabajo>;
+    private actualizarServiciosOt;
+    private resolverEstadoServiciosTrasCierreOt;
+    private inferServiciosAfectadosOrden;
 }

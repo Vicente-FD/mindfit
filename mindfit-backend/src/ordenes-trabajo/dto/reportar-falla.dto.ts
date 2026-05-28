@@ -1,5 +1,6 @@
 import {
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -45,4 +46,22 @@ export class ReportarFallaDto {
   @Type(() => Number)
   @IsInt()
   asignadoAId?: number;
+
+  @IsOptional()
+  @IsIn(['bano', 'camarin', 'ducha'])
+  areaServicios?: 'bano' | 'camarin' | 'ducha';
+
+  @IsOptional()
+  @IsString()
+  generoServicios?: 'hombres' | 'mujeres' | string;
+
+  /** CSV: hombres,mujeres */
+  @IsOptional()
+  @IsString()
+  generosServicios?: string;
+
+  /** multipart envía strings "true"/"false" */
+  @IsOptional()
+  @IsIn(['true', 'false', '1', '0'])
+  fallaGeneralServicios?: string;
 }

@@ -1,0 +1,286 @@
+<section class="fc-panel page-card">
+  @if (showDetailList()) {
+    <button
+      type="button"
+      class="fc-panel__summary"
+      (click)="toggleDetail()"
+      [attr.aria-expanded]="detailExpanded()"
+    >
+      <span class="fc-panel__summary-left">
+        <lucide-icon name="droplets" [size]="18" class="text-orange-energy shrink-0" />
+        <span class="min-w-0 text-left">
+          <span class="block text-sm font-semibold text-pure-white">Facilidades críticas</span>
+          @if (loading()) {
+            <span class="block text-xs text-slate-grey">Cargando…</span>
+          } @else {
+            <span class="block text-xs text-slate-grey">{{ resumenLinea() }}</span>
+          }
+        </span>
+      </span>
+      <span class="fc-panel__summary-right">
+        @if (resumen(); as r) {
+          <span class="fc-semaforo-badge fc-semaforo-badge--sm" [class]="semaforoClass(r.semaforo)">
+            <span class="fc-semaforo-dot"></span>
+            {{ semaforoLabel(r.semaforo) }}
+          </span>
+        }
+        <lucide-icon
+          [name]="detailExpanded() ? 'chevron-up' : 'chevron-down'"
+          [size]="18"
+          class="text-slate-grey shrink-0"
+        />
+      </span>
+    </button>
+  } @else {
+    <div class="fc-panel__summary fc-panel__summary--static">
+      <span class="fc-panel__summary-left">
+        <lucide-icon name="droplets" [size]="18" class="text-orange-energy shrink-0" />
+        <span class="min-w-0">
+          <span class="block text-sm font-semibold text-pure-white">Área de servicios</span>
+          @if (loading()) {
+            <span class="block text-xs text-slate-grey">Cargando estado…</span>
+          } @else {
+            <span class="block text-xs text-slate-grey">{{ resumenLinea() }}</span>
+          }
+        </span>
+      </span>
+      @if (resumen(); as r) {
+        <span class="fc-semaforo-badge fc-semaforo-badge--sm" [class]="semaforoClass(r.semaforo)">
+          <span class="fc-semaforo-dot"></span>
+          {{ semaforoLabel(r.semaforo) }}
+        </span>
+      }
+    </div>
+  }
+
+  <div class="fc-panel__compact-actions">
+    <button type="button" class="btn-primary w-full text-sm py-2.5" (click)="abrirReporteModal()">
+      Reportar falla en área de servicios
+    </button>
+  </div>
+
+  @if (showDetailList() && detailExpanded() && resumen(); as r) {
+    <div class="fc-panel__body">
+      <div class="fc-stats">
+        <span class="fc-stat fc-stat--ok">{{ r.operativas }} operativas</span>
+        <span class="fc-stat fc-stat--warn">{{ r.enMantenimiento }} mantenimiento</span>
+        <span class="fc-stat fc-stat--bad">{{ r.fueraDeServicio }} fuera de servicio</span>
+      </div>
+      <ul class="fc-list">
+        @for (f of r.items; track f.id) {
+          <li class="fc-item" [class]="estadoFacilidadClass(f.estado)">
+            <div class="fc-item__main">
+              <p class="fc-item__title">{{ f.tipoLabel }}</p>
+              <p class="fc-item__meta">
+                {{ labelEstadoFacilidad(f.estado) }}
+                @if (f.fallosHistoricos > 0) {
+                  · {{ f.fallosHistoricos }} fallo(s) histórico(s)
+                }
+              </p>
+            </div>
+            <div class="fc-item__actions">
+              <button type="button" class="btn-ghost text-xs" (click)="abrirHistorial(f)">
+                Historial
+              </button>
+              @if (allowResolve()) {
+                <button type="button" class="btn-ghost text-xs" (click)="abrirResolver(f)">
+                  Cambiar estado
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</section>
+
+@if (reportModalOpen()) {
+  <div class="mf-modal-backdrop" role="dialog" aria-modal="true" (click)="cerrarReporteModal()">
+    <div class="mf-modal-panel max-w-md max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <header class="mf-modal-head">
+        <h3 class="text-lg font-semibold text-pure-white pr-2">
+          Reportar falla en área de servicios
+        </h3>
+        <button type="button" class="btn-ghost shrink-0" (click)="cerrarReporteModal()" aria-label="Cerrar">
+          <lucide-icon name="x" [size]="20" />
+        </button>
+      </header>
+
+      <form class="mf-modal-body space-y-4" [formGroup]="reportForm" (ngSubmit)="enviarReporte()">
+        <p class="text-xs text-slate-grey">
+          Elija el tipo de instalación afectada. Se generará una OT para que operaciones asigne un técnico.
+        </p>
+
+        <div class="fc-picker-grid">
+          <button
+            type="button"
+            class="fc-picker-btn"
+            [class.fc-picker-btn--active]="selectedArea() === 'bano' && !esFallaGeneral()"
+            (click)="seleccionarArea('bano')"
+          >
+            Baños
+          </button>
+          <button
+            type="button"
+            class="fc-picker-btn"
+            [class.fc-picker-btn--active]="selectedArea() === 'camarin' && !esFallaGeneral()"
+            (click)="seleccionarArea('camarin')"
+          >
+            Camarines
+          </button>
+          <button
+            type="button"
+            class="fc-picker-btn"
+            [class.fc-picker-btn--active]="selectedArea() === 'ducha' && !esFallaGeneral()"
+            (click)="seleccionarArea('ducha')"
+          >
+            Duchas
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="fc-picker-general"
+          [class.fc-picker-general--active]="esFallaGeneral()"
+          (click)="activarFallaGeneral()"
+        >
+          Falla general en toda el área de servicios
+        </button>
+
+        @if (selectedArea() && !esFallaGeneral()) {
+          <div>
+            <p class="field-label mb-2">Género / sector</p>
+            <div class="fc-picker-grid fc-picker-grid--2">
+              <button
+                type="button"
+                class="fc-picker-btn"
+                [class.fc-picker-btn--active]="selectedGenero() === 'hombres'"
+                (click)="seleccionarGenero('hombres')"
+              >
+                Hombres
+              </button>
+              <button
+                type="button"
+                class="fc-picker-btn"
+                [class.fc-picker-btn--active]="selectedGenero() === 'mujeres'"
+                (click)="seleccionarGenero('mujeres')"
+              >
+                Mujeres
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (puedeEnviarReporte()) {
+          <div>
+            <label class="field-label" for="fc-desc">Descripción del problema</label>
+            <textarea
+              id="fc-desc"
+              class="field-input min-h-[4.5rem]"
+              formControlName="descripcionProblema"
+              placeholder="Describa el problema observado"
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="field-label" for="fc-notas">Notas (opcional)</label>
+            <textarea
+              id="fc-notas"
+              class="field-input min-h-[2.5rem]"
+              formControlName="notasTecnicas"
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="field-label">Fotografía del problema (obligatoria)</label>
+            @if (imagePreview()) {
+              <div class="fc-foto-preview">
+                <img [src]="imagePreview()!" alt="Vista previa" />
+                <button type="button" class="btn-ghost text-xs" (click)="clearFoto()">Quitar foto</button>
+              </div>
+            }
+            <label class="fc-foto-upload">
+              <lucide-icon name="camera" [size]="18" />
+              @if (processingFoto()) { Procesando… } @else { Tomar o subir foto }
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                class="sr-only"
+                (change)="onFotoSelected($event)"
+              />
+            </label>
+          </div>
+        }
+
+        <div class="flex gap-2 pt-1">
+          <button type="button" class="btn-ghost flex-1" (click)="cerrarReporteModal()">Cancelar</button>
+          <button
+            type="submit"
+            class="btn-primary flex-1"
+            [disabled]="!puedeEnviarReporte() || reporting()"
+          >
+            @if (reporting()) { Enviando… } @else { Enviar reporte }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (historialTarget(); as target) {
+  <div class="mf-modal-backdrop" role="dialog" aria-modal="true" (click)="cerrarHistorial()">
+    <div class="mf-modal-panel max-w-md max-h-[85vh] flex flex-col" (click)="$event.stopPropagation()">
+      <header class="mf-modal-head">
+        <h3 class="text-lg font-semibold text-pure-white pr-2">{{ target.tipoLabel }}</h3>
+        <button type="button" class="btn-ghost shrink-0" (click)="cerrarHistorial()" aria-label="Cerrar">
+          <lucide-icon name="x" [size]="20" />
+        </button>
+      </header>
+
+      @if (allowResolve()) {
+        <form
+          class="mf-modal-body space-y-3 border-b border-white/5"
+          [formGroup]="resolveForm"
+          (ngSubmit)="enviarResolver()"
+        >
+          <select class="field-input" formControlName="estado">
+            <option value="operativo">Operativo</option>
+            <option value="mantenimiento">Mantenimiento</option>
+            <option value="fuera_de_servicio">Fuera de servicio</option>
+          </select>
+          <textarea class="field-input min-h-[2.5rem]" formControlName="notasTecnicas"></textarea>
+          <button type="submit" class="btn-primary w-full" [disabled]="resolvingId() === target.id">
+            @if (resolvingId() === target.id) { Guardando… } @else { Guardar estado }
+          </button>
+        </form>
+      }
+
+      <div class="mf-modal-body flex-1 overflow-y-auto">
+        @if (historialLoading()) {
+          <p class="text-sm text-slate-grey">Cargando…</p>
+        } @else if (historial().length === 0) {
+          <p class="text-sm text-slate-grey">Sin registros.</p>
+        } @else {
+          <ul class="space-y-2">
+            @for (h of historial(); track h.id) {
+              <li class="fc-hist-row">
+                <p class="text-xs text-slate-grey">
+                  {{ h.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                </p>
+                <p class="text-sm text-pure-white">
+                  {{ labelEstadoFacilidad(h.estadoAnterior) }} →
+                  {{ labelEstadoFacilidad(h.estadoNuevo) }}
+                </p>
+                @if (h.descripcionProblema) {
+                  <p class="text-xs text-slate-grey mt-1">{{ h.descripcionProblema }}</p>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  </div>
+}

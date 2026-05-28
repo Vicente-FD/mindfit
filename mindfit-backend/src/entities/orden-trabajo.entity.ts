@@ -21,6 +21,7 @@ import { Usuario } from './usuario.entity';
 import { EvidenciaOt } from './evidencia-ot.entity';
 import { ComentarioOt } from './comentario-ot.entity';
 import { OrdenTrabajoRepuesto } from './orden-trabajo-repuesto.entity';
+import { FacilidadCritica } from './facilidad-critica.entity';
 
 @Entity('ordenes_trabajo')
 export class OrdenTrabajo {
@@ -39,6 +40,38 @@ export class OrdenTrabajo {
 
   @Column({ name: 'activo_id', type: 'int', nullable: true })
   activoId: number | null;
+
+  @Column({ name: 'facilidad_critica_id', type: 'int', nullable: true })
+  facilidadCriticaId: number | null;
+
+  @Column({ name: 'area_servicios', type: 'varchar', length: 20, nullable: true })
+  areaServicios: 'bano' | 'camarin' | 'ducha' | null;
+
+  @Column({
+    name: 'genero_servicios',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  generoServicios: 'hombres' | 'mujeres' | null;
+
+  @Column({
+    name: 'falla_general_servicios',
+    type: 'boolean',
+    default: false,
+  })
+  fallaGeneralServicios: boolean;
+
+  @Column({
+    name: 'servicios_afectados',
+    type: 'jsonb',
+    nullable: true,
+  })
+  serviciosAfectados: string[] | null;
+
+  @ManyToOne(() => FacilidadCritica, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'facilidad_critica_id' })
+  facilidadCritica: FacilidadCritica | null;
 
   @ManyToOne(() => Activo, (activo) => activo.ordenesTrabajo, {
     nullable: true,

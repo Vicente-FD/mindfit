@@ -75,6 +75,49 @@
     }
 
     @if (activeTab() === 'operaciones') {
+      <section class="page-card fc-monitoreo-block">
+        <div class="section-head">
+          <h2 class="section-title">Operatividad — facilidades críticas</h2>
+          <p class="text-xs text-slate-grey">
+            Baños, camarines y duchas por sede. Cada ítem es independiente.
+          </p>
+        </div>
+
+        @if (isGlobalView() && m.sedesSemaforoFacilidades.length) {
+          <div class="fc-sedes-grid">
+            @for (s of m.sedesSemaforoFacilidades; track s.sucursalId) {
+              <article class="fc-sede-card" [class]="semaforoClass($any(s.semaforo))">
+                <div class="fc-sede-card__head">
+                  <span class="fc-semaforo-dot"></span>
+                  <div>
+                    <p class="font-semibold text-pure-white text-sm">{{ s.sucursalNombre }}</p>
+                    <p class="text-xs text-slate-grey">{{ s.sucursalSigla }}</p>
+                  </div>
+                </div>
+                <p class="fc-sede-card__status">{{ semaforoLabel($any(s.semaforo)) }}</p>
+                <p class="text-xs text-slate-grey mt-1">
+                  @if (s.fueraDeServicio > 0) {
+                    <span class="text-red-400">{{ s.fueraDeServicio }} fuera de servicio</span>
+                  } @else if (s.enMantenimiento > 0) {
+                    <span class="text-yellow-400">{{ s.enMantenimiento }} en mantenimiento</span>
+                  } @else {
+                    {{ s.operativas }} operativas
+                  }
+                </p>
+              </article>
+            }
+          </div>
+        } @else if (!isGlobalView() && m.facilidadesCriticas) {
+          <app-facilidades-sucursal-panel
+            [sucursalId]="m.sucursal.id"
+            [allowResolve]="true"
+            [showDetailList]="true"
+          />
+        } @else {
+          <p class="text-sm text-slate-grey">Sin datos de facilidades para este alcance.</p>
+        }
+      </section>
+
       <section class="metrics-grid">
         <article class="metric-card h-full">
           <span class="stat-label">Activos operativos</span>

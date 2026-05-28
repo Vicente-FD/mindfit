@@ -18,11 +18,18 @@ const usuario_entity_1 = require("./usuario.entity");
 const evidencia_ot_entity_1 = require("./evidencia-ot.entity");
 const comentario_ot_entity_1 = require("./comentario-ot.entity");
 const orden_trabajo_repuesto_entity_1 = require("./orden-trabajo-repuesto.entity");
+const facilidad_critica_entity_1 = require("./facilidad-critica.entity");
 let OrdenTrabajo = class OrdenTrabajo {
     id;
     codigoOt;
     clasificacion;
     activoId;
+    facilidadCriticaId;
+    areaServicios;
+    generoServicios;
+    fallaGeneralServicios;
+    serviciosAfectados;
+    facilidadCritica;
     activo;
     sucursalId;
     sucursal;
@@ -70,6 +77,44 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'activo_id', type: 'int', nullable: true }),
     __metadata("design:type", Object)
 ], OrdenTrabajo.prototype, "activoId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'facilidad_critica_id', type: 'int', nullable: true }),
+    __metadata("design:type", Object)
+], OrdenTrabajo.prototype, "facilidadCriticaId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'area_servicios', type: 'varchar', length: 20, nullable: true }),
+    __metadata("design:type", Object)
+], OrdenTrabajo.prototype, "areaServicios", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        name: 'genero_servicios',
+        type: 'varchar',
+        length: 20,
+        nullable: true,
+    }),
+    __metadata("design:type", Object)
+], OrdenTrabajo.prototype, "generoServicios", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        name: 'falla_general_servicios',
+        type: 'boolean',
+        default: false,
+    }),
+    __metadata("design:type", Boolean)
+], OrdenTrabajo.prototype, "fallaGeneralServicios", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        name: 'servicios_afectados',
+        type: 'jsonb',
+        nullable: true,
+    }),
+    __metadata("design:type", Object)
+], OrdenTrabajo.prototype, "serviciosAfectados", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => facilidad_critica_entity_1.FacilidadCritica, { nullable: true, onDelete: 'SET NULL' }),
+    (0, typeorm_1.JoinColumn)({ name: 'facilidad_critica_id' }),
+    __metadata("design:type", Object)
+], OrdenTrabajo.prototype, "facilidadCritica", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => activo_entity_1.Activo, (activo) => activo.ordenesTrabajo, {
         nullable: true,

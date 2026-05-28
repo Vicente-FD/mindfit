@@ -38,6 +38,10 @@ export interface HybridReportSubmitPayload {
   sucursalId: number;
   titulo?: string;
   asignadoAId?: number | null;
+  areaServicios?: 'bano' | 'camarin' | 'ducha';
+  generoServicios?: 'hombres' | 'mujeres';
+  generosServicios?: Array<'hombres' | 'mujeres'>;
+  fallaGeneralServicios?: boolean;
 }
 
 function requiredImageFile(control: AbstractControl): ValidationErrors | null {
@@ -77,6 +81,12 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
 
   readonly form = this.fb.nonNullable.group({
     clasificacion: ['maquina' as TipoReporteSucursal, Validators.required],
+    esAreaServicios: [false],
+    areaServicios: [''],
+    generoServicios: [''],
+    generoServiciosHombres: [false],
+    generoServiciosMujeres: [false],
+    fallaGeneralServicios: [false],
     sucursalId: [''],
     titulo: [''],
     activoId: ['', Validators.required],
@@ -137,14 +147,25 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
     return this.form.controls.clasificacion.value === 'maquina';
   }
 
+  get esAreaServicios(): boolean {
+    return (
+      this.form.controls.clasificacion.value === 'infraestructura' &&
+      this.form.controls.esAreaServicios.value === true
+    );
+  }
+
   /** Solo jefe de sucursal debe adjuntar foto en fallas de máquina. */
   get fotoEsObligatoria(): boolean {
-    return this.esReporteMaquina && !this.esCentral();
+    return (this.esReporteMaquina && !this.esCentral()) || this.esAreaServicios;
   }
 
   private applyValidatorsForClasificacion(tipo: TipoReporteSucursal): void {
     const activoCtrl = this.form.controls.activoId;
     const fotoCtrl = this.form.controls.foto;
+    const areaCtrl = this.form.controls.areaServicios;
+    const generoCtrl = this.form.controls.generoServicios;
+    const hombresCtrl = this.form.controls.generoServiciosHombres;
+    const mujeresCtrl = this.form.controls.generoServiciosMujeres;
 
     if (tipo === 'maquina') {
       activoCtrl.setValidators([Validators.required]);
@@ -156,12 +177,44 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
     } else {
       activoCtrl.clearValidators();
       activoCtrl.setValue('');
-      fotoCtrl.clearValidators();
-      fotoCtrl.setValue(null);
-      this.revokePreview();
+      const esServicios =
+        tipo === 'infraestructura' && this.form.controls.esAreaServicios.value;
+      if (esServicios) {
+        const esGeneral = this.form.controls.fallaGeneralServicios.value === true;
+        if (esGeneral) {
+          areaCtrl.clearValidators();
+        } else {
+          areaCtrl.setValidators([Validators.required]);
+        }
+        if (esGeneral) {
+          generoCtrl.clearValidators();
+          hombresCtrl.setValue(false);
+          mujeresCtrl.setValue(false);
+        } else {
+          generoCtrl.setValidators([Validators.required]);
+        }
+        fotoCtrl.setValidators([Validators.required, requiredImageFile]);
+      } else {
+        areaCtrl.clearValidators();
+        generoCtrl.clearValidators();
+        this.form.patchValue({
+          areaServicios: '',
+          generoServicios: '',
+          generoServiciosHombres: false,
+          generoServiciosMujeres: false,
+          fallaGeneralServicios: false,
+        });
+        fotoCtrl.clearValidators();
+        fotoCtrl.setValue(null);
+        this.revokePreview();
+      }
     }
 
     activoCtrl.updateValueAndValidity();
+    areaCtrl.updateValueAndValidity();
+    generoCtrl.updateValueAndValidity();
+    hombresCtrl.updateValueAndValidity();
+    mujeresCtrl.updateValueAndValidity();
     fotoCtrl.updateValueAndValidity();
   }
 
@@ -172,6 +225,47 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
   setModoHibrido(subtipo: TipoReporteSucursal): void {
     if (subtipo === 'maquina') return;
     this.form.controls.clasificacion.setValue(subtipo);
+    this.form.controls.esAreaServicios.setValue(false);
+    this.applyValidatorsForClasificacion(subtipo);
+  }
+
+  setModoAreaServicios(): void {
+    this.form.controls.clasificacion.setValue('infraestructura');
+    this.form.controls.esAreaServicios.setValue(true);
+    this.applyValidatorsForClasificacion('infraestructura');
+  }
+
+  toggleFallaGeneralServicios(): void {
+    const next = !this.form.controls.fallaGeneralServicios.value;
+    this.form.controls.fallaGeneralServicios.setValue(next);
+    if (next) {
+      this.form.controls.generoServicios.setValue('');
+      this.form.controls.generoServiciosHombres.setValue(false);
+      this.form.controls.generoServiciosMujeres.setValue(false);
+      this.form.controls.areaServicios.setValue('');
+    }
+    this.applyValidatorsForClasificacion(this.form.controls.clasificacion.value);
+  }
+
+  toggleGeneroServicio(genero: 'hombres' | 'mujeres'): void {
+    if (genero === 'hombres') {
+      this.form.controls.generoServiciosHombres.setValue(
+        !this.form.controls.generoServiciosHombres.value,
+      );
+    } else {
+      this.form.controls.generoServiciosMujeres.setValue(
+        !this.form.controls.generoServiciosMujeres.value,
+      );
+    }
+    const seleccionados: Array<'hombres' | 'mujeres'> = [];
+    if (this.form.controls.generoServiciosHombres.value) {
+      seleccionados.push('hombres');
+    }
+    if (this.form.controls.generoServiciosMujeres.value) {
+      seleccionados.push('mujeres');
+    }
+    this.form.controls.generoServicios.setValue(seleccionados.join(','));
+    this.form.controls.generoServicios.updateValueAndValidity();
   }
 
   loadActivos(): void {
@@ -265,6 +359,25 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
       sucursalId,
       titulo: v.titulo.trim() || undefined,
       asignadoAId: v.asignadoAId ? Number(v.asignadoAId) : null,
+      areaServicios:
+        this.esAreaServicios && !v.fallaGeneralServicios
+          ? (v.areaServicios as 'bano' | 'camarin' | 'ducha')
+          : undefined,
+      generoServicios:
+        this.esAreaServicios && !v.fallaGeneralServicios
+          ? (v.generoServicios as 'hombres' | 'mujeres')
+          : undefined,
+      generosServicios:
+        this.esAreaServicios && !v.fallaGeneralServicios
+          ? (v.generoServicios
+              .split(',')
+              .map((g) => g.trim())
+              .filter((g) => g === 'hombres' || g === 'mujeres') as Array<
+              'hombres' | 'mujeres'
+            >)
+          : undefined,
+      fallaGeneralServicios:
+        this.esAreaServicios ? v.fallaGeneralServicios : false,
     });
   }
 
@@ -273,6 +386,12 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
     this.preselectedActivoNombre.set(null);
     this.form.reset({
       clasificacion: 'maquina',
+      esAreaServicios: false,
+      areaServicios: '',
+      generoServicios: '',
+      generoServiciosHombres: false,
+      generoServiciosMujeres: false,
+      fallaGeneralServicios: false,
       sucursalId: this.esCentral() ? '' : String(this.fixedSucursalId() ?? ''),
       titulo: '',
       activoId: '',

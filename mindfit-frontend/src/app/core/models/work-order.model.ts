@@ -61,6 +61,11 @@ export interface WorkOrder {
   codigoOt: string;
   clasificacion?: ClasificacionOt;
   activoId: number | null;
+  facilidadCriticaId?: number | null;
+  areaServicios?: 'bano' | 'camarin' | 'ducha' | null;
+  generoServicios?: 'hombres' | 'mujeres' | null;
+  fallaGeneralServicios?: boolean;
+  serviciosAfectados?: string[] | null;
   sucursalId: number;
   creadoPorId: number;
   asignadoAId: number | null;

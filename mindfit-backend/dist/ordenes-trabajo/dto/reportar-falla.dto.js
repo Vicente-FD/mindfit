@@ -22,6 +22,10 @@ class ReportarFallaDto {
     titulo;
     sucursalId;
     asignadoAId;
+    areaServicios;
+    generoServicios;
+    generosServicios;
+    fallaGeneralServicios;
 }
 exports.ReportarFallaDto = ReportarFallaDto;
 __decorate([
@@ -61,4 +65,24 @@ __decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], ReportarFallaDto.prototype, "asignadoAId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['bano', 'camarin', 'ducha']),
+    __metadata("design:type", String)
+], ReportarFallaDto.prototype, "areaServicios", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ReportarFallaDto.prototype, "generoServicios", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ReportarFallaDto.prototype, "generosServicios", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['true', 'false', '1', '0']),
+    __metadata("design:type", String)
+], ReportarFallaDto.prototype, "fallaGeneralServicios", void 0);
 //# sourceMappingURL=reportar-falla.dto.js.map

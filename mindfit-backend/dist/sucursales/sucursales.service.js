@@ -18,12 +18,15 @@ const sucursal_entity_1 = require("../entities/sucursal.entity");
 const enums_1 = require("../common/enums");
 const cotizacion_venta_entity_1 = require("../entities/cotizacion-venta.entity");
 const transaction_context_service_1 = require("../common/database/transaction-context.service");
+const facilidades_criticas_service_1 = require("../facilidades-criticas/facilidades-criticas.service");
 let SucursalesService = class SucursalesService {
     dataSource;
     transactionContext;
-    constructor(dataSource, transactionContext) {
+    facilidadesCriticasService;
+    constructor(dataSource, transactionContext, facilidadesCriticasService) {
         this.dataSource = dataSource;
         this.transactionContext = transactionContext;
+        this.facilidadesCriticasService = facilidadesCriticasService;
     }
     repo() {
         return this.transactionContext.getRepository(sucursal_entity_1.Sucursal, this.dataSource);
@@ -87,15 +90,21 @@ let SucursalesService = class SucursalesService {
         }, undefined, true);
     }
     async fetchMonitoreoPayload(sucursal, sucursalId, incluirSedeEnItems) {
-        const [activos, ordenesEnCurso, cotizacionesPendientes, ordenesHistorial, otMetricas,] = await Promise.all([
+        const [activos, ordenesEnCurso, cotizacionesPendientes, ordenesHistorial, otMetricas, facilidadesDetalle, sedesSemaforo,] = await Promise.all([
             this.loadActivosMonitoreo(sucursalId),
             this.loadOrdenesEnCursoMonitoreo(sucursalId),
             this.loadCotizacionesPendientes(sucursalId),
             this.loadOrdenesHistorialMonitoreo(sucursalId),
             this.loadOtMetricasMonitoreo(sucursalId),
+            sucursalId != null
+                ? this.facilidadesCriticasService.getResumenSucursal(sucursalId)
+                : Promise.resolve(null),
+            sucursalId == null
+                ? this.facilidadesCriticasService.getResumenGlobalSedes()
+                : Promise.resolve([]),
         ]);
         const ordenes = this.mergeOrdenesUnicas(ordenesEnCurso, ordenesHistorial);
-        return this.buildMonitoreoPayload(sucursal, activos, ordenes, incluirSedeEnItems, cotizacionesPendientes, otMetricas);
+        return this.buildMonitoreoPayload(sucursal, activos, ordenes, incluirSedeEnItems, cotizacionesPendientes, otMetricas, facilidadesDetalle, sedesSemaforo);
     }
     mergeOrdenesUnicas(enCurso, historial) {
         const map = new Map();
@@ -208,7 +217,7 @@ let SucursalesService = class SucursalesService {
             createdAt: c.createdAt.toISOString(),
         }));
     }
-    buildMonitoreoPayload(sucursal, activos, ordenes, incluirSedeEnItems, cotizacionesPendientes, otMetricas) {
+    buildMonitoreoPayload(sucursal, activos, ordenes, incluirSedeEnItems, cotizacionesPendientes, otMetricas, facilidadesDetalle, sedesSemaforo = []) {
         const activosOperativos = activos.filter((a) => a.estadoOperacional === enums_1.EstadoOperacionalActivo.OPERATIVO).length;
         const activosFueraServicio = activos.filter((a) => a.estadoOperacional === enums_1.EstadoOperacionalActivo.FUERA_SERVICIO).length;
         const activosEnReparacion = activos.filter((a) => a.estadoOperacional === enums_1.EstadoOperacionalActivo.EN_REPARACION).length;
@@ -313,6 +322,23 @@ let SucursalesService = class SucursalesService {
                 otsReportadas,
                 otsResueltas,
             },
+            facilidadesCriticas: facilidadesDetalle
+                ? {
+                    semaforo: facilidadesDetalle.semaforo,
+                    operativas: facilidadesDetalle.operativas,
+                    enMantenimiento: facilidadesDetalle.enMantenimiento,
+                    fueraDeServicio: facilidadesDetalle.fueraDeServicio,
+                    items: facilidadesDetalle.items.map((i) => ({
+                        id: i.id,
+                        tipo: i.tipo,
+                        tipoLabel: i.tipoLabel,
+                        estado: i.estado,
+                        notasTecnicas: i.notasTecnicas,
+                        fallosHistoricos: i.fallosHistoricos,
+                    })),
+                }
+                : null,
+            sedesSemaforoFacilidades: sedesSemaforo,
             trabajosEnCurso,
             cotizacionesPendientes,
             historialInfraestructura,
@@ -392,7 +418,9 @@ let SucursalesService = class SucursalesService {
             cantidadPisos: dto.cantidadPisos ?? 1,
         });
         try {
-            return await this.repo().save(sucursal);
+            const saved = await this.repo().save(sucursal);
+            await this.facilidadesCriticasService.ensurePlantillaSucursal(saved.id);
+            return saved;
         }
         catch (err) {
             this.handleUniqueViolation(err);
@@ -445,6 +473,7 @@ exports.SucursalesService = SucursalesService;
 exports.SucursalesService = SucursalesService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [typeorm_1.DataSource,
-        transaction_context_service_1.TransactionContextService])
+        transaction_context_service_1.TransactionContextService,
+        facilidades_criticas_service_1.FacilidadesCriticasService])
 ], SucursalesService);
 //# sourceMappingURL=sucursales.service.js.map

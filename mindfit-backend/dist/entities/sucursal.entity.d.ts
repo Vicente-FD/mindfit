@@ -1,6 +1,7 @@
 import { Usuario } from './usuario.entity';
 import { Activo } from './activo.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
+import { FacilidadCritica } from './facilidad-critica.entity';
 export declare class Sucursal {
     id: number;
     nombre: string;
@@ -16,4 +17,5 @@ export declare class Sucursal {
     usuarios: Usuario[];
     activos: Activo[];
     ordenesTrabajo: OrdenTrabajo[];
+    facilidadesCriticas: FacilidadCritica[];
 }

@@ -1,10 +1,11 @@
 <div class="sucursal-page mx-auto max-w-lg space-y-4 pb-4">
   <header class="rounded-2xl border border-white/5 bg-obsidian-grey p-4">
-    <h1 class="text-lg font-semibold text-pure-white">Reporte de fallas</h1>
-    <p class="text-xs text-slate-grey">Equipos, infraestructura o peticiones de su sede</p>
+    <h1 class="text-lg font-semibold text-pure-white">Mi sucursal</h1>
+    <p class="text-xs text-slate-grey">Facilidades críticas, equipos e infraestructura</p>
   </header>
 
   <section class="page-card">
+    <h2 class="mb-3 text-sm font-semibold text-pure-white">Reporte de equipos / OT</h2>
     <app-hybrid-report-form
       variant="sucursal"
       [fixedSucursalId]="user()?.sucursalId ?? null"

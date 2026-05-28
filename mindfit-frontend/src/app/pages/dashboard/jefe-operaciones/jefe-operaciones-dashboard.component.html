@@ -142,6 +142,9 @@
             {{ o.sucursal?.nombre ?? 'Sucursal #' + o.sucursalId }}
             @if (esInfraestructura(o)) {
               <span class="badge-infra">Infraestructura</span>
+              @if (esReporteAreaServicios(o)) {
+                <span class="badge-infra ml-1">{{ areaServiciosLabel(o) }}</span>
+              }
             } @else if (o.activo) {
               · {{ o.activo.codigoInventario || o.activo.codigoQrToken }} — {{ o.activo.nombre }}
             }
@@ -309,6 +312,7 @@
   <app-reject-ot-modal
     [mode]="rejectModalMode()"
     [orden]="orden"
+    [isServicios]="esReporteAreaServicios(orden)"
     [rejecting]="rejecting()"
     (closed)="closeReject()"
     (confirmed)="confirmReject($event)"
@@ -364,6 +368,12 @@
             <span class="ot-reporte-falla__label">Tipo</span>
             <p class="ot-reporte-falla__value">{{ clasificacionReporteLabel(o) }}</p>
           </div>
+          @if (esReporteAreaServicios(o)) {
+            <div>
+              <span class="ot-reporte-falla__label">Servicio</span>
+              <p class="ot-reporte-falla__value">{{ areaServiciosLabel(o) }}</p>
+            </div>
+          }
           <div>
             <span class="ot-reporte-falla__label">Sede</span>
             <p class="ot-reporte-falla__value">

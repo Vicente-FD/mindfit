@@ -17,8 +17,9 @@ export class RejectOtModalComponent {
   readonly orden = input.required<WorkOrder>();
   readonly rejecting = input(false);
   readonly mode = input<RejectOtModalMode>('cierre');
+  readonly isServicios = input(false);
   readonly closed = output<void>();
-  readonly confirmed = output<string>();
+  readonly confirmed = output<{ motivo: string }>();
 
   readonly titulo = computed(() =>
     this.mode() === 'ticket'
@@ -35,7 +36,9 @@ export class RejectOtModalComponent {
       this.form.markAllAsTouched();
       return;
     }
-    this.confirmed.emit(this.form.controls.motivo.value);
+    this.confirmed.emit({
+      motivo: this.form.controls.motivo.value,
+    });
   }
 
   close(): void {

@@ -11,7 +11,10 @@ import {
 
 @Component({
   selector: 'app-sucursal-dashboard',
-  imports: [LucideAngularModule, HybridReportFormComponent],
+  imports: [
+    LucideAngularModule,
+    HybridReportFormComponent,
+  ],
   templateUrl: './sucursal-dashboard.component.html',
   styleUrl: './sucursal-dashboard.component.css',
 })
@@ -43,6 +46,10 @@ export class SucursalDashboardComponent implements OnInit {
         descripcion: payload.descripcion,
         prioridad: payload.prioridad,
         fotoFalla: payload.fotoFalla,
+        areaServicios: payload.areaServicios,
+        generoServicios: payload.generoServicios,
+        generosServicios: payload.generosServicios,
+        fallaGeneralServicios: payload.fallaGeneralServicios,
       })
       .subscribe({
         next: () => {

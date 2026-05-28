@@ -14,6 +14,7 @@ const typeorm_1 = require("typeorm");
 const usuario_entity_1 = require("./usuario.entity");
 const activo_entity_1 = require("./activo.entity");
 const orden_trabajo_entity_1 = require("./orden-trabajo.entity");
+const facilidad_critica_entity_1 = require("./facilidad-critica.entity");
 let Sucursal = class Sucursal {
     id;
     nombre;
@@ -29,6 +30,7 @@ let Sucursal = class Sucursal {
     usuarios;
     activos;
     ordenesTrabajo;
+    facilidadesCriticas;
 };
 exports.Sucursal = Sucursal;
 __decorate([
@@ -87,6 +89,10 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => orden_trabajo_entity_1.OrdenTrabajo, (orden) => orden.sucursal),
     __metadata("design:type", Array)
 ], Sucursal.prototype, "ordenesTrabajo", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => facilidad_critica_entity_1.FacilidadCritica, (f) => f.sucursal),
+    __metadata("design:type", Array)
+], Sucursal.prototype, "facilidadesCriticas", void 0);
 exports.Sucursal = Sucursal = __decorate([
     (0, typeorm_1.Entity)('sucursales')
 ], Sucursal);

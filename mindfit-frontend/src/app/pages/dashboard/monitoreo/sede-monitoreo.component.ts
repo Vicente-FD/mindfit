@@ -21,13 +21,23 @@ import {
   TrabajoEnCurso,
 } from '../../../core/models/sucursal-monitoreo.model';
 import { resolveMediaUrl } from '../../../core/utils/media-url';
+import {
+  semaforoClass,
+  semaforoLabel,
+} from '../../../core/utils/facilidad-semaforo.util';
+import { FacilidadesSucursalPanelComponent } from '../../../shared/facilidades-sucursal-panel/facilidades-sucursal-panel.component';
 
 const POLL_MS = 30_000;
 const TICK_MS = 60_000;
 
 @Component({
   selector: 'app-sede-monitoreo',
-  imports: [DatePipe, DecimalPipe, LucideAngularModule],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    LucideAngularModule,
+    FacilidadesSucursalPanelComponent,
+  ],
   templateUrl: './sede-monitoreo.component.html',
   styleUrl: './sede-monitoreo.component.css',
 })
@@ -43,6 +53,9 @@ export class SedeMonitoreoComponent implements OnInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly lightboxUrl = signal<string | null>(null);
   readonly tick = signal(0);
+
+  readonly semaforoClass = semaforoClass;
+  readonly semaforoLabel = semaforoLabel;
 
   readonly isGlobalView = computed(
     () => this.selectedKey() === MONITOREO_GLOBAL_KEY,

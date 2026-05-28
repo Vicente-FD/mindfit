@@ -70,6 +70,30 @@ export interface CotizacionPendienteMonitoreoDto {
     divisaCodigo: string;
     createdAt: string;
 }
+export interface FacilidadCriticaMonitoreoItemDto {
+    id: number;
+    tipo: string;
+    tipoLabel: string;
+    estado: string;
+    notasTecnicas: string | null;
+    fallosHistoricos: number;
+}
+export interface FacilidadesCriticasMonitoreoDto {
+    semaforo: string;
+    operativas: number;
+    enMantenimiento: number;
+    fueraDeServicio: number;
+    items: FacilidadCriticaMonitoreoItemDto[];
+}
+export interface SedeSemaforoMonitoreoDto {
+    sucursalId: number;
+    sucursalNombre: string;
+    sucursalSigla: string;
+    semaforo: string;
+    operativas: number;
+    enMantenimiento: number;
+    fueraDeServicio: number;
+}
 export interface SucursalMonitoreoResponseDto {
     sucursal: {
         id: number;
@@ -77,6 +101,8 @@ export interface SucursalMonitoreoResponseDto {
         sigla: string;
     };
     salud: SucursalMonitoreoSaludDto;
+    facilidadesCriticas: FacilidadesCriticasMonitoreoDto | null;
+    sedesSemaforoFacilidades: SedeSemaforoMonitoreoDto[];
     trabajosEnCurso: TrabajoEnCursoDto[];
     cotizacionesPendientes: CotizacionPendienteMonitoreoDto[];
     historialInfraestructura: HistorialInfraDto[];

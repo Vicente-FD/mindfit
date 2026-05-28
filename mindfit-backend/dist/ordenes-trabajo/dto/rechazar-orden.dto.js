@@ -14,6 +14,7 @@ const class_validator_1 = require("class-validator");
 class RechazarOrdenDto {
     motivo;
     motivo_rechazo;
+    actualizarServiciosOperativo;
 }
 exports.RechazarOrdenDto = RechazarOrdenDto;
 __decorate([
@@ -30,4 +31,8 @@ __decorate([
     (0, class_validator_1.MinLength)(3),
     __metadata("design:type", String)
 ], RechazarOrdenDto.prototype, "motivo_rechazo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], RechazarOrdenDto.prototype, "actualizarServiciosOperativo", void 0);
 //# sourceMappingURL=rechazar-orden.dto.js.map

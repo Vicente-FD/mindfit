@@ -79,6 +79,12 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
         }
         const tipoReporte = dto.tipoReporte ?? 'maquina';
         const foto = files.foto_falla?.[0];
+        const generoSingle = dto.generoServicios === 'hombres' || dto.generoServicios === 'mujeres'
+            ? dto.generoServicios
+            : undefined;
+        const esReporteServicios = tipoReporte === 'infraestructura' &&
+            (!!dto.areaServicios ||
+                ['true', '1'].includes(String(dto.fallaGeneralServicios ?? '').toLowerCase()));
         if (tipoReporte === 'maquina') {
             if (dto.activoId == null || Number.isNaN(Number(dto.activoId))) {
                 throw new common_1.BadRequestException('Debe indicar el activo para reportes de máquina');
@@ -87,6 +93,14 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
             if (fotoObligatoria && !foto) {
                 throw new common_1.BadRequestException('La foto de la falla es obligatoria para equipos');
             }
+        }
+        if (esReporteServicios && !foto) {
+            throw new common_1.BadRequestException('La foto de la falla es obligatoria para área de servicios');
+        }
+        if (esReporteServicios &&
+            !['true', '1'].includes(String(dto.fallaGeneralServicios ?? '').toLowerCase()) &&
+            (!dto.areaServicios || !(dto.generosServicios || dto.generoServicios))) {
+            throw new common_1.BadRequestException('Debe seleccionar área y género o marcar falla general de servicios');
         }
         const port = this.configService.get('PORT', 3000);
         const fotoUrl = foto
@@ -99,6 +113,10 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
             prioridad: dto.prioridad,
             titulo: dto.titulo,
             asignadoAId: dto.asignadoAId,
+            areaServicios: dto.areaServicios,
+            generoServicios: generoSingle,
+            generosServicios: dto.generosServicios,
+            fallaGeneralServicios: String(dto.fallaGeneralServicios ?? '').toLowerCase(),
         }, user.id, sucursalId, fotoUrl);
     }
     findCalendario(query) {
@@ -193,7 +211,7 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
     }
     rechazar(id, dto) {
         const motivo = dto.motivo ?? dto.motivo_rechazo ?? '';
-        return this.ordenesService.rechazar(id, motivo);
+        return this.ordenesService.rechazar(id, motivo, dto.actualizarServiciosOperativo === true);
     }
     revertirAprobacion(id) {
         return this.ordenesService.revertirAprobacion(id);

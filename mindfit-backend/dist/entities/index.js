@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LicenciaTecnico = exports.Vehiculo = exports.CotizacionVentaHistorial = exports.CotizacionVentasDetalle = exports.CotizacionVenta = exports.Oportunidad = exports.Cliente = exports.RendicionGasto = exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.SolicitudPassword = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
+exports.FacilidadCriticaHistorial = exports.FacilidadCritica = exports.LicenciaTecnico = exports.Vehiculo = exports.CotizacionVentaHistorial = exports.CotizacionVentasDetalle = exports.CotizacionVenta = exports.Oportunidad = exports.Cliente = exports.RendicionGasto = exports.MovimientoInventario = exports.OrdenTrabajoRepuesto = exports.BodegaStock = exports.Repuesto = exports.PlanPreventivo = exports.AuditTrail = exports.ComentarioOt = exports.EvidenciaOt = exports.OrdenTrabajo = exports.Activo = exports.SolicitudPassword = exports.Usuario = exports.Sucursal = exports.Marca = exports.Categoria = void 0;
 var categoria_entity_1 = require("./categoria.entity");
 Object.defineProperty(exports, "Categoria", { enumerable: true, get: function () { return categoria_entity_1.Categoria; } });
 var marca_entity_1 = require("./marca.entity");
@@ -47,4 +47,8 @@ var vehiculo_entity_1 = require("./vehiculo.entity");
 Object.defineProperty(exports, "Vehiculo", { enumerable: true, get: function () { return vehiculo_entity_1.Vehiculo; } });
 var licencia_tecnico_entity_1 = require("./licencia-tecnico.entity");
 Object.defineProperty(exports, "LicenciaTecnico", { enumerable: true, get: function () { return licencia_tecnico_entity_1.LicenciaTecnico; } });
+var facilidad_critica_entity_1 = require("./facilidad-critica.entity");
+Object.defineProperty(exports, "FacilidadCritica", { enumerable: true, get: function () { return facilidad_critica_entity_1.FacilidadCritica; } });
+var facilidad_critica_historial_entity_1 = require("./facilidad-critica-historial.entity");
+Object.defineProperty(exports, "FacilidadCriticaHistorial", { enumerable: true, get: function () { return facilidad_critica_historial_entity_1.FacilidadCriticaHistorial; } });
 //# sourceMappingURL=index.js.map
