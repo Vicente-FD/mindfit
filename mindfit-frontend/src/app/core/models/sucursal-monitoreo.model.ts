@@ -82,6 +82,7 @@ export interface BitacoraTimelineItem extends Partial<MonitoreoSedeRef> {
 export interface FacilidadesCriticasMonitoreo {
   semaforo: string;
   operativas: number;
+  degradadas: number;
   enMantenimiento: number;
   fueraDeServicio: number;
   items: {
@@ -100,6 +101,7 @@ export interface SedeSemaforoMonitoreo {
   sucursalSigla: string;
   semaforo: string;
   operativas: number;
+  degradadas: number;
   enMantenimiento: number;
   fueraDeServicio: number;
 }

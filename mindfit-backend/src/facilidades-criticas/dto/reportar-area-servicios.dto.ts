@@ -47,4 +47,9 @@ export class ReportarAreaServiciosDto {
   )
   @IsIn(GENEROS_FACILIDAD)
   genero?: GeneroFacilidad;
+
+  /** JSON: [{ "tipo_elemento": "wc", "cantidad": 1 }] */
+  @IsOptional()
+  @IsString()
+  elementosAfectados?: string;
 }

@@ -16,6 +16,7 @@ import { CerrarOrdenDto } from './dto/cerrar-orden.dto';
 import { InventarioService } from '../inventario/inventario.service';
 import { RepuestoConsumoItemDto } from '../inventario/dto/repuesto-consumo.dto';
 import { TipoReporteSucursal } from './dto/tipo-reporte-sucursal';
+import type { ElementoAfectadoDto, ServiciosAfectadosPayload } from '../common/types/capacidades-servicios.types';
 import { FacilidadCritica } from '../entities/facilidad-critica.entity';
 import { CalendarioOrdenesResponseDto } from './dto/calendario-ordenes-response.dto';
 export declare class OrdenesTrabajoService {
@@ -63,9 +64,10 @@ export declare class OrdenesTrabajoService {
         generoServicios?: 'hombres' | 'mujeres';
         generosServicios?: string;
         fallaGeneralServicios?: string;
+        elementosAfectados?: ElementoAfectadoDto[];
     }, creadoPorId: number, sucursalId: number, fotoUrl?: string): Promise<OrdenTrabajo>;
-    private syncAreaServiciosDesdeReporte;
-    private resolveServiciosAfectados;
+    private syncOperatividadTrasReporteServicios;
+    private resolveServiciosAfectadosPayload;
     private eliminarEvidenciasDespues;
     create(dto: CreateOrdenTrabajoDto, creadoPorId: number): Promise<OrdenTrabajo>;
     createBulk(tasks: BulkOrdenTrabajoItemDto[], creadoPorId: number): Promise<{
@@ -86,7 +88,7 @@ export declare class OrdenesTrabajoService {
         areaServicios: "bano" | "camarin" | "ducha" | null;
         generoServicios: "hombres" | "mujeres" | null;
         fallaGeneralServicios: boolean;
-        serviciosAfectados: string[] | null;
+        serviciosAfectados: ServiciosAfectadosPayload | null;
         facilidadCritica: FacilidadCritica | null;
         activo: Activo | null;
         sucursalId: number;
@@ -127,6 +129,5 @@ export declare class OrdenesTrabajoService {
     revertirAprobacion(id: number): Promise<OrdenTrabajo>;
     rechazar(id: number, motivo: string, _actualizarServiciosOperativo?: boolean): Promise<OrdenTrabajo>;
     private actualizarServiciosOt;
-    private resolverEstadoServiciosTrasCierreOt;
-    private inferServiciosAfectadosOrden;
+    private mapOrdenToServiciosContext;
 }

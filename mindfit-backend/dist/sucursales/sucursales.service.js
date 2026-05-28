@@ -326,6 +326,7 @@ let SucursalesService = class SucursalesService {
                 ? {
                     semaforo: facilidadesDetalle.semaforo,
                     operativas: facilidadesDetalle.operativas,
+                    degradadas: facilidadesDetalle.degradadas,
                     enMantenimiento: facilidadesDetalle.enMantenimiento,
                     fueraDeServicio: facilidadesDetalle.fueraDeServicio,
                     items: facilidadesDetalle.items.map((i) => ({
@@ -416,6 +417,7 @@ let SucursalesService = class SucursalesService {
             ciudad: dto.ciudad.trim(),
             estaActiva: dto.estaActiva ?? true,
             cantidadPisos: dto.cantidadPisos ?? 1,
+            capacidadesServicios: dto.capacidadesServicios ?? null,
         });
         try {
             const saved = await this.repo().save(sucursal);
@@ -441,6 +443,9 @@ let SucursalesService = class SucursalesService {
             sucursal.estaActiva = dto.estaActiva;
         if (dto.cantidadPisos != null)
             sucursal.cantidadPisos = dto.cantidadPisos;
+        if (dto.capacidadesServicios !== undefined) {
+            sucursal.capacidadesServicios = dto.capacidadesServicios;
+        }
         if (dto.sigla != null) {
             const sigla = this.normalizeSigla(dto.sigla);
             await this.assertSiglaUnique(sigla, id);

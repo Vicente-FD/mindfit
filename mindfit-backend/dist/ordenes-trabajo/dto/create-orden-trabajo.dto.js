@@ -93,6 +93,6 @@ __decorate([
 ], CreateOrdenTrabajoDto.prototype, "fallaGeneralServicios", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Array)
+    __metadata("design:type", Object)
 ], CreateOrdenTrabajoDto.prototype, "serviciosAfectados", void 0);
 //# sourceMappingURL=create-orden-trabajo.dto.js.map

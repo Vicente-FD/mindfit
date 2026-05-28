@@ -31,6 +31,7 @@ import {
   HybridReportSubmitPayload,
 } from '../../../shared/hybrid-report-form/hybrid-report-form.component';
 import { formatDateTimeChile } from '../../../core/utils/date-format';
+import { labelReporteServiciosOt } from '../../../core/utils/servicios-ot-label.util';
 import { LucideAngularModule } from 'lucide-angular';
 import { DeleteOtConfirmModalComponent } from '../../../shared/delete-ot-confirm-modal/delete-ot-confirm-modal.component';
 import { EditOtModalComponent } from '../../../shared/edit-ot-modal/edit-ot-modal.component';
@@ -133,6 +134,7 @@ export class JefeOperacionesDashboardComponent implements OnInit {
         generoServicios: payload.generoServicios,
         generosServicios: payload.generosServicios,
         fallaGeneralServicios: payload.fallaGeneralServicios,
+        elementosAfectados: payload.elementosAfectados,
       })
       .subscribe({
         next: () => {
@@ -292,29 +294,7 @@ export class JefeOperacionesDashboardComponent implements OnInit {
 
   areaServiciosLabel(orden: WorkOrder): string | null {
     if (!this.esReporteAreaServicios(orden)) return null;
-    if (orden.fallaGeneralServicios) return 'Falla general';
-    const afectados = orden.serviciosAfectados ?? [];
-    if (afectados.length > 1) {
-      const first = afectados[0] ?? '';
-      if (first.startsWith('bano_')) return 'Baños · Hombres y Mujeres';
-      if (first.startsWith('camarin_')) return 'Camarines · Hombres y Mujeres';
-      if (first.startsWith('duchas_')) return 'Duchas · Hombres y Mujeres';
-    }
-    const areaMap: Record<string, string> = {
-      bano: 'Baños',
-      camarin: 'Camarines',
-      ducha: 'Duchas',
-    };
-    const generoMap: Record<string, string> = {
-      hombres: 'Hombres',
-      mujeres: 'Mujeres',
-    };
-    const area = orden.areaServicios ? areaMap[orden.areaServicios] : null;
-    const genero = orden.generoServicios
-      ? generoMap[orden.generoServicios]
-      : null;
-    if (area && genero) return `${area} · ${genero}`;
-    return area ?? 'Área de servicios';
+    return labelReporteServiciosOt(orden);
   }
 
   openPreview(url: string): void {

@@ -26,6 +26,7 @@ class ReportarFallaDto {
     generoServicios;
     generosServicios;
     fallaGeneralServicios;
+    elementosAfectados;
 }
 exports.ReportarFallaDto = ReportarFallaDto;
 __decorate([
@@ -85,4 +86,9 @@ __decorate([
     (0, class_validator_1.IsIn)(['true', 'false', '1', '0']),
     __metadata("design:type", String)
 ], ReportarFallaDto.prototype, "fallaGeneralServicios", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ReportarFallaDto.prototype, "elementosAfectados", void 0);
 //# sourceMappingURL=reportar-falla.dto.js.map

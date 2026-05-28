@@ -72,7 +72,13 @@ export function calcularSemaforoOperatividad(
   ) {
     return SemaforoOperatividadSede.ROJO;
   }
-  if (estados.some((e) => e === EstadoFacilidadCritica.MANTENIMIENTO)) {
+  if (
+    estados.some(
+      (e) =>
+        e === EstadoFacilidadCritica.DEGRADADO ||
+        e === EstadoFacilidadCritica.MANTENIMIENTO,
+    )
+  ) {
     return SemaforoOperatividadSede.AMARILLO;
   }
   return SemaforoOperatividadSede.VERDE;

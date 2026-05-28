@@ -11,6 +11,14 @@ import { SucursalesService } from '../../../core/services/sucursales.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Sucursal } from '../../../core/models/sucursal.model';
 import { DeleteSucursalConfirmModalComponent } from '../../../shared/delete-sucursal-confirm-modal/delete-sucursal-confirm-modal.component';
+import {
+  CAPACIDAD_SECCIONES,
+  LABEL_ELEMENTO,
+  type CapacidadesServicios,
+  type TipoElementoServicio,
+  type TipoFacilidadKey,
+  buildCapacidadesFormValue,
+} from '../../../core/utils/capacidades-servicios.util';
 
 const SIGLA_PATTERN = /^[A-Z]{2,3}$/;
 
@@ -44,6 +52,12 @@ export class SucursalesAdminComponent implements OnInit {
   readonly deleteTarget = signal<Sucursal | null>(null);
   readonly isCreateMode = computed(
     () => this.showForm() && this.selected() === null,
+  );
+
+  readonly capacidadSecciones = CAPACIDAD_SECCIONES;
+  readonly LABEL_ELEMENTO = LABEL_ELEMENTO;
+  readonly capacidadesEdit = signal<CapacidadesServicios>(
+    buildCapacidadesFormValue(),
   );
 
   readonly form = this.fb.nonNullable.group({
@@ -81,6 +95,7 @@ export class SucursalesAdminComponent implements OnInit {
   openCreate(): void {
     this.selected.set(null);
     this.showForm.set(true);
+    this.capacidadesEdit.set(buildCapacidadesFormValue());
     this.form.reset({
       nombre: '',
       sigla: '',
@@ -95,6 +110,7 @@ export class SucursalesAdminComponent implements OnInit {
   selectSucursal(s: Sucursal): void {
     this.showForm.set(false);
     this.selected.set(s);
+    this.capacidadesEdit.set(buildCapacidadesFormValue(s.capacidadesServicios));
     this.form.patchValue({
       nombre: s.nombre,
       sigla: s.sigla,
@@ -109,6 +125,23 @@ export class SucursalesAdminComponent implements OnInit {
   closePanel(): void {
     this.showForm.set(false);
     this.selected.set(null);
+    this.capacidadesEdit.set(buildCapacidadesFormValue());
+  }
+
+  capacidadValor(tipo: TipoFacilidadKey, el: TipoElementoServicio): number {
+    return Number(this.capacidadesEdit()[tipo]?.[el] ?? 0);
+  }
+
+  setCapacidad(
+    tipo: TipoFacilidadKey,
+    el: TipoElementoServicio,
+    raw: string,
+  ): void {
+    const n = Math.max(0, Math.min(99, Number(raw) || 0));
+    this.capacidadesEdit.update((prev) => ({
+      ...prev,
+      [tipo]: { ...prev[tipo], [el]: n },
+    }));
   }
 
   onSiglaInput(event: Event): void {
@@ -163,6 +196,7 @@ export class SucursalesAdminComponent implements OnInit {
       ciudad: v.ciudad.trim(),
       estaActiva: v.estaActiva,
       cantidadPisos: Number(v.cantidadPisos),
+      capacidadesServicios: this.capacidadesEdit(),
     };
 
     this.saving.set(true);

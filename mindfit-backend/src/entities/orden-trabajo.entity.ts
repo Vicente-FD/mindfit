@@ -22,6 +22,7 @@ import { EvidenciaOt } from './evidencia-ot.entity';
 import { ComentarioOt } from './comentario-ot.entity';
 import { OrdenTrabajoRepuesto } from './orden-trabajo-repuesto.entity';
 import { FacilidadCritica } from './facilidad-critica.entity';
+import type { ServiciosAfectadosPayload } from '../common/types/capacidades-servicios.types';
 
 @Entity('ordenes_trabajo')
 export class OrdenTrabajo {
@@ -67,7 +68,7 @@ export class OrdenTrabajo {
     type: 'jsonb',
     nullable: true,
   })
-  serviciosAfectados: string[] | null;
+  serviciosAfectados: ServiciosAfectadosPayload | null;
 
   @ManyToOne(() => FacilidadCritica, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'facilidad_critica_id' })

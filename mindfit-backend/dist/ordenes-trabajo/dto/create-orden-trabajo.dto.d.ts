@@ -1,4 +1,5 @@
 import { ClasificacionOrden, PrioridadOrden, TipoMantenimiento } from '../../common/enums';
+import type { ServiciosAfectadosPayload } from '../../common/types/capacidades-servicios.types';
 export declare class CreateOrdenTrabajoDto {
     clasificacion?: ClasificacionOrden;
     activoId?: number;
@@ -13,5 +14,5 @@ export declare class CreateOrdenTrabajoDto {
     areaServicios?: 'bano' | 'camarin' | 'ducha';
     generoServicios?: 'hombres' | 'mujeres';
     fallaGeneralServicios?: boolean;
-    serviciosAfectados?: string[];
+    serviciosAfectados?: ServiciosAfectadosPayload;
 }

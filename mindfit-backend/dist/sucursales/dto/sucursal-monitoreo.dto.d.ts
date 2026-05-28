@@ -81,6 +81,7 @@ export interface FacilidadCriticaMonitoreoItemDto {
 export interface FacilidadesCriticasMonitoreoDto {
     semaforo: string;
     operativas: number;
+    degradadas: number;
     enMantenimiento: number;
     fueraDeServicio: number;
     items: FacilidadCriticaMonitoreoItemDto[];
@@ -91,6 +92,7 @@ export interface SedeSemaforoMonitoreoDto {
     sucursalSigla: string;
     semaforo: string;
     operativas: number;
+    degradadas: number;
     enMantenimiento: number;
     fueraDeServicio: number;
 }

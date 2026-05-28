@@ -13,6 +13,7 @@ import {
   WorkOrderPriority,
 } from '../models/work-order.model';
 import { TipoReporteSucursal } from '../models/tipo-reporte.model';
+import type { ElementoAfectado } from '../utils/capacidades-servicios.util';
 import {
   BulkCreateWorkOrdersResponse,
   BulkWorkOrderTask,
@@ -50,6 +51,7 @@ export interface ReportarFallaPayload {
   generoServicios?: 'hombres' | 'mujeres';
   generosServicios?: Array<'hombres' | 'mujeres'>;
   fallaGeneralServicios?: boolean;
+  elementosAfectados?: ElementoAfectado[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -172,6 +174,12 @@ export class WorkOrdersService {
       formData.append(
         'fallaGeneralServicios',
         payload.fallaGeneralServicios ? 'true' : 'false',
+      );
+    }
+    if (payload.elementosAfectados?.length) {
+      formData.append(
+        'elementosAfectados',
+        JSON.stringify(payload.elementosAfectados),
       );
     }
     if (payload.tipoReporte === 'maquina' && payload.activoId != null) {

@@ -1,4 +1,5 @@
 import { DataSource, EntityManager } from 'typeorm';
+import { TransactionContextService } from '../common/database/transaction-context.service';
 import { OrdenesTrabajoService } from '../ordenes-trabajo/ordenes-trabajo.service';
 import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 import { ActualizarEstadoFacilidadDto } from './dto/actualizar-estado-facilidad.dto';
@@ -8,7 +9,9 @@ import { ReportarFallaFacilidadDto } from './dto/reportar-falla-facilidad.dto';
 export declare class FacilidadesCriticasService {
     private readonly dataSource;
     private readonly ordenesTrabajoService;
-    constructor(dataSource: DataSource, ordenesTrabajoService: OrdenesTrabajoService);
+    private readonly transactionContext;
+    constructor(dataSource: DataSource, ordenesTrabajoService: OrdenesTrabajoService, transactionContext: TransactionContextService);
+    private manager;
     ensurePlantillaSucursal(sucursalId: number, manager?: EntityManager): Promise<void>;
     backfillTodasLasSucursales(): Promise<void>;
     getResumenSucursal(sucursalId: number): Promise<FacilidadesResumenDto>;

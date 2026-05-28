@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { finalize } from 'rxjs';
 import {
   Component,
   computed,
@@ -23,8 +24,21 @@ import type {
   GeneroFacilidad,
 } from '../../core/models/facilidad-critica.model';
 import { FacilidadesCriticasService } from '../../core/services/facilidades-criticas.service';
+import { SucursalesService } from '../../core/services/sucursales.service';
 import { ImageCompressorService } from '../../core/services/image-compressor.service';
 import { ToastService } from '../../core/services/toast.service';
+import {
+  ELEMENTOS_POR_AREA,
+  LABEL_ELEMENTO,
+  type CapacidadesServicios,
+  type ElementoAfectado,
+  type TipoFacilidadKey,
+  type TipoElementoServicio,
+  capacidadMax,
+  emptyElementosRecord,
+  resolveCapacidades,
+  resolveTipoFacilidadKey,
+} from '../../core/utils/capacidades-servicios.util';
 import {
   estadoFacilidadClass,
   labelEstadoFacilidad,
@@ -45,6 +59,7 @@ function requiredImageFile(control: { value: unknown }) {
 export class FacilidadesSucursalPanelComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(FacilidadesCriticasService);
+  private readonly sucursalesService = inject(SucursalesService);
   private readonly compressor = inject(ImageCompressorService);
   private readonly toast = inject(ToastService);
 
@@ -70,6 +85,12 @@ export class FacilidadesSucursalPanelComponent implements OnDestroy {
   readonly selectedArea = signal<AreaFacilidad | null>(null);
   readonly selectedGenero = signal<GeneroFacilidad | null>(null);
   readonly esFallaGeneral = signal(false);
+  readonly capacidades = signal<CapacidadesServicios>(resolveCapacidades());
+  readonly elementosCantidad = signal<Record<TipoElementoServicio, number>>(
+    emptyElementosRecord(['wc', 'urinarios', 'lavamanos', 'duchas', 'lockers']),
+  );
+
+  readonly LABEL_ELEMENTO = LABEL_ELEMENTO;
 
   readonly reportForm = this.fb.nonNullable.group({
     descripcionProblema: ['', [Validators.required, Validators.maxLength(2000)]],
@@ -78,7 +99,13 @@ export class FacilidadesSucursalPanelComponent implements OnDestroy {
   });
 
   readonly resolveForm = this.fb.nonNullable.group({
-    estado: ['operativo' as 'operativo' | 'mantenimiento' | 'fuera_de_servicio'],
+    estado: [
+      'operativo' as
+        | 'operativo'
+        | 'degradado'
+        | 'mantenimiento'
+        | 'fuera_de_servicio',
+    ],
     notasTecnicas: ['', Validators.maxLength(2000)],
   });
 
@@ -87,16 +114,34 @@ export class FacilidadesSucursalPanelComponent implements OnDestroy {
   readonly estadoFacilidadClass = estadoFacilidadClass;
   readonly labelEstadoFacilidad = labelEstadoFacilidad;
 
+  private readonly tipoFacilidadToKey: Record<string, TipoFacilidadKey> = {
+    bano_hombres: 'bano_hombres',
+    bano_mujeres: 'bano_mujeres',
+    camarin_hombres: 'camarin_hombres',
+    camarin_mujeres: 'camarin_mujeres',
+    duchas_hombres: 'duchas_hombres',
+    duchas_mujeres: 'duchas_mujeres',
+  };
+
   readonly resumenLinea = computed(() => {
     const r = this.resumen();
     if (!r) return '';
     if (r.fueraDeServicio > 0) {
       return `${r.fueraDeServicio} fuera de servicio`;
     }
+    if (r.degradadas > 0) {
+      return `${r.degradadas} degradada(s) / parcial`;
+    }
     if (r.enMantenimiento > 0) {
       return `${r.enMantenimiento} en mantenimiento`;
     }
     return 'Todas operativas';
+  });
+
+  readonly elementosDisponibles = computed((): TipoElementoServicio[] => {
+    const area = this.selectedArea();
+    if (!area) return [];
+    return ELEMENTOS_POR_AREA[area];
   });
 
   readonly puedeEnviarReporte = computed(() => {
@@ -118,6 +163,7 @@ export class FacilidadesSucursalPanelComponent implements OnDestroy {
   reload(): void {
     this.loading.set(true);
     const sid = this.sucursalId();
+    this.loadCapacidades(sid);
     const req = sid != null ? this.api.porSucursal(sid) : this.api.miSucursal();
     req.subscribe({
       next: (r) => {
@@ -131,6 +177,68 @@ export class FacilidadesSucursalPanelComponent implements OnDestroy {
     });
   }
 
+  private loadCapacidades(sucursalId: number | null): void {
+    if (sucursalId == null) {
+      this.capacidades.set(resolveCapacidades());
+      return;
+    }
+    this.sucursalesService.getById(sucursalId).subscribe({
+      next: (s) =>
+        this.capacidades.set(resolveCapacidades(s.capacidadesServicios)),
+      error: () => this.capacidades.set(resolveCapacidades()),
+    });
+  }
+
+  maxElemento(el: TipoElementoServicio): number {
+    const area = this.selectedArea();
+    const genero = this.selectedGenero();
+    if (!area || !genero) return 0;
+    const tipo = resolveTipoFacilidadKey(area, genero);
+    return capacidadMax(this.capacidades(), tipo, el);
+  }
+
+  setElementoCantidad(el: TipoElementoServicio, raw: string): void {
+    const max = this.maxElemento(el);
+    const n = Math.max(0, Math.min(max, Number(raw) || 0));
+    this.elementosCantidad.update((prev) => ({ ...prev, [el]: n }));
+  }
+
+  private resetElementosCantidad(): void {
+    const els = this.elementosDisponibles();
+    this.elementosCantidad.set(
+      emptyElementosRecord(
+        els.length
+          ? els
+          : (['wc', 'urinarios', 'lavamanos', 'duchas', 'lockers'] as TipoElementoServicio[]),
+      ),
+    );
+  }
+
+  private buildElementosAfectados(): ElementoAfectado[] {
+    return this.elementosDisponibles()
+      .map((tipo_elemento) => ({
+        tipo_elemento,
+        cantidad: this.elementosCantidad()[tipo_elemento] ?? 0,
+      }))
+      .filter((e) => e.cantidad > 0);
+  }
+
+  capacidadTipoLabel(tipoFacilidad: string): string {
+    const key = this.tipoFacilidadToKey[tipoFacilidad];
+    if (!key) return '';
+    const caps = this.capacidades()[key];
+    if (!caps) return '';
+
+    const parts: string[] = [];
+    for (const [el, qty] of Object.entries(caps)) {
+      const n = Number(qty) || 0;
+      if (n <= 0) continue;
+      const label = LABEL_ELEMENTO[el as TipoElementoServicio] ?? el;
+      parts.push(`${n} ${label}`);
+    }
+    return parts.join(' · ');
+  }
+
   toggleDetail(): void {
     if (!this.showDetailList()) return;
     this.detailExpanded.update((v) => !v);
@@ -141,6 +249,7 @@ export class FacilidadesSucursalPanelComponent implements OnDestroy {
     this.selectedArea.set(null);
     this.selectedGenero.set(null);
     this.esFallaGeneral.set(false);
+    this.resetElementosCantidad();
     this.reportForm.reset({
       descripcionProblema: '',
       notasTecnicas: '',
@@ -158,16 +267,19 @@ export class FacilidadesSucursalPanelComponent implements OnDestroy {
     this.esFallaGeneral.set(false);
     this.selectedArea.set(area);
     this.selectedGenero.set(null);
+    this.resetElementosCantidad();
   }
 
   seleccionarGenero(genero: GeneroFacilidad): void {
     this.selectedGenero.set(genero);
+    this.resetElementosCantidad();
   }
 
   activarFallaGeneral(): void {
     this.esFallaGeneral.set(true);
     this.selectedArea.set(null);
     this.selectedGenero.set(null);
+    this.resetElementosCantidad();
   }
 
   async onFotoSelected(event: Event): Promise<void> {
@@ -184,8 +296,17 @@ export class FacilidadesSucursalPanelComponent implements OnDestroy {
       this.reportForm.patchValue({ foto: compressed });
       this.reportForm.get('foto')?.updateValueAndValidity();
     } catch {
-      this.reportForm.patchValue({ foto: null });
-      this.revokePreview();
+      if (file.type.startsWith('image/')) {
+        this.reportForm.patchValue({ foto: file });
+        this.reportForm.get('foto')?.updateValueAndValidity();
+        this.toast.error(
+          'No se pudo comprimir la imagen; se enviará el archivo original.',
+        );
+      } else {
+        this.reportForm.patchValue({ foto: null });
+        this.revokePreview();
+        this.toast.error('Seleccione una imagen válida (JPG, PNG o WEBP).');
+      }
     } finally {
       this.processingFoto.set(false);
       input.value = '';
@@ -204,6 +325,12 @@ export class FacilidadesSucursalPanelComponent implements OnDestroy {
       return;
     }
 
+    const elementos = this.buildElementosAfectados();
+    if (!this.esFallaGeneral() && elementos.length === 0) {
+      this.toast.error('Indique al menos un elemento dañado');
+      return;
+    }
+
     const v = this.reportForm.getRawValue();
     const formData = new FormData();
     formData.append('descripcionProblema', v.descripcionProblema.trim());
@@ -218,28 +345,30 @@ export class FacilidadesSucursalPanelComponent implements OnDestroy {
     if (!this.esFallaGeneral()) {
       formData.append('area', this.selectedArea()!);
       formData.append('genero', this.selectedGenero()!);
+      formData.append('elementosAfectados', JSON.stringify(elementos));
     }
     if (v.foto) {
       formData.append('foto_falla', v.foto, v.foto.name);
     }
 
     this.reporting.set(true);
-    this.api.reportarAreaServicios(formData).subscribe({
-      next: (res) => {
-        this.reporting.set(false);
-        this.cerrarReporteModal();
-        this.toast.success(
-          `Ticket ${res.codigoOt} creado. Operaciones asignará un técnico.`,
-        );
-        this.reload();
-        this.reportado.emit();
-      },
-      error: (err) => {
-        this.reporting.set(false);
-        const msg = err?.error?.message ?? 'No se pudo enviar el reporte';
-        this.toast.error(Array.isArray(msg) ? msg.join(', ') : String(msg));
-      },
-    });
+    this.api
+      .reportarAreaServicios(formData)
+      .pipe(finalize(() => this.reporting.set(false)))
+      .subscribe({
+        next: (res) => {
+          this.cerrarReporteModal();
+          this.toast.success(
+            `Ticket ${res.codigoOt} creado. Operaciones asignará un técnico.`,
+          );
+          this.reload();
+          this.reportado.emit();
+        },
+        error: (err) => {
+          const msg = err?.error?.message ?? 'No se pudo enviar el reporte';
+          this.toast.error(Array.isArray(msg) ? msg.join(', ') : String(msg));
+        },
+      });
   }
 
   abrirHistorial(item: FacilidadCriticaItem): void {

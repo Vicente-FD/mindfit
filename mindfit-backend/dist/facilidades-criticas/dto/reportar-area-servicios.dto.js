@@ -21,6 +21,7 @@ class ReportarAreaServiciosDto {
     esFallaGeneral;
     area;
     genero;
+    elementosAfectados;
 }
 exports.ReportarAreaServiciosDto = ReportarAreaServiciosDto;
 __decorate([
@@ -55,4 +56,9 @@ __decorate([
     (0, class_validator_1.IsIn)(exports.GENEROS_FACILIDAD),
     __metadata("design:type", String)
 ], ReportarAreaServiciosDto.prototype, "genero", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ReportarAreaServiciosDto.prototype, "elementosAfectados", void 0);
 //# sourceMappingURL=reportar-area-servicios.dto.js.map

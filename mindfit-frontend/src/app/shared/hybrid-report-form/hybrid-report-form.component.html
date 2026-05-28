@@ -94,10 +94,13 @@
         [class.tipo-pill--active]="form.controls.fallaGeneralServicios.value"
         (click)="toggleFallaGeneralServicios()"
       >
-        Falla general en área de servicios
+        Falla general (corte de agua, inundación, etc.)
       </button>
 
       @if (!form.controls.fallaGeneralServicios.value) {
+        <p class="text-xs text-slate-grey">
+          Si no es falla general: elija área y género; luego indique cuántos WC, urinarios, lavamanos o duchas están dañados.
+        </p>
         <div>
           <label class="field-label">Género *</label>
           <div class="tipo-reporte-pills tipo-reporte-pills--sub" role="group">
@@ -122,6 +125,32 @@
             <p class="mt-1 text-xs text-orange-energy">Seleccione al menos un género.</p>
           }
         </div>
+
+        @if (
+          form.controls.areaServicios.value &&
+          generoServiciosSeleccionado()
+        ) {
+          <div class="space-y-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3">
+            <p class="text-xs font-medium text-yellow-400">Falla específica — elementos dañados</p>
+            @for (el of elementosDisponibles(); track el) {
+              <div class="flex items-center justify-between gap-2">
+                <label class="text-sm text-pure-white" [for]="'el-' + el">
+                  {{ LABEL_ELEMENTO[el] }}
+                  <span class="text-xs text-slate-grey">(máx. {{ maxElemento(el) }})</span>
+                </label>
+                <input
+                  [id]="'el-' + el"
+                  type="number"
+                  class="field-input w-20 text-center"
+                  min="0"
+                  [max]="maxElemento(el)"
+                  [value]="elementosCantidad()[el]"
+                  (input)="setElementoCantidad(el, $any($event.target).value)"
+                />
+              </div>
+            }
+          </div>
+        }
       }
     </div>
   }

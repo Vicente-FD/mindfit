@@ -6,6 +6,7 @@ import { EvidenciaOt } from './evidencia-ot.entity';
 import { ComentarioOt } from './comentario-ot.entity';
 import { OrdenTrabajoRepuesto } from './orden-trabajo-repuesto.entity';
 import { FacilidadCritica } from './facilidad-critica.entity';
+import type { ServiciosAfectadosPayload } from '../common/types/capacidades-servicios.types';
 export declare class OrdenTrabajo {
     id: number;
     codigoOt: string;
@@ -15,7 +16,7 @@ export declare class OrdenTrabajo {
     areaServicios: 'bano' | 'camarin' | 'ducha' | null;
     generoServicios: 'hombres' | 'mujeres' | null;
     fallaGeneralServicios: boolean;
-    serviciosAfectados: string[] | null;
+    serviciosAfectados: ServiciosAfectadosPayload | null;
     facilidadCritica: FacilidadCritica | null;
     activo: Activo | null;
     sucursalId: number;

@@ -13,6 +13,7 @@ exports.CreateSucursalDto = void 0;
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 const class_transformer_2 = require("class-transformer");
+const class_validator_2 = require("class-validator");
 const SIGLA_REGEX = /^[A-Z]{2,3}$/;
 class CreateSucursalDto {
     nombre;
@@ -22,6 +23,7 @@ class CreateSucursalDto {
     ciudad;
     estaActiva;
     cantidadPisos;
+    capacidadesServicios;
 }
 exports.CreateSucursalDto = CreateSucursalDto;
 __decorate([
@@ -69,4 +71,9 @@ __decorate([
     (0, class_validator_1.Max)(20),
     __metadata("design:type", Number)
 ], CreateSucursalDto.prototype, "cantidadPisos", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_2.IsObject)(),
+    __metadata("design:type", Object)
+], CreateSucursalDto.prototype, "capacidadesServicios", void 0);
 //# sourceMappingURL=create-sucursal.dto.js.map

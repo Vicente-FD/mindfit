@@ -8,12 +8,14 @@ import {
   HybridReportFormComponent,
   HybridReportSubmitPayload,
 } from '../../../shared/hybrid-report-form/hybrid-report-form.component';
+import { FacilidadesSucursalPanelComponent } from '../../../shared/facilidades-sucursal-panel/facilidades-sucursal-panel.component';
 
 @Component({
   selector: 'app-sucursal-dashboard',
   imports: [
     LucideAngularModule,
     HybridReportFormComponent,
+    FacilidadesSucursalPanelComponent,
   ],
   templateUrl: './sucursal-dashboard.component.html',
   styleUrl: './sucursal-dashboard.component.css',
@@ -50,6 +52,7 @@ export class SucursalDashboardComponent implements OnInit {
         generoServicios: payload.generoServicios,
         generosServicios: payload.generosServicios,
         fallaGeneralServicios: payload.fallaGeneralServicios,
+        elementosAfectados: payload.elementosAfectados,
       })
       .subscribe({
         next: () => {

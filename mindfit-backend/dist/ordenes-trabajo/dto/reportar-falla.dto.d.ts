@@ -12,4 +12,5 @@ export declare class ReportarFallaDto {
     generoServicios?: 'hombres' | 'mujeres' | string;
     generosServicios?: string;
     fallaGeneralServicios?: string;
+    elementosAfectados?: string;
 }

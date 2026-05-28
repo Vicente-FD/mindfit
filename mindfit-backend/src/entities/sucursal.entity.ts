@@ -11,6 +11,7 @@ import { Usuario } from './usuario.entity';
 import { Activo } from './activo.entity';
 import { OrdenTrabajo } from './orden-trabajo.entity';
 import { FacilidadCritica } from './facilidad-critica.entity';
+import type { CapacidadesServicios } from '../common/types/capacidades-servicios.types';
 
 @Entity('sucursales')
 export class Sucursal {
@@ -37,6 +38,9 @@ export class Sucursal {
 
   @Column({ name: 'cantidad_pisos', type: 'int', default: 1 })
   cantidadPisos: number;
+
+  @Column({ name: 'capacidades_servicios', type: 'jsonb', nullable: true })
+  capacidadesServicios: CapacidadesServicios | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

@@ -63,6 +63,7 @@
     <div class="fc-panel__body">
       <div class="fc-stats">
         <span class="fc-stat fc-stat--ok">{{ r.operativas }} operativas</span>
+        <span class="fc-stat fc-stat--degraded">{{ r.degradadas }} degradadas</span>
         <span class="fc-stat fc-stat--warn">{{ r.enMantenimiento }} mantenimiento</span>
         <span class="fc-stat fc-stat--bad">{{ r.fueraDeServicio }} fuera de servicio</span>
       </div>
@@ -77,6 +78,9 @@
                   · {{ f.fallosHistoricos }} fallo(s) histórico(s)
                 }
               </p>
+              @if (capacidadTipoLabel(f.tipo); as capLabel) {
+                <p class="fc-item__meta">Capacidad base: {{ capLabel }}</p>
+              }
             </div>
             <div class="fc-item__actions">
               <button type="button" class="btn-ghost text-xs" (click)="abrirHistorial(f)">
@@ -109,7 +113,9 @@
 
       <form class="mf-modal-body space-y-4" [formGroup]="reportForm" (ngSubmit)="enviarReporte()">
         <p class="text-xs text-slate-grey">
-          Elija el tipo de instalación afectada. Se generará una OT para que operaciones asigne un técnico.
+          1) Elija baños, camarines o duchas y el género.
+          2) Si no es falla general, indique cuántos WC, urinarios, lavamanos o duchas fallan.
+          3) Adjunte foto y descripción. Operaciones asignará un técnico.
         </p>
 
         <div class="fc-picker-grid">
@@ -169,6 +175,29 @@
                 Mujeres
               </button>
             </div>
+          </div>
+        }
+
+        @if (selectedArea() && selectedGenero() && !esFallaGeneral()) {
+          <div class="space-y-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3">
+            <p class="text-xs font-medium text-yellow-400">Falla específica — elementos dañados</p>
+            @for (el of elementosDisponibles(); track el) {
+              <div class="flex items-center justify-between gap-2">
+                <label class="text-sm text-pure-white" [for]="'fc-el-' + el">
+                  {{ LABEL_ELEMENTO[el] }}
+                  <span class="text-xs text-slate-grey">(máx. {{ maxElemento(el) }})</span>
+                </label>
+                <input
+                  [id]="'fc-el-' + el"
+                  type="number"
+                  class="field-input w-20 text-center"
+                  min="0"
+                  [max]="maxElemento(el)"
+                  [value]="elementosCantidad()[el]"
+                  (input)="setElementoCantidad(el, $any($event.target).value)"
+                />
+              </div>
+            }
           </div>
         }
 
@@ -247,6 +276,7 @@
         >
           <select class="field-input" formControlName="estado">
             <option value="operativo">Operativo</option>
+            <option value="degradado">Degradado / Parcial</option>
             <option value="mantenimiento">Mantenimiento</option>
             <option value="fuera_de_servicio">Fuera de servicio</option>
           </select>

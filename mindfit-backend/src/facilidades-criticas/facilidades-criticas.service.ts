@@ -11,6 +11,7 @@ import {
   RolUsuario,
   TipoFacilidadCritica,
 } from '../common/enums';
+import type { ElementoAfectadoDto } from '../common/types/capacidades-servicios.types';
 import {
   type AreaFacilidad,
   calcularSemaforoOperatividad,
@@ -20,6 +21,9 @@ import {
   labelTipoFacilidad,
   resolveTipoFacilidad,
 } from '../common/utils/facilidades-criticas.util';
+import { parseElementosAfectadosJson } from '../common/utils/operatividad-servicios.util';
+import { recalcularOperatividadFacilidades } from '../common/utils/recalcular-operatividad-facilidades.util';
+import { TransactionContextService } from '../common/database/transaction-context.service';
 import { OrdenesTrabajoService } from '../ordenes-trabajo/ordenes-trabajo.service';
 import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 import { FacilidadCriticaHistorial } from '../entities/facilidad-critica-historial.entity';
@@ -41,7 +45,12 @@ export class FacilidadesCriticasService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly ordenesTrabajoService: OrdenesTrabajoService,
+    private readonly transactionContext: TransactionContextService,
   ) {}
+
+  private manager(): EntityManager {
+    return this.transactionContext.getManager(this.dataSource);
+  }
 
   async ensurePlantillaSucursal(
     sucursalId: number,
@@ -104,6 +113,7 @@ export class FacilidadesCriticasService {
         sucursalSigla: s.sigla,
         semaforo: resumen.semaforo,
         operativas: resumen.operativas,
+        degradadas: resumen.degradadas,
         enMantenimiento: resumen.enMantenimiento,
         fueraDeServicio: resumen.fueraDeServicio,
       });
@@ -179,47 +189,45 @@ export class FacilidadesCriticasService {
     const prioridad = dto.prioridad ?? PrioridadOrden.MEDIA;
     const notas = dto.notasTecnicas?.trim() || null;
 
-    const prep = await this.dataSource.transaction(async (manager) => {
-      await this.ensurePlantillaSucursal(sucursalId, manager);
-
-      let tituloOt: string;
-      let facilidadCriticaId: number | null = null;
-
-      if (esGeneral) {
-        tituloOt = 'Falla general — área de servicios';
-        await this.marcarFallaEnTodasLasFacilidades(
-          manager,
-          sucursalId,
-          descripcion,
-          notas,
-          user.sub,
-        );
-      } else {
-        const tipo = resolveTipoFacilidad(
-          dto.area as AreaFacilidad,
-          dto.genero as GeneroFacilidad,
-        );
-        const facilidad = await manager.getRepository(FacilidadCritica).findOne({
-          where: { sucursalId, tipo },
-        });
-        if (!facilidad) {
-          throw new NotFoundException(
-            'No se encontró la facilidad indicada en esta sucursal',
-          );
-        }
-        facilidadCriticaId = facilidad.id;
-        tituloOt = `Área de servicios — ${labelAreaGenero(dto.area as AreaFacilidad, dto.genero as GeneroFacilidad)}`;
-        await this.aplicarFallaFacilidad(
-          manager,
-          facilidad,
-          descripcion,
-          notas,
-          user.sub,
+    const elementos = parseElementosAfectadosJson(dto.elementosAfectados);
+    if (!esGeneral) {
+      const totalElementos = elementos.reduce(
+        (acc, e) => acc + (Number(e.cantidad) || 0),
+        0,
+      );
+      if (totalElementos <= 0) {
+        throw new BadRequestException(
+          'Indique al menos un elemento dañado con cantidad mayor a cero',
         );
       }
+    }
 
-      return { tituloOt, facilidadCriticaId, esGeneral };
-    });
+    const em = this.manager();
+    await this.ensurePlantillaSucursal(sucursalId, em);
+
+    let tituloOt: string;
+    let facilidadCriticaId: number | null = null;
+
+    if (esGeneral) {
+      tituloOt = 'Falla general — área de servicios';
+    } else {
+      const tipo = resolveTipoFacilidad(
+        dto.area as AreaFacilidad,
+        dto.genero as GeneroFacilidad,
+      );
+      const facilidad = await em
+        .getRepository(FacilidadCritica)
+        .findOne({ where: { sucursalId, tipo } });
+      if (!facilidad) {
+        throw new NotFoundException(
+          'No se encontró la facilidad indicada en esta sucursal',
+        );
+      }
+      facilidadCriticaId = facilidad.id;
+      tituloOt = `Área de servicios — ${labelAreaGenero(dto.area as AreaFacilidad, dto.genero as GeneroFacilidad)}`;
+    }
+
+    const prep = { tituloOt, facilidadCriticaId, esGeneral };
 
     const descripcionOt = notas
       ? `${descripcion}\n\nNotas: ${notas}`
@@ -232,6 +240,10 @@ export class FacilidadesCriticasService {
         prioridad,
         titulo: prep.tituloOt,
         facilidadCriticaId: prep.facilidadCriticaId ?? undefined,
+        areaServicios: esGeneral ? undefined : dto.area,
+        generoServicios: esGeneral ? undefined : dto.genero,
+        fallaGeneralServicios: esGeneral ? 'true' : 'false',
+        elementosAfectados: esGeneral ? undefined : elementos,
       },
       user.sub,
       sucursalId,
@@ -257,39 +269,38 @@ export class FacilidadesCriticasService {
       throw new BadRequestException('La descripción del problema es obligatoria');
     }
 
-    return this.dataSource.transaction(async (manager) => {
-      const facilidad = await this.findFacilidadOrFail(facilidadId, manager);
-      await this.assertPuedeModificarSucursal(facilidad.sucursalId, user);
+    const manager = this.manager();
+    const facilidad = await this.findFacilidadOrFail(facilidadId, manager);
+    await this.assertPuedeModificarSucursal(facilidad.sucursalId, user);
 
-      const estadoAnterior = facilidad.estado;
-      const estadoNuevo = EstadoFacilidadCritica.FUERA_DE_SERVICIO;
+    const estadoAnterior = facilidad.estado;
+    const estadoNuevo = EstadoFacilidadCritica.FUERA_DE_SERVICIO;
 
-      if (estadoAnterior === estadoNuevo && !dto.notasTecnicas?.trim()) {
-        throw new BadRequestException(
-          'La facilidad ya está fuera de servicio. Agregue notas si desea actualizar el registro.',
-        );
-      }
-
-      facilidad.estado = estadoNuevo;
-      if (dto.notasTecnicas?.trim()) {
-        facilidad.notasTecnicas = dto.notasTecnicas.trim();
-      }
-      facilidad.actualizadoPorId = user.sub;
-      await manager.getRepository(FacilidadCritica).save(facilidad);
-
-      await manager.getRepository(FacilidadCriticaHistorial).save({
-        facilidadCriticaId: facilidad.id,
-        estadoAnterior,
-        estadoNuevo,
-        descripcionProblema: descripcion,
-        reportadoPorId: user.sub,
-      });
-
-      return this.mapItem(
-        facilidad,
-        await this.countHistorialFallas(facilidad.id, manager),
+    if (estadoAnterior === estadoNuevo && !dto.notasTecnicas?.trim()) {
+      throw new BadRequestException(
+        'La facilidad ya está fuera de servicio. Agregue notas si desea actualizar el registro.',
       );
+    }
+
+    facilidad.estado = estadoNuevo;
+    if (dto.notasTecnicas?.trim()) {
+      facilidad.notasTecnicas = dto.notasTecnicas.trim();
+    }
+    facilidad.actualizadoPorId = user.sub;
+    await manager.getRepository(FacilidadCritica).save(facilidad);
+
+    await manager.getRepository(FacilidadCriticaHistorial).save({
+      facilidadCriticaId: facilidad.id,
+      estadoAnterior,
+      estadoNuevo,
+      descripcionProblema: descripcion,
+      reportadoPorId: user.sub,
     });
+
+    return this.mapItem(
+      facilidad,
+      await this.countHistorialFallas(facilidad.id, manager),
+    );
   }
 
   async actualizarEstado(
@@ -299,39 +310,38 @@ export class FacilidadesCriticasService {
   ): Promise<FacilidadCriticaItemDto> {
     this.assertPuedeResolverEstado(user);
 
-    return this.dataSource.transaction(async (manager) => {
-      const facilidad = await this.findFacilidadOrFail(facilidadId, manager);
-      const estadoAnterior = facilidad.estado;
-      const estadoNuevo = dto.estado;
+    const manager = this.manager();
+    const facilidad = await this.findFacilidadOrFail(facilidadId, manager);
+    const estadoAnterior = facilidad.estado;
+    const estadoNuevo = dto.estado;
 
-      if (estadoAnterior === estadoNuevo && dto.notasTecnicas === undefined) {
-        throw new BadRequestException('El estado ya es el indicado');
-      }
+    if (estadoAnterior === estadoNuevo && dto.notasTecnicas === undefined) {
+      throw new BadRequestException('El estado ya es el indicado');
+    }
 
-      facilidad.estado = estadoNuevo;
-      if (dto.notasTecnicas !== undefined) {
-        facilidad.notasTecnicas = dto.notasTecnicas.trim() || null;
-      }
-      facilidad.actualizadoPorId = user.sub;
-      await manager.getRepository(FacilidadCritica).save(facilidad);
+    facilidad.estado = estadoNuevo;
+    if (dto.notasTecnicas !== undefined) {
+      facilidad.notasTecnicas = dto.notasTecnicas.trim() || null;
+    }
+    facilidad.actualizadoPorId = user.sub;
+    await manager.getRepository(FacilidadCritica).save(facilidad);
 
-      if (estadoAnterior !== estadoNuevo) {
-        await manager.getRepository(FacilidadCriticaHistorial).save({
-          facilidadCriticaId: facilidad.id,
-          estadoAnterior,
-          estadoNuevo,
-          descripcionProblema:
-            dto.notasTecnicas?.trim() ||
-            `Estado actualizado a ${estadoNuevo} por operaciones`,
-          reportadoPorId: user.sub,
-        });
-      }
+    if (estadoAnterior !== estadoNuevo) {
+      await manager.getRepository(FacilidadCriticaHistorial).save({
+        facilidadCriticaId: facilidad.id,
+        estadoAnterior,
+        estadoNuevo,
+        descripcionProblema:
+          dto.notasTecnicas?.trim() ||
+          `Estado actualizado a ${estadoNuevo} por operaciones`,
+        reportadoPorId: user.sub,
+      });
+    }
 
-      return this.mapItem(
-        facilidad,
-        await this.countHistorialFallas(facilidad.id, manager),
-      );
-    });
+    return this.mapItem(
+      facilidad,
+      await this.countHistorialFallas(facilidad.id, manager),
+    );
   }
 
   private async loadItemsConConteo(
@@ -372,6 +382,9 @@ export class FacilidadesCriticasService {
       semaforo: calcularSemaforoOperatividad(estados),
       operativas: items.filter(
         (i) => i.estado === EstadoFacilidadCritica.OPERATIVO,
+      ).length,
+      degradadas: items.filter(
+        (i) => i.estado === EstadoFacilidadCritica.DEGRADADO,
       ).length,
       enMantenimiento: items.filter(
         (i) => i.estado === EstadoFacilidadCritica.MANTENIMIENTO,

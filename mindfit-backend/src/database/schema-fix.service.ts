@@ -108,7 +108,7 @@ export class SchemaFixService implements OnModuleInit {
         sucursal_id INT NOT NULL REFERENCES sucursales(id) ON DELETE CASCADE,
         tipo VARCHAR(40) NOT NULL,
         estado VARCHAR(24) NOT NULL DEFAULT 'operativo'
-          CHECK (estado IN ('operativo', 'mantenimiento', 'fuera_de_servicio')),
+          CHECK (estado IN ('operativo', 'degradado', 'mantenimiento', 'fuera_de_servicio')),
         notas_tecnicas TEXT NULL,
         actualizado_por_id INT NULL REFERENCES usuarios(id) ON DELETE SET NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -176,6 +176,28 @@ export class SchemaFixService implements OnModuleInit {
     await this.dataSource.query(`
       ALTER TABLE ordenes_trabajo
       ADD COLUMN IF NOT EXISTS servicios_afectados JSONB NULL;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE sucursales
+      ADD COLUMN IF NOT EXISTS capacidades_servicios JSONB NULL;
+    `);
+    await this.dataSource.query(`
+      DO $$
+      BEGIN
+        ALTER TABLE facilidades_criticas
+          DROP CONSTRAINT IF EXISTS facilidades_criticas_estado_check;
+      EXCEPTION
+        WHEN undefined_object THEN NULL;
+      END $$;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE facilidades_criticas
+      DROP CONSTRAINT IF EXISTS facilidades_criticas_estado_check;
+    `);
+    await this.dataSource.query(`
+      ALTER TABLE facilidades_criticas
+      ADD CONSTRAINT facilidades_criticas_estado_check
+      CHECK (estado IN ('operativo', 'degradado', 'mantenimiento', 'fuera_de_servicio'));
     `);
     this.logger.log('Facilidades críticas verificadas');
   }

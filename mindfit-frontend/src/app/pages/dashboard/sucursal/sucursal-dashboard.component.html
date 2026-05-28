@@ -4,8 +4,18 @@
     <p class="text-xs text-slate-grey">Facilidades críticas, equipos e infraestructura</p>
   </header>
 
+  <app-facilidades-sucursal-panel
+    [sucursalId]="user()?.sucursalId ?? null"
+    [showDetailList]="false"
+    (reportado)="loadOrdenes()"
+  />
+
   <section class="page-card">
     <h2 class="mb-3 text-sm font-semibold text-pure-white">Reporte de equipos / OT</h2>
+    <p class="mb-3 text-xs text-slate-grey">
+      Para baños, camarines o duchas use el botón «Reportar falla en área de servicios» de arriba.
+      Aquí reporte máquinas o infraestructura general.
+    </p>
     <app-hybrid-report-form
       variant="sucursal"
       [fixedSucursalId]="user()?.sucursalId ?? null"

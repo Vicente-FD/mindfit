@@ -64,4 +64,9 @@ export class ReportarFallaDto {
   @IsOptional()
   @IsIn(['true', 'false', '1', '0'])
   fallaGeneralServicios?: string;
+
+  /** JSON: [{ "tipo_elemento": "wc", "cantidad": 1 }] */
+  @IsOptional()
+  @IsString()
+  elementosAfectados?: string;
 }

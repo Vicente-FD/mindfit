@@ -9,4 +9,5 @@ export declare class ReportarAreaServiciosDto {
     esFallaGeneral?: string;
     area?: AreaFacilidad;
     genero?: GeneroFacilidad;
+    elementosAfectados?: string;
 }

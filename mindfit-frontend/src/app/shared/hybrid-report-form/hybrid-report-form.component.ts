@@ -27,6 +27,22 @@ import {
 } from '../../core/models/tipo-reporte.model';
 import { Sucursal } from '../../core/models/sucursal.model';
 import { Usuario } from '../../core/models/usuario.model';
+import { SucursalesService } from '../../core/services/sucursales.service';
+import type {
+  AreaFacilidad,
+  GeneroFacilidad,
+} from '../../core/models/facilidad-critica.model';
+import {
+  type CapacidadesServicios,
+  type ElementoAfectado,
+  type TipoElementoServicio,
+  ELEMENTOS_POR_AREA,
+  LABEL_ELEMENTO,
+  capacidadMax,
+  emptyElementosRecord,
+  resolveCapacidades,
+  resolveTipoFacilidadKey,
+} from '../../core/utils/capacidades-servicios.util';
 import { QrScannerModalComponent } from '../../layout/qr-scanner-modal/qr-scanner-modal.component';
 
 export interface HybridReportSubmitPayload {
@@ -42,6 +58,7 @@ export interface HybridReportSubmitPayload {
   generoServicios?: 'hombres' | 'mujeres';
   generosServicios?: Array<'hombres' | 'mujeres'>;
   fallaGeneralServicios?: boolean;
+  elementosAfectados?: ElementoAfectado[];
 }
 
 function requiredImageFile(control: AbstractControl): ValidationErrors | null {
@@ -58,6 +75,7 @@ function requiredImageFile(control: AbstractControl): ValidationErrors | null {
 export class HybridReportFormComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly activosService = inject(ActivosService);
+  private readonly sucursalesService = inject(SucursalesService);
   private readonly compressor = inject(ImageCompressorService);
   private readonly toast = inject(ToastService);
 
@@ -78,6 +96,12 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
   readonly processingFoto = signal(false);
   readonly showScanner = signal(false);
   readonly preselectedActivoNombre = signal<string | null>(null);
+  readonly capacidades = signal<CapacidadesServicios>(resolveCapacidades());
+  readonly elementosCantidad = signal<Record<TipoElementoServicio, number>>(
+    emptyElementosRecord(['wc', 'urinarios', 'lavamanos', 'duchas', 'lockers']),
+  );
+
+  readonly LABEL_ELEMENTO = LABEL_ELEMENTO;
 
   readonly form = this.fb.nonNullable.group({
     clasificacion: ['maquina' as TipoReporteSucursal, Validators.required],
@@ -112,6 +136,18 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
     return this.activos().filter((a) => a.sucursalId === sid);
   });
 
+  readonly elementosDisponibles = computed((): TipoElementoServicio[] => {
+    const area = this.form.controls.areaServicios.value as AreaFacilidad | '';
+    if (!area || !ELEMENTOS_POR_AREA[area]) return [];
+    return ELEMENTOS_POR_AREA[area];
+  });
+
+  readonly generoServiciosSeleccionado = computed((): GeneroFacilidad | null => {
+    if (this.form.controls.generoServiciosHombres.value) return 'hombres';
+    if (this.form.controls.generoServiciosMujeres.value) return 'mujeres';
+    return null;
+  });
+
   ngOnInit(): void {
     if (this.esCentral()) {
       this.form.controls.sucursalId.setValidators([Validators.required]);
@@ -134,9 +170,15 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
       this.form.patchValue({ activoId: '' });
       this.preselectedActivoNombre.set(null);
       this.loadActivos();
+      this.loadCapacidades();
     });
 
+    this.form.controls.areaServicios.valueChanges.subscribe(() =>
+      this.resetElementosCantidad(),
+    );
+
     this.loadActivos();
+    this.loadCapacidades();
   }
 
   ngOnDestroy(): void {
@@ -268,6 +310,50 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
     this.form.controls.generoServicios.updateValueAndValidity();
   }
 
+  loadCapacidades(): void {
+    const sid = this.sucursalEfectivaId();
+    if (!sid) {
+      this.capacidades.set(resolveCapacidades());
+      return;
+    }
+    this.sucursalesService.getById(sid).subscribe({
+      next: (s) => this.capacidades.set(resolveCapacidades(s.capacidadesServicios)),
+      error: () => this.capacidades.set(resolveCapacidades()),
+    });
+  }
+
+  maxElemento(el: TipoElementoServicio): number {
+    const area = this.form.controls.areaServicios.value as AreaFacilidad | '';
+    const genero = this.generoServiciosSeleccionado();
+    if (!area || !genero) return 0;
+    const tipo = resolveTipoFacilidadKey(area, genero);
+    return capacidadMax(this.capacidades(), tipo, el);
+  }
+
+  setElementoCantidad(el: TipoElementoServicio, raw: string): void {
+    const max = this.maxElemento(el);
+    let n = Math.max(0, Math.min(max, Number(raw) || 0));
+    this.elementosCantidad.update((prev) => ({ ...prev, [el]: n }));
+  }
+
+  private resetElementosCantidad(): void {
+    const els = this.elementosDisponibles();
+    this.elementosCantidad.set(
+      emptyElementosRecord(
+        els.length ? els : (['wc', 'urinarios', 'lavamanos', 'duchas', 'lockers'] as TipoElementoServicio[]),
+      ),
+    );
+  }
+
+  private buildElementosAfectados(): ElementoAfectado[] {
+    return this.elementosDisponibles()
+      .map((tipo_elemento) => ({
+        tipo_elemento,
+        cantidad: this.elementosCantidad()[tipo_elemento] ?? 0,
+      }))
+      .filter((e) => e.cantidad > 0);
+  }
+
   loadActivos(): void {
     const sid = this.sucursalEfectivaId();
     if (!sid) {
@@ -350,6 +436,16 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
 
     if (clasificacion === 'maquina' && this.fotoEsObligatoria && !foto) return;
 
+    const elementos = this.buildElementosAfectados();
+    if (
+      this.esAreaServicios &&
+      !v.fallaGeneralServicios &&
+      elementos.length === 0
+    ) {
+      this.toast.error('Indique al menos un elemento dañado');
+      return;
+    }
+
     this.submitted.emit({
       tipoReporte: clasificacion,
       activoId: clasificacion === 'maquina' ? Number(v.activoId) : null,
@@ -378,6 +474,10 @@ export class HybridReportFormComponent implements OnInit, OnDestroy {
           : undefined,
       fallaGeneralServicios:
         this.esAreaServicios ? v.fallaGeneralServicios : false,
+      elementosAfectados:
+        this.esAreaServicios && !v.fallaGeneralServicios
+          ? elementos
+          : undefined,
     });
   }
 

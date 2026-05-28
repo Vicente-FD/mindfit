@@ -3,6 +3,7 @@ export type GeneroFacilidad = 'hombres' | 'mujeres';
 
 export type EstadoFacilidadCritica =
   | 'operativo'
+  | 'degradado'
   | 'mantenimiento'
   | 'fuera_de_servicio';
 
@@ -22,6 +23,7 @@ export interface FacilidadCriticaItem {
 export interface FacilidadesResumen {
   semaforo: SemaforoOperatividadSede;
   operativas: number;
+  degradadas: number;
   enMantenimiento: number;
   fueraDeServicio: number;
   items: FacilidadCriticaItem[];
@@ -33,6 +35,7 @@ export interface SedeSemaforoResumen {
   sucursalSigla: string;
   semaforo: SemaforoOperatividadSede;
   operativas: number;
+  degradadas: number;
   enMantenimiento: number;
   fueraDeServicio: number;
 }

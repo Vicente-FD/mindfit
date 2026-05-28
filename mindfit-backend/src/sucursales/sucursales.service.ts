@@ -451,6 +451,7 @@ export class SucursalesService {
         ? {
             semaforo: facilidadesDetalle.semaforo,
             operativas: facilidadesDetalle.operativas,
+            degradadas: facilidadesDetalle.degradadas,
             enMantenimiento: facilidadesDetalle.enMantenimiento,
             fueraDeServicio: facilidadesDetalle.fueraDeServicio,
             items: facilidadesDetalle.items.map((i) => ({
@@ -572,6 +573,7 @@ export class SucursalesService {
       ciudad: dto.ciudad.trim(),
       estaActiva: dto.estaActiva ?? true,
       cantidadPisos: dto.cantidadPisos ?? 1,
+      capacidadesServicios: dto.capacidadesServicios ?? null,
     });
 
     try {
@@ -593,6 +595,9 @@ export class SucursalesService {
     if (dto.ciudad != null) sucursal.ciudad = dto.ciudad.trim();
     if (dto.estaActiva != null) sucursal.estaActiva = dto.estaActiva;
     if (dto.cantidadPisos != null) sucursal.cantidadPisos = dto.cantidadPisos;
+    if (dto.capacidadesServicios !== undefined) {
+      sucursal.capacidadesServicios = dto.capacidadesServicios;
+    }
     if (dto.sigla != null) {
       const sigla = this.normalizeSigla(dto.sigla);
       await this.assertSiglaUnique(sigla, id);

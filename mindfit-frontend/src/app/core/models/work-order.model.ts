@@ -65,7 +65,10 @@ export interface WorkOrder {
   areaServicios?: 'bano' | 'camarin' | 'ducha' | null;
   generoServicios?: 'hombres' | 'mujeres' | null;
   fallaGeneralServicios?: boolean;
-  serviciosAfectados?: string[] | null;
+  serviciosAfectados?:
+    | string[]
+    | Array<{ tipo_elemento: string; cantidad: number }>
+    | null;
   sucursalId: number;
   creadoPorId: number;
   asignadoAId: number | null;

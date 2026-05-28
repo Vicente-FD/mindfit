@@ -51,7 +51,8 @@ function calcularSemaforoOperatividad(estados) {
     if (estados.some((e) => e === enums_1.EstadoFacilidadCritica.FUERA_DE_SERVICIO)) {
         return enums_1.SemaforoOperatividadSede.ROJO;
     }
-    if (estados.some((e) => e === enums_1.EstadoFacilidadCritica.MANTENIMIENTO)) {
+    if (estados.some((e) => e === enums_1.EstadoFacilidadCritica.DEGRADADO ||
+        e === enums_1.EstadoFacilidadCritica.MANTENIMIENTO)) {
         return enums_1.SemaforoOperatividadSede.AMARILLO;
     }
     return enums_1.SemaforoOperatividadSede.VERDE;

@@ -19,6 +19,7 @@ import {
   WorkOrder,
   WorkOrderStatus,
 } from '../../../core/models/work-order.model';
+import { labelReporteServiciosOt } from '../../../core/utils/servicios-ot-label.util';
 import { CloseOtModalComponent } from '../../../layout/close-ot-modal/close-ot-modal.component';
 import { StartWorkModalComponent } from '../../../layout/start-work-modal/start-work-modal.component';
 import { RenderGastoModalComponent } from '../../../layout/render-gasto-modal/render-gasto-modal.component';
@@ -492,6 +493,8 @@ export class TecnicoDashboardComponent implements OnInit {
   }
 
   activoDetalle(orden: WorkOrder): string {
+    const servicios = labelReporteServiciosOt(orden);
+    if (servicios) return servicios;
     const a = orden.activo;
     if (!a) return orden.descripcion ?? 'Sin activo vinculado';
     const parts = [a.marca, a.modelo].filter(Boolean).join(' · ');

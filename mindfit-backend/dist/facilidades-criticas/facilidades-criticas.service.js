@@ -14,6 +14,8 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("typeorm");
 const enums_1 = require("../common/enums");
 const facilidades_criticas_util_1 = require("../common/utils/facilidades-criticas.util");
+const operatividad_servicios_util_1 = require("../common/utils/operatividad-servicios.util");
+const transaction_context_service_1 = require("../common/database/transaction-context.service");
 const ordenes_trabajo_service_1 = require("../ordenes-trabajo/ordenes-trabajo.service");
 const facilidad_critica_historial_entity_1 = require("../entities/facilidad-critica-historial.entity");
 const facilidad_critica_entity_1 = require("../entities/facilidad-critica.entity");
@@ -21,9 +23,14 @@ const sucursal_entity_1 = require("../entities/sucursal.entity");
 let FacilidadesCriticasService = class FacilidadesCriticasService {
     dataSource;
     ordenesTrabajoService;
-    constructor(dataSource, ordenesTrabajoService) {
+    transactionContext;
+    constructor(dataSource, ordenesTrabajoService, transactionContext) {
         this.dataSource = dataSource;
         this.ordenesTrabajoService = ordenesTrabajoService;
+        this.transactionContext = transactionContext;
+    }
+    manager() {
+        return this.transactionContext.getManager(this.dataSource);
     }
     async ensurePlantillaSucursal(sucursalId, manager) {
         const repo = manager
@@ -71,6 +78,7 @@ let FacilidadesCriticasService = class FacilidadesCriticasService {
                 sucursalSigla: s.sigla,
                 semaforo: resumen.semaforo,
                 operativas: resumen.operativas,
+                degradadas: resumen.degradadas,
                 enMantenimiento: resumen.enMantenimiento,
                 fueraDeServicio: resumen.fueraDeServicio,
             });
@@ -120,28 +128,32 @@ let FacilidadesCriticasService = class FacilidadesCriticasService {
         }
         const prioridad = dto.prioridad ?? enums_1.PrioridadOrden.MEDIA;
         const notas = dto.notasTecnicas?.trim() || null;
-        const prep = await this.dataSource.transaction(async (manager) => {
-            await this.ensurePlantillaSucursal(sucursalId, manager);
-            let tituloOt;
-            let facilidadCriticaId = null;
-            if (esGeneral) {
-                tituloOt = 'Falla general — área de servicios';
-                await this.marcarFallaEnTodasLasFacilidades(manager, sucursalId, descripcion, notas, user.sub);
+        const elementos = (0, operatividad_servicios_util_1.parseElementosAfectadosJson)(dto.elementosAfectados);
+        if (!esGeneral) {
+            const totalElementos = elementos.reduce((acc, e) => acc + (Number(e.cantidad) || 0), 0);
+            if (totalElementos <= 0) {
+                throw new common_1.BadRequestException('Indique al menos un elemento dañado con cantidad mayor a cero');
             }
-            else {
-                const tipo = (0, facilidades_criticas_util_1.resolveTipoFacilidad)(dto.area, dto.genero);
-                const facilidad = await manager.getRepository(facilidad_critica_entity_1.FacilidadCritica).findOne({
-                    where: { sucursalId, tipo },
-                });
-                if (!facilidad) {
-                    throw new common_1.NotFoundException('No se encontró la facilidad indicada en esta sucursal');
-                }
-                facilidadCriticaId = facilidad.id;
-                tituloOt = `Área de servicios — ${(0, facilidades_criticas_util_1.labelAreaGenero)(dto.area, dto.genero)}`;
-                await this.aplicarFallaFacilidad(manager, facilidad, descripcion, notas, user.sub);
+        }
+        const em = this.manager();
+        await this.ensurePlantillaSucursal(sucursalId, em);
+        let tituloOt;
+        let facilidadCriticaId = null;
+        if (esGeneral) {
+            tituloOt = 'Falla general — área de servicios';
+        }
+        else {
+            const tipo = (0, facilidades_criticas_util_1.resolveTipoFacilidad)(dto.area, dto.genero);
+            const facilidad = await em
+                .getRepository(facilidad_critica_entity_1.FacilidadCritica)
+                .findOne({ where: { sucursalId, tipo } });
+            if (!facilidad) {
+                throw new common_1.NotFoundException('No se encontró la facilidad indicada en esta sucursal');
             }
-            return { tituloOt, facilidadCriticaId, esGeneral };
-        });
+            facilidadCriticaId = facilidad.id;
+            tituloOt = `Área de servicios — ${(0, facilidades_criticas_util_1.labelAreaGenero)(dto.area, dto.genero)}`;
+        }
+        const prep = { tituloOt, facilidadCriticaId, esGeneral };
         const descripcionOt = notas
             ? `${descripcion}\n\nNotas: ${notas}`
             : descripcion;
@@ -151,6 +163,10 @@ let FacilidadesCriticasService = class FacilidadesCriticasService {
             prioridad,
             titulo: prep.tituloOt,
             facilidadCriticaId: prep.facilidadCriticaId ?? undefined,
+            areaServicios: esGeneral ? undefined : dto.area,
+            generoServicios: esGeneral ? undefined : dto.genero,
+            fallaGeneralServicios: esGeneral ? 'true' : 'false',
+            elementosAfectados: esGeneral ? undefined : elementos,
         }, user.sub, sucursalId, fotoUrl);
         return {
             ordenId: orden.id,
@@ -165,57 +181,55 @@ let FacilidadesCriticasService = class FacilidadesCriticasService {
         if (!descripcion) {
             throw new common_1.BadRequestException('La descripción del problema es obligatoria');
         }
-        return this.dataSource.transaction(async (manager) => {
-            const facilidad = await this.findFacilidadOrFail(facilidadId, manager);
-            await this.assertPuedeModificarSucursal(facilidad.sucursalId, user);
-            const estadoAnterior = facilidad.estado;
-            const estadoNuevo = enums_1.EstadoFacilidadCritica.FUERA_DE_SERVICIO;
-            if (estadoAnterior === estadoNuevo && !dto.notasTecnicas?.trim()) {
-                throw new common_1.BadRequestException('La facilidad ya está fuera de servicio. Agregue notas si desea actualizar el registro.');
-            }
-            facilidad.estado = estadoNuevo;
-            if (dto.notasTecnicas?.trim()) {
-                facilidad.notasTecnicas = dto.notasTecnicas.trim();
-            }
-            facilidad.actualizadoPorId = user.sub;
-            await manager.getRepository(facilidad_critica_entity_1.FacilidadCritica).save(facilidad);
+        const manager = this.manager();
+        const facilidad = await this.findFacilidadOrFail(facilidadId, manager);
+        await this.assertPuedeModificarSucursal(facilidad.sucursalId, user);
+        const estadoAnterior = facilidad.estado;
+        const estadoNuevo = enums_1.EstadoFacilidadCritica.FUERA_DE_SERVICIO;
+        if (estadoAnterior === estadoNuevo && !dto.notasTecnicas?.trim()) {
+            throw new common_1.BadRequestException('La facilidad ya está fuera de servicio. Agregue notas si desea actualizar el registro.');
+        }
+        facilidad.estado = estadoNuevo;
+        if (dto.notasTecnicas?.trim()) {
+            facilidad.notasTecnicas = dto.notasTecnicas.trim();
+        }
+        facilidad.actualizadoPorId = user.sub;
+        await manager.getRepository(facilidad_critica_entity_1.FacilidadCritica).save(facilidad);
+        await manager.getRepository(facilidad_critica_historial_entity_1.FacilidadCriticaHistorial).save({
+            facilidadCriticaId: facilidad.id,
+            estadoAnterior,
+            estadoNuevo,
+            descripcionProblema: descripcion,
+            reportadoPorId: user.sub,
+        });
+        return this.mapItem(facilidad, await this.countHistorialFallas(facilidad.id, manager));
+    }
+    async actualizarEstado(facilidadId, dto, user) {
+        this.assertPuedeResolverEstado(user);
+        const manager = this.manager();
+        const facilidad = await this.findFacilidadOrFail(facilidadId, manager);
+        const estadoAnterior = facilidad.estado;
+        const estadoNuevo = dto.estado;
+        if (estadoAnterior === estadoNuevo && dto.notasTecnicas === undefined) {
+            throw new common_1.BadRequestException('El estado ya es el indicado');
+        }
+        facilidad.estado = estadoNuevo;
+        if (dto.notasTecnicas !== undefined) {
+            facilidad.notasTecnicas = dto.notasTecnicas.trim() || null;
+        }
+        facilidad.actualizadoPorId = user.sub;
+        await manager.getRepository(facilidad_critica_entity_1.FacilidadCritica).save(facilidad);
+        if (estadoAnterior !== estadoNuevo) {
             await manager.getRepository(facilidad_critica_historial_entity_1.FacilidadCriticaHistorial).save({
                 facilidadCriticaId: facilidad.id,
                 estadoAnterior,
                 estadoNuevo,
-                descripcionProblema: descripcion,
+                descripcionProblema: dto.notasTecnicas?.trim() ||
+                    `Estado actualizado a ${estadoNuevo} por operaciones`,
                 reportadoPorId: user.sub,
             });
-            return this.mapItem(facilidad, await this.countHistorialFallas(facilidad.id, manager));
-        });
-    }
-    async actualizarEstado(facilidadId, dto, user) {
-        this.assertPuedeResolverEstado(user);
-        return this.dataSource.transaction(async (manager) => {
-            const facilidad = await this.findFacilidadOrFail(facilidadId, manager);
-            const estadoAnterior = facilidad.estado;
-            const estadoNuevo = dto.estado;
-            if (estadoAnterior === estadoNuevo && dto.notasTecnicas === undefined) {
-                throw new common_1.BadRequestException('El estado ya es el indicado');
-            }
-            facilidad.estado = estadoNuevo;
-            if (dto.notasTecnicas !== undefined) {
-                facilidad.notasTecnicas = dto.notasTecnicas.trim() || null;
-            }
-            facilidad.actualizadoPorId = user.sub;
-            await manager.getRepository(facilidad_critica_entity_1.FacilidadCritica).save(facilidad);
-            if (estadoAnterior !== estadoNuevo) {
-                await manager.getRepository(facilidad_critica_historial_entity_1.FacilidadCriticaHistorial).save({
-                    facilidadCriticaId: facilidad.id,
-                    estadoAnterior,
-                    estadoNuevo,
-                    descripcionProblema: dto.notasTecnicas?.trim() ||
-                        `Estado actualizado a ${estadoNuevo} por operaciones`,
-                    reportadoPorId: user.sub,
-                });
-            }
-            return this.mapItem(facilidad, await this.countHistorialFallas(facilidad.id, manager));
-        });
+        }
+        return this.mapItem(facilidad, await this.countHistorialFallas(facilidad.id, manager));
     }
     async loadItemsConConteo(sucursalId) {
         const facilidades = await this.dataSource.getRepository(facilidad_critica_entity_1.FacilidadCritica).find({
@@ -244,6 +258,7 @@ let FacilidadesCriticasService = class FacilidadesCriticasService {
         return {
             semaforo: (0, facilidades_criticas_util_1.calcularSemaforoOperatividad)(estados),
             operativas: items.filter((i) => i.estado === enums_1.EstadoFacilidadCritica.OPERATIVO).length,
+            degradadas: items.filter((i) => i.estado === enums_1.EstadoFacilidadCritica.DEGRADADO).length,
             enMantenimiento: items.filter((i) => i.estado === enums_1.EstadoFacilidadCritica.MANTENIMIENTO).length,
             fueraDeServicio: items.filter((i) => i.estado === enums_1.EstadoFacilidadCritica.FUERA_DE_SERVICIO).length,
             items,
@@ -366,6 +381,7 @@ exports.FacilidadesCriticasService = FacilidadesCriticasService;
 exports.FacilidadesCriticasService = FacilidadesCriticasService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [typeorm_1.DataSource,
-        ordenes_trabajo_service_1.OrdenesTrabajoService])
+        ordenes_trabajo_service_1.OrdenesTrabajoService,
+        transaction_context_service_1.TransactionContextService])
 ], FacilidadesCriticasService);
 //# sourceMappingURL=facilidades-criticas.service.js.map

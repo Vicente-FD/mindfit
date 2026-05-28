@@ -96,13 +96,10 @@
                 </div>
                 <p class="fc-sede-card__status">{{ semaforoLabel($any(s.semaforo)) }}</p>
                 <p class="text-xs text-slate-grey mt-1">
-                  @if (s.fueraDeServicio > 0) {
-                    <span class="text-red-400">{{ s.fueraDeServicio }} fuera de servicio</span>
-                  } @else if (s.enMantenimiento > 0) {
-                    <span class="text-yellow-400">{{ s.enMantenimiento }} en mantenimiento</span>
-                  } @else {
-                    {{ s.operativas }} operativas
-                  }
+                  {{ s.operativas }} operativas · {{ s.degradadas }} degradadas · {{ s.fueraDeServicio }} fuera de servicio
+                </p>
+                <p class="text-[11px] mt-1 text-slate-grey">
+                  {{ s.operativas + s.degradadas + s.enMantenimiento + s.fueraDeServicio }} zonas evaluadas
                 </p>
               </article>
             }

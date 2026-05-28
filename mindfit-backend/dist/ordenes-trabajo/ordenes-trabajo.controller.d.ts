@@ -42,7 +42,7 @@ export declare class OrdenesTrabajoController {
         areaServicios: "bano" | "camarin" | "ducha" | null;
         generoServicios: "hombres" | "mujeres" | null;
         fallaGeneralServicios: boolean;
-        serviciosAfectados: string[] | null;
+        serviciosAfectados: import("../common/types/capacidades-servicios.types").ServiciosAfectadosPayload | null;
         facilidadCritica: import("../entities").FacilidadCritica | null;
         activo: import("../entities").Activo | null;
         sucursalId: number;

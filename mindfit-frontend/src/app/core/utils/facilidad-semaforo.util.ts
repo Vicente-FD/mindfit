@@ -6,6 +6,7 @@ import type {
 export function labelEstadoFacilidad(estado: EstadoFacilidadCritica): string {
   const map: Record<EstadoFacilidadCritica, string> = {
     operativo: 'Operativo',
+    degradado: 'Degradado / Parcial',
     mantenimiento: 'Mantenimiento',
     fuera_de_servicio: 'Fuera de servicio',
   };
@@ -23,7 +24,7 @@ export function estadoFacilidadClass(estado: EstadoFacilidadCritica): string {
 export function semaforoLabel(semaforo: SemaforoOperatividadSede): string {
   const map: Record<SemaforoOperatividadSede, string> = {
     verde: 'Operativo',
-    amarillo: 'Atención',
+    amarillo: 'Degradado / Parcial',
     rojo: 'Crítico',
   };
   return map[semaforo] ?? semaforo;

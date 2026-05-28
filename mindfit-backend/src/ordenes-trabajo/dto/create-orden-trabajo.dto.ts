@@ -13,6 +13,7 @@ import {
   PrioridadOrden,
   TipoMantenimiento,
 } from '../../common/enums';
+import type { ServiciosAfectadosPayload } from '../../common/types/capacidades-servicios.types';
 
 export class CreateOrdenTrabajoDto {
   @IsOptional()
@@ -68,5 +69,5 @@ export class CreateOrdenTrabajoDto {
   fallaGeneralServicios?: boolean;
 
   @IsOptional()
-  serviciosAfectados?: string[];
+  serviciosAfectados?: ServiciosAfectadosPayload;
 }

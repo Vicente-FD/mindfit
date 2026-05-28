@@ -36,6 +36,7 @@ import { ReportarFallaDto } from './dto/reportar-falla.dto';
 import { FilterOrdenesTrabajoDto } from './dto/filter-ordenes-trabajo.dto';
 import { FilterCalendarioOrdenesDto } from './dto/filter-calendario-ordenes.dto';
 import { RechazarOrdenDto } from './dto/rechazar-orden.dto';
+import { parseElementosAfectadosJson } from '../common/utils/operatividad-servicios.util';
 import { OrdenesTrabajoService } from './ordenes-trabajo.service';
 import {
   buildPublicFileUrl,
@@ -192,6 +193,9 @@ export class OrdenesTrabajoController {
         generosServicios: dto.generosServicios,
         fallaGeneralServicios:
           String(dto.fallaGeneralServicios ?? '').toLowerCase(),
+        elementosAfectados: parseElementosAfectadosJson(
+          dto.elementosAfectados,
+        ),
       },
       user.id,
       sucursalId,

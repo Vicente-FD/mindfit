@@ -20,6 +20,7 @@ export interface FacilidadHistorialItemDto {
 export interface FacilidadesResumenDto {
     semaforo: SemaforoOperatividadSede;
     operativas: number;
+    degradadas: number;
     enMantenimiento: number;
     fueraDeServicio: number;
     items: FacilidadCriticaItemDto[];
@@ -30,6 +31,7 @@ export interface SedeSemaforoResumenDto {
     sucursalSigla: string;
     semaforo: SemaforoOperatividadSede;
     operativas: number;
+    degradadas: number;
     enMantenimiento: number;
     fueraDeServicio: number;
 }

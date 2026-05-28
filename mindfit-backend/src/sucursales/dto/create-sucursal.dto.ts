@@ -11,6 +11,8 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsObject } from 'class-validator';
+import type { CapacidadesServicios } from '../../common/types/capacidades-servicios.types';
 
 const SIGLA_REGEX = /^[A-Z]{2,3}$/;
 
@@ -54,4 +56,8 @@ export class CreateSucursalDto {
   @Min(1)
   @Max(20)
   cantidadPisos?: number;
+
+  @IsOptional()
+  @IsObject()
+  capacidadesServicios?: CapacidadesServicios;
 }

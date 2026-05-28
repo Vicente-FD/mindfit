@@ -31,6 +31,7 @@ const reportar_falla_dto_1 = require("./dto/reportar-falla.dto");
 const filter_ordenes_trabajo_dto_1 = require("./dto/filter-ordenes-trabajo.dto");
 const filter_calendario_ordenes_dto_1 = require("./dto/filter-calendario-ordenes.dto");
 const rechazar_orden_dto_1 = require("./dto/rechazar-orden.dto");
+const operatividad_servicios_util_1 = require("../common/utils/operatividad-servicios.util");
 const ordenes_trabajo_service_1 = require("./ordenes-trabajo.service");
 const evidencias_storage_1 = require("./storage/evidencias.storage");
 let OrdenesTrabajoController = class OrdenesTrabajoController {
@@ -117,6 +118,7 @@ let OrdenesTrabajoController = class OrdenesTrabajoController {
             generoServicios: generoSingle,
             generosServicios: dto.generosServicios,
             fallaGeneralServicios: String(dto.fallaGeneralServicios ?? '').toLowerCase(),
+            elementosAfectados: (0, operatividad_servicios_util_1.parseElementosAfectadosJson)(dto.elementosAfectados),
         }, user.id, sucursalId, fotoUrl);
     }
     findCalendario(query) {

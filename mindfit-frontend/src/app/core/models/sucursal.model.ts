@@ -1,3 +1,5 @@
+import type { CapacidadesServicios } from '../utils/capacidades-servicios.util';
+
 export interface Sucursal {
   id: number;
   nombre: string;
@@ -7,6 +9,7 @@ export interface Sucursal {
   ciudad?: string | null;
   estaActiva?: boolean;
   cantidadPisos?: number;
+  capacidadesServicios?: CapacidadesServicios | null;
   activosOperativos?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -20,6 +23,7 @@ export interface CreateSucursalPayload {
   ciudad: string;
   estaActiva?: boolean;
   cantidadPisos?: number;
+  capacidadesServicios?: CapacidadesServicios;
 }
 
 export interface UpdateSucursalPayload {
@@ -30,6 +34,7 @@ export interface UpdateSucursalPayload {
   ciudad?: string;
   estaActiva?: boolean;
   cantidadPisos?: number;
+  capacidadesServicios?: CapacidadesServicios;
 }
 
 export const CASA_CENTRAL_VALUE = 'casa_central';

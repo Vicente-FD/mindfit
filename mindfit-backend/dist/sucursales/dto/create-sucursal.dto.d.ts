@@ -1,3 +1,4 @@
+import type { CapacidadesServicios } from '../../common/types/capacidades-servicios.types';
 export declare class CreateSucursalDto {
     nombre: string;
     sigla: string;
@@ -6,4 +7,5 @@ export declare class CreateSucursalDto {
     ciudad: string;
     estaActiva?: boolean;
     cantidadPisos?: number;
+    capacidadesServicios?: CapacidadesServicios;
 }

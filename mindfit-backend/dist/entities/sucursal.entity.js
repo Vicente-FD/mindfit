@@ -24,6 +24,7 @@ let Sucursal = class Sucursal {
     ciudad;
     estaActiva;
     cantidadPisos;
+    capacidadesServicios;
     createdAt;
     updatedAt;
     deletedAt;
@@ -65,6 +66,10 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'cantidad_pisos', type: 'int', default: 1 }),
     __metadata("design:type", Number)
 ], Sucursal.prototype, "cantidadPisos", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'capacidades_servicios', type: 'jsonb', nullable: true }),
+    __metadata("design:type", Object)
+], Sucursal.prototype, "capacidadesServicios", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
     __metadata("design:type", Date)
