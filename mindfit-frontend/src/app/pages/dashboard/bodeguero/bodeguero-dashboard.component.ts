@@ -10,6 +10,7 @@ import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 import { InventarioService } from '../../../core/services/inventario.service';
 import { SucursalesService } from '../../../core/services/sucursales.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import {
   BodegaKpis,
   BodegaMaquina,
@@ -33,6 +34,7 @@ export class BodegueroDashboardComponent implements OnInit, OnDestroy {
   private readonly inventario = inject(InventarioService);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly toast = inject(ToastService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly fb = inject(FormBuilder);
   private readonly destroy$ = new Subject<void>();
   private readonly busqueda$ = new Subject<string>();
@@ -507,14 +509,14 @@ export class BodegueroDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  softDeleteRepuesto(row: BodegaStockRow): void {
-    if (
-      !confirm(
-        `¿Descontinuar «${row.repuesto.nombre}» del catálogo? El historial Kardex se conservará.`,
-      )
-    ) {
-      return;
-    }
+  async softDeleteRepuesto(row: BodegaStockRow): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Descontinuar repuesto',
+      message: `¿Descontinuar «${row.repuesto.nombre}» del catálogo? El historial Kardex se conservará.`,
+      confirmLabel: 'Descontinuar',
+      variant: 'danger',
+    });
+    if (!ok) return;
     this.inventario.deleteRepuesto(row.repuestoId).subscribe({
       next: () => {
         this.toast.success('Repuesto descontinuado');

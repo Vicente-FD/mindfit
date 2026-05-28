@@ -13,5 +13,8 @@ export declare class PasswordResetGateway implements OnGatewayInit {
     handleSubscribe(client: Socket, body: SubscribePayload): {
         ok: boolean;
     };
+    handleSubscribeAdmin(client: Socket): {
+        ok: boolean;
+    };
 }
 export {};

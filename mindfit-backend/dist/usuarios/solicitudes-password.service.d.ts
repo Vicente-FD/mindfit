@@ -24,5 +24,8 @@ export declare class SolicitudesPasswordService {
     solicitar(email: string): Promise<SolicitarRecuperacionResponseDto>;
     findPendientes(): Promise<SolicitudPasswordPendienteDto[]>;
     aprobar(solicitudId: number, adminUserId: number): Promise<AprobarSolicitudPasswordResultDto>;
+    rechazar(solicitudId: number, adminUserId: number): Promise<{
+        solicitudId: number;
+    }>;
     private generateReadablePassword;
 }

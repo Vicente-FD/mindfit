@@ -43,4 +43,10 @@ export class PasswordResetGateway implements OnGatewayInit {
     void client.join(`reset:${watchToken}`);
     return { ok: true };
   }
+
+  @SubscribeMessage('subscribeAdmin')
+  handleSubscribeAdmin(@ConnectedSocket() client: Socket): { ok: boolean } {
+    void client.join('admin:recuperacion');
+    return { ok: true };
+  }
 }

@@ -41,6 +41,15 @@
     @apply rounded-lg px-3 py-2 text-slate-grey transition hover:bg-white/5 hover:text-pure-white;
   }
 
+  .btn-danger {
+    @apply rounded-xl px-4 py-3 text-sm font-semibold text-pure-white transition disabled:cursor-not-allowed disabled:opacity-50;
+    background: rgb(220 38 38 / 0.9);
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: rgb(220 38 38 / 1);
+  }
+
   .page-card {
     @apply rounded-2xl border border-white/5 bg-obsidian-grey p-6;
   }

@@ -46,6 +46,15 @@ export class UsuariosController {
     return this.solicitudesPasswordService.aprobar(solicitudId, admin.sub);
   }
 
+  @Patch('recuperar/rechazar/:solicitudId')
+  @Roles(RolUsuario.ADMIN)
+  rechazarRecuperacion(
+    @Param('solicitudId', ParseIntPipe) solicitudId: number,
+    @CurrentUser() admin: JwtPayload,
+  ) {
+    return this.solicitudesPasswordService.rechazar(solicitudId, admin.sub);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.usuariosService.findOne(id);

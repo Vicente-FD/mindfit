@@ -8,6 +8,7 @@ import {
 import { LucideAngularModule } from 'lucide-angular';
 import { VentasService } from '../../../core/services/ventas.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { Cliente, CreateClientePayload } from '../../../core/models/ventas.model';
 
 @Component({
@@ -19,6 +20,7 @@ import { Cliente, CreateClientePayload } from '../../../core/models/ventas.model
 export class ClientesVentasComponent implements OnInit {
   private readonly ventas = inject(VentasService);
   private readonly toast = inject(ToastService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly fb = inject(FormBuilder);
 
   readonly lista = signal<Cliente[]>([]);
@@ -141,8 +143,14 @@ export class ClientesVentasComponent implements OnInit {
     });
   }
 
-  remove(c: Cliente): void {
-    if (!confirm(`¿Eliminar cliente ${c.razonSocial}?`)) return;
+  async remove(c: Cliente): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Eliminar cliente',
+      message: `¿Eliminar el cliente ${c.razonSocial}?`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
     this.ventas.deleteCliente(c.id).subscribe({
       next: () => {
         this.toast.success('Cliente eliminado');

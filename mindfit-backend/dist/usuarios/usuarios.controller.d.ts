@@ -11,6 +11,9 @@ export declare class UsuariosController {
     findAll(): Promise<import("../entities").Usuario[]>;
     listRecuperacionPendientes(): Promise<import("./solicitudes-password.service").SolicitudPasswordPendienteDto[]>;
     aprobarRecuperacion(solicitudId: number, admin: JwtPayload): Promise<import("./solicitudes-password.service").AprobarSolicitudPasswordResultDto>;
+    rechazarRecuperacion(solicitudId: number, admin: JwtPayload): Promise<{
+        solicitudId: number;
+    }>;
     findOne(id: number): Promise<import("../entities").Usuario>;
     create(dto: CreateUsuarioDto): Promise<import("../entities").Usuario>;
     update(id: number, dto: UpdateUsuarioDto): Promise<import("../entities").Usuario>;

@@ -58,6 +58,13 @@ export class UsuariosService {
       {},
     );
   }
+
+  rechazarRecuperacion(solicitudId: number): Observable<{ solicitudId: number }> {
+    return this.http.patch<{ solicitudId: number }>(
+      `${this.baseUrl}/recuperar/rechazar/${solicitudId}`,
+      {},
+    );
+  }
 }
 
 export interface SolicitudRecuperacionPendiente {

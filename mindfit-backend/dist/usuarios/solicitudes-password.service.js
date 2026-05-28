@@ -85,6 +85,7 @@ let SolicitudesPasswordService = class SolicitudesPasswordService {
                 pendiente = await repo.save(pendiente);
             }
             watchToken = pendiente.watchToken ?? undefined;
+            this.passwordResetEvents.emitAdminPendientesChanged();
         }
         return {
             message: 'Si el correo está registrado, un administrador revisará su solicitud de restablecimiento.',
@@ -163,12 +164,59 @@ let SolicitudesPasswordService = class SolicitudesPasswordService {
                     solicitudId: solicitud.id,
                 });
             }
+            this.passwordResetEvents.emitAdminPendientesChanged();
             return result;
         });
     }
+    async rechazar(solicitudId, adminUserId) {
+        return this.dataSource.transaction(async (manager) => {
+            const solicitudRepo = manager.getRepository(solicitud_password_entity_1.SolicitudPassword);
+            const auditRepo = manager.getRepository(audit_trail_entity_1.AuditTrail);
+            const solicitud = await solicitudRepo.findOne({
+                where: { id: solicitudId },
+                relations: { usuario: true },
+            });
+            if (!solicitud) {
+                throw new common_1.NotFoundException(`Solicitud ${solicitudId} no encontrada`);
+            }
+            if (solicitud.estado !== enums_1.EstadoSolicitudPassword.PENDIENTE) {
+                throw new common_1.BadRequestException('La solicitud ya fue procesada');
+            }
+            solicitud.estado = enums_1.EstadoSolicitudPassword.RECHAZADO;
+            await solicitudRepo.save(solicitud);
+            await auditRepo.save({
+                tableName: 'solicitudes_password',
+                rowPk: String(solicitud.id),
+                operation: enums_1.OperacionAuditoria.UPDATE,
+                userId: adminUserId,
+                oldData: {
+                    estado: enums_1.EstadoSolicitudPassword.PENDIENTE,
+                    usuarioId: solicitud.usuarioId,
+                },
+                newData: {
+                    estado: enums_1.EstadoSolicitudPassword.RECHAZADO,
+                    usuarioId: solicitud.usuarioId,
+                    rechazadoPorId: adminUserId,
+                },
+            });
+            if (solicitud.watchToken) {
+                this.passwordResetEvents.emitPasswordResetRejected(solicitud.watchToken, {
+                    solicitudId: solicitud.id,
+                    message: 'El administrador rechazó su solicitud de restablecimiento de contraseña.',
+                });
+            }
+            this.passwordResetEvents.emitAdminPendientesChanged();
+            return { solicitudId: solicitud.id };
+        });
+    }
     generateReadablePassword() {
-        const num = Math.floor(100 + Math.random() * 899);
-        return `MindfitTemp${num}!`;
+        const words = ['Mindfit', 'Tempo', 'Acceso', 'Clave', 'Secure', 'Ops'];
+        const tails = ['Flow', 'Pass', 'Key', 'Lock', 'Safe', 'Run'];
+        const word = words[(0, crypto_1.randomInt)(words.length)];
+        const tail = tails[(0, crypto_1.randomInt)(tails.length)];
+        const num = (0, crypto_1.randomInt)(100, 999);
+        const code = (0, crypto_1.randomBytes)(2).toString('hex').toUpperCase();
+        return `${word}${tail}${code}${num}!`;
     }
 };
 exports.SolicitudesPasswordService = SolicitudesPasswordService;

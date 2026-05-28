@@ -1,4 +1,5 @@
 export declare enum EstadoSolicitudPassword {
     PENDIENTE = "pendiente",
-    PROCESADO = "procesado"
+    PROCESADO = "procesado",
+    RECHAZADO = "rechazado"
 }

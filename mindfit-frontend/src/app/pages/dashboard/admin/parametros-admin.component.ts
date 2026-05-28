@@ -8,6 +8,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { CategoriasService } from '../../../core/services/categorias.service';
 import { MarcasService } from '../../../core/services/marcas.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { Categoria } from '../../../core/models/categoria.model';
 import { Marca } from '../../../core/models/marca.model';
 
@@ -24,6 +25,7 @@ export class ParametrosAdminComponent implements OnInit {
   private readonly categoriasService = inject(CategoriasService);
   private readonly marcasService = inject(MarcasService);
   private readonly toast = inject(ToastService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   readonly categorias = signal<Categoria[]>([]);
   readonly marcas = signal<Marca[]>([]);
@@ -133,8 +135,14 @@ export class ParametrosAdminComponent implements OnInit {
     });
   }
 
-  deleteCategoria(c: Categoria): void {
-    if (!confirm(`¿Dar de baja la familia «${c.nombre}»?`)) return;
+  async deleteCategoria(c: Categoria): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Dar de baja familia',
+      message: `¿Dar de baja la familia «${c.nombre}»?`,
+      confirmLabel: 'Dar de baja',
+      variant: 'danger',
+    });
+    if (!ok) return;
     this.categoriasService.remove(c.id).subscribe({
       next: () => {
         this.toast.success('Categoría dada de baja');
@@ -198,8 +206,14 @@ export class ParametrosAdminComponent implements OnInit {
     });
   }
 
-  deleteMarca(m: Marca): void {
-    if (!confirm(`¿Dar de baja la marca «${m.nombre}»?`)) return;
+  async deleteMarca(m: Marca): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Dar de baja marca',
+      message: `¿Dar de baja la marca «${m.nombre}»?`,
+      confirmLabel: 'Dar de baja',
+      variant: 'danger',
+    });
+    if (!ok) return;
     this.marcasService.remove(m.id).subscribe({
       next: () => {
         this.toast.success('Marca dada de baja');

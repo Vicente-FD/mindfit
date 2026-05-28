@@ -122,7 +122,7 @@ let SchemaFixService = SchemaFixService_1 = class SchemaFixService {
         id SERIAL PRIMARY KEY,
         usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
         estado VARCHAR(20) NOT NULL DEFAULT 'pendiente'
-          CHECK (estado IN ('pendiente', 'procesado')),
+          CHECK (estado IN ('pendiente', 'procesado', 'rechazado')),
         contrasena_temporal_legible VARCHAR(120) NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -135,6 +135,15 @@ let SchemaFixService = SchemaFixService_1 = class SchemaFixService {
         await this.dataSource.query(`
       ALTER TABLE solicitudes_password
       ADD COLUMN IF NOT EXISTS watch_token VARCHAR(64) NULL UNIQUE;
+    `);
+        await this.dataSource.query(`
+      ALTER TABLE solicitudes_password
+      DROP CONSTRAINT IF EXISTS solicitudes_password_estado_check;
+    `);
+        await this.dataSource.query(`
+      ALTER TABLE solicitudes_password
+      ADD CONSTRAINT solicitudes_password_estado_check
+      CHECK (estado IN ('pendiente', 'procesado', 'rechazado'));
     `);
         this.logger.log('Tabla solicitudes_password verificada');
     }

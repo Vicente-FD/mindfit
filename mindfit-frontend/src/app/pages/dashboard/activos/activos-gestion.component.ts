@@ -27,6 +27,7 @@ import { AssetHistoryModalComponent } from '../../../shared/asset-history-modal/
 import { environment } from '../../../../environments/environment';
 import { MindfitDatePickerComponent } from '../../../common/components/date-picker/date-picker.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-activos-gestion',
@@ -49,6 +50,7 @@ export class ActivosGestionComponent implements OnInit {
   private readonly marcasService = inject(MarcasService);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly toast = inject(ToastService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly auth = inject(AuthService);
 
   readonly categorias = signal<Categoria[]>([]);
@@ -364,11 +366,14 @@ export class ActivosGestionComponent implements OnInit {
     return !!activo.codigoQrToken?.trim();
   }
 
-  enviarABodega(activo: Activo): void {
+  async enviarABodega(activo: Activo): Promise<void> {
     if (!this.puedeMover(activo)) return;
-    const ok = confirm(
-      `¿Enviar «${activo.nombre}» a Bodega Central?\n\nSe desactivará el QR de sucursal hasta un nuevo traslado.`,
-    );
+    const ok = await this.confirmDialog.confirm({
+      title: 'Enviar a Bodega Central',
+      message: `¿Enviar «${activo.nombre}» a Bodega Central?\n\nSe desactivará el QR de sucursal hasta un nuevo traslado.`,
+      confirmLabel: 'Enviar',
+      variant: 'primary',
+    });
     if (!ok) return;
     this.ejecutarTraslado(activo, null);
   }

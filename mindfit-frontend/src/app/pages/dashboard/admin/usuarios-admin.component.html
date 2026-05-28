@@ -144,14 +144,24 @@
                           {{ s.createdAt | date: 'dd/MM/yyyy HH:mm' }}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        class="btn-recovery"
-                        [disabled]="approvingId() === s.id"
-                        (click)="aprobarSolicitud(s)"
-                      >
-                        @if (approvingId() === s.id) { Generando... } @else { Generar Clave Temporal }
-                      </button>
+                      <div class="recovery-actions">
+                        <button
+                          type="button"
+                          class="btn-recovery"
+                          [disabled]="approvingId() === s.id || rejectingId() === s.id"
+                          (click)="aprobarSolicitud(s)"
+                        >
+                          @if (approvingId() === s.id) { Generando... } @else { Generar Clave Temporal }
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-recovery-reject"
+                          [disabled]="approvingId() === s.id || rejectingId() === s.id"
+                          (click)="rechazarSolicitud(s)"
+                        >
+                          @if (rejectingId() === s.id) { Rechazando... } @else { Rechazar }
+                        </button>
+                      </div>
                     </li>
                   }
                 </ul>
@@ -315,12 +325,12 @@
 @if (tempPasswordResult(); as res) {
   <div class="mf-modal-backdrop" role="dialog" aria-modal="true" (click)="cerrarModalClave()">
     <div class="mf-modal-panel max-w-md" (click)="$event.stopPropagation()">
-      <div class="mf-modal-header">
-        <h3 class="text-lg font-semibold text-pure-white">Clave temporal generada</h3>
-        <button type="button" class="mf-modal-close" (click)="cerrarModalClave()" aria-label="Cerrar">
+      <header class="mf-modal-head">
+        <h3 class="text-lg font-semibold text-pure-white pr-2">Clave temporal generada</h3>
+        <button type="button" class="btn-ghost shrink-0" (click)="cerrarModalClave()" aria-label="Cerrar">
           <lucide-icon name="x" [size]="20" />
         </button>
-      </div>
+      </header>
       <div class="mf-modal-body space-y-4">
         <p class="text-sm text-slate-grey">
           Copia esta contraseña y entrégasela de forma segura al usuario. En su próximo inicio de sesión,

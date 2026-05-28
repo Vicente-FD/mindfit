@@ -23,6 +23,8 @@ import {
   resolvePermisosUi,
 } from '../../../core/models/permisos-ui.model';
 import { SucursalesService } from '../../../core/services/sucursales.service';
+import { AdminRecuperacionWsService } from '../../../core/services/admin-recuperacion-ws.service';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Usuario, PermisosUi } from '../../../core/models/usuario.model';
 import { UserRole, EstadoSesion } from '../../../core/models/user.model';
@@ -61,6 +63,8 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   private readonly usuariosService = inject(UsuariosService);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly toast = inject(ToastService);
+  private readonly adminRecuperacionWs = inject(AdminRecuperacionWsService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   readonly casaCentral = CASA_CENTRAL_VALUE;
   readonly roles = ROLES;
@@ -79,6 +83,7 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   readonly solicitudesPendientes = signal<SolicitudRecuperacionPendiente[]>([]);
   readonly loadingSolicitudes = signal(false);
   readonly approvingId = signal<number | null>(null);
+  readonly rejectingId = signal<number | null>(null);
   readonly tempPasswordResult = signal<AprobarRecuperacionResponse | null>(null);
   readonly recoveryPanelOpen = signal(true);
   readonly isAdmin = computed(() => this.auth.hasRole('admin'));
@@ -137,13 +142,17 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.load();
     this.loadSolicitudesPendientes();
+    if (this.isAdmin()) {
+      this.adminRecuperacionWs.connect();
+      this.adminRecuperacionWs
+        .onPendientesChanged()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.loadSolicitudesPendientes(true));
+    }
     this.sucursalesService.list().subscribe({
       next: (s) => this.sucursales.set(s),
     });
-    this.refreshIntervalId = setInterval(() => {
-      this.load(true);
-      this.loadSolicitudesPendientes(true);
-    }, 30_000);
+    this.refreshIntervalId = setInterval(() => this.load(true), 30_000);
 
     this.createForm.controls.rol.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -165,6 +174,7 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
     if (this.refreshIntervalId != null) {
       clearInterval(this.refreshIntervalId);
     }
+    this.adminRecuperacionWs.disconnect();
   }
 
   loadSolicitudesPendientes(silent = false): void {
@@ -197,6 +207,22 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.approvingId.set(null);
         const msg = err?.error?.message ?? 'No se pudo aprobar la solicitud';
+        this.toast.error(Array.isArray(msg) ? msg.join(', ') : String(msg));
+      },
+    });
+  }
+
+  rechazarSolicitud(solicitud: SolicitudRecuperacionPendiente): void {
+    this.rejectingId.set(solicitud.id);
+    this.usuariosService.rechazarRecuperacion(solicitud.id).subscribe({
+      next: () => {
+        this.rejectingId.set(null);
+        this.loadSolicitudesPendientes(true);
+        this.toast.success('Solicitud rechazada');
+      },
+      error: (err) => {
+        this.rejectingId.set(null);
+        const msg = err?.error?.message ?? 'No se pudo rechazar la solicitud';
         this.toast.error(Array.isArray(msg) ? msg.join(', ') : String(msg));
       },
     });
@@ -473,8 +499,14 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
     });
   }
 
-  deactivate(u: Usuario): void {
-    if (!confirm(`¿Dar de baja a ${u.nombre}?`)) return;
+  async deactivate(u: Usuario): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Dar de baja usuario',
+      message: `¿Dar de baja a ${u.nombre}? El usuario no podrá iniciar sesión.`,
+      confirmLabel: 'Dar de baja',
+      variant: 'danger',
+    });
+    if (!ok) return;
     this.usuariosService.deactivate(u.id).subscribe({
       next: () => {
         this.toast.success('Usuario dado de baja');

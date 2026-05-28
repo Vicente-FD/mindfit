@@ -1,0 +1,33 @@
+@if (dialog(); as d) {
+  <div
+    class="confirm-dialog-backdrop"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="'confirm-dialog-title'"
+    (click)="cancel()"
+  >
+    <div class="confirm-dialog-panel" (click)="$event.stopPropagation()">
+      <header class="confirm-dialog-head">
+        <h2 id="confirm-dialog-title" class="confirm-dialog-title">{{ d.title }}</h2>
+        <button type="button" class="btn-ghost shrink-0" (click)="cancel()" aria-label="Cerrar">
+          <lucide-icon name="x" [size]="20" />
+        </button>
+      </header>
+      <p class="confirm-dialog-message">{{ d.message }}</p>
+      <div class="confirm-dialog-actions">
+        <button type="button" class="btn-ghost flex-1" (click)="cancel()">
+          {{ d.cancelLabel }}
+        </button>
+        <button
+          type="button"
+          class="flex-1"
+          [class.btn-danger]="d.variant === 'danger'"
+          [class.btn-primary]="d.variant === 'primary'"
+          (click)="confirm()"
+        >
+          {{ d.confirmLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -37,6 +37,10 @@ let PasswordResetGateway = PasswordResetGateway_1 = class PasswordResetGateway {
         void client.join(`reset:${watchToken}`);
         return { ok: true };
     }
+    handleSubscribeAdmin(client) {
+        void client.join('admin:recuperacion');
+        return { ok: true };
+    }
 };
 exports.PasswordResetGateway = PasswordResetGateway;
 __decorate([
@@ -51,6 +55,13 @@ __decorate([
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
     __metadata("design:returntype", Object)
 ], PasswordResetGateway.prototype, "handleSubscribe", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('subscribeAdmin'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket]),
+    __metadata("design:returntype", Object)
+], PasswordResetGateway.prototype, "handleSubscribeAdmin", null);
 exports.PasswordResetGateway = PasswordResetGateway = PasswordResetGateway_1 = __decorate([
     (0, websockets_1.WebSocketGateway)({
         namespace: '/password-reset',

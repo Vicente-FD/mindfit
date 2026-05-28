@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { randomUUID } from 'crypto';
+import { randomBytes, randomInt, randomUUID } from 'crypto';
 import { DataSource } from 'typeorm';
 import { PasswordResetEventsService } from '../auth/password-reset/password-reset-events.service';
 import {
@@ -71,6 +71,7 @@ export class SolicitudesPasswordService {
         pendiente = await repo.save(pendiente);
       }
       watchToken = pendiente.watchToken ?? undefined;
+      this.passwordResetEvents.emitAdminPendientesChanged();
     }
 
     return {
@@ -170,12 +171,72 @@ export class SolicitudesPasswordService {
         );
       }
 
+      this.passwordResetEvents.emitAdminPendientesChanged();
+
       return result;
     });
   }
 
+  async rechazar(
+    solicitudId: number,
+    adminUserId: number,
+  ): Promise<{ solicitudId: number }> {
+    return this.dataSource.transaction(async (manager) => {
+      const solicitudRepo = manager.getRepository(SolicitudPassword);
+      const auditRepo = manager.getRepository(AuditTrail);
+
+      const solicitud = await solicitudRepo.findOne({
+        where: { id: solicitudId },
+        relations: { usuario: true },
+      });
+
+      if (!solicitud) {
+        throw new NotFoundException(`Solicitud ${solicitudId} no encontrada`);
+      }
+      if (solicitud.estado !== EstadoSolicitudPassword.PENDIENTE) {
+        throw new BadRequestException('La solicitud ya fue procesada');
+      }
+
+      solicitud.estado = EstadoSolicitudPassword.RECHAZADO;
+      await solicitudRepo.save(solicitud);
+
+      await auditRepo.save({
+        tableName: 'solicitudes_password',
+        rowPk: String(solicitud.id),
+        operation: OperacionAuditoria.UPDATE,
+        userId: adminUserId,
+        oldData: {
+          estado: EstadoSolicitudPassword.PENDIENTE,
+          usuarioId: solicitud.usuarioId,
+        },
+        newData: {
+          estado: EstadoSolicitudPassword.RECHAZADO,
+          usuarioId: solicitud.usuarioId,
+          rechazadoPorId: adminUserId,
+        },
+      });
+
+      if (solicitud.watchToken) {
+        this.passwordResetEvents.emitPasswordResetRejected(solicitud.watchToken, {
+          solicitudId: solicitud.id,
+          message:
+            'El administrador rechazó su solicitud de restablecimiento de contraseña.',
+        });
+      }
+
+      this.passwordResetEvents.emitAdminPendientesChanged();
+
+      return { solicitudId: solicitud.id };
+    });
+  }
+
   private generateReadablePassword(): string {
-    const num = Math.floor(100 + Math.random() * 899);
-    return `MindfitTemp${num}!`;
+    const words = ['Mindfit', 'Tempo', 'Acceso', 'Clave', 'Secure', 'Ops'];
+    const tails = ['Flow', 'Pass', 'Key', 'Lock', 'Safe', 'Run'];
+    const word = words[randomInt(words.length)];
+    const tail = tails[randomInt(tails.length)];
+    const num = randomInt(100, 999);
+    const code = randomBytes(2).toString('hex').toUpperCase();
+    return `${word}${tail}${code}${num}!`;
   }
 }

@@ -12,6 +12,7 @@ import { LicenciasService } from '../../../core/services/licencias.service';
 import { SucursalesService } from '../../../core/services/sucursales.service';
 import { UsuariosService } from '../../../core/services/usuarios.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { ImageCompressorService } from '../../../core/services/image-compressor.service';
 import { resolveMediaUrl } from '../../../core/utils/media-url';
 import {
@@ -52,6 +53,7 @@ export class FlotaDashboardComponent implements OnInit {
   private readonly sucursalesApi = inject(SucursalesService);
   private readonly usuariosApi = inject(UsuariosService);
   private readonly toast = inject(ToastService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly compressor = inject(ImageCompressorService);
 
   readonly casaCentral = CASA_CENTRAL_VALUE;
@@ -226,8 +228,14 @@ export class FlotaDashboardComponent implements OnInit {
       });
   }
 
-  eliminarVehiculo(v: Vehiculo): void {
-    if (!confirm(`¿Eliminar vehículo ${v.patente}?`)) return;
+  async eliminarVehiculo(v: Vehiculo): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Eliminar vehículo',
+      message: `¿Eliminar el vehículo con patente ${v.patente}?`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
     this.vehiculosApi.remove(v.id).subscribe({
       next: () => {
         this.toast.success('Vehículo eliminado');

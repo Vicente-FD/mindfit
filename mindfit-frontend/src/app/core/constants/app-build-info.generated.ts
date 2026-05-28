@@ -2,6 +2,6 @@
 export const APP_BUILD_INFO_GENERATED = {
   /** Fecha del último commit (dd/MM/yyyy). */
   lastUpdate: '27/05/2026',
-  commitShort: 'dab34bf4',
-  commitIso: '2026-05-27T00:09:48-04:00',
+  commitShort: '3419ae7c',
+  commitIso: '2026-05-27T00:16:25-04:00',
 } as const;

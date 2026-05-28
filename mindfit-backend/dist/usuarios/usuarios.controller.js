@@ -38,6 +38,9 @@ let UsuariosController = class UsuariosController {
     aprobarRecuperacion(solicitudId, admin) {
         return this.solicitudesPasswordService.aprobar(solicitudId, admin.sub);
     }
+    rechazarRecuperacion(solicitudId, admin) {
+        return this.solicitudesPasswordService.rechazar(solicitudId, admin.sub);
+    }
     findOne(id) {
         return this.usuariosService.findOne(id);
     }
@@ -77,6 +80,15 @@ __decorate([
     __metadata("design:paramtypes", [Number, Function]),
     __metadata("design:returntype", void 0)
 ], UsuariosController.prototype, "aprobarRecuperacion", null);
+__decorate([
+    (0, common_1.Patch)('recuperar/rechazar/:solicitudId'),
+    (0, roles_decorator_1.Roles)(enums_1.RolUsuario.ADMIN),
+    __param(0, (0, common_1.Param)('solicitudId', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Function]),
+    __metadata("design:returntype", void 0)
+], UsuariosController.prototype, "rechazarRecuperacion", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),

@@ -2,7 +2,10 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subject, timeout, catchError, throwError } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
-import type { PasswordResetCompletedEvent } from './password-reset.types';
+import type {
+  PasswordResetCompletedEvent,
+  PasswordResetRejectedEvent,
+} from './password-reset.types';
 
 const DEFAULT_WAIT_MS = 5 * 60 * 1000;
 
@@ -42,6 +45,16 @@ export class PasswordResetWsService implements OnDestroy {
       subject.complete();
     };
 
+    const onRejected = (payload: PasswordResetRejectedEvent) => {
+      cleanup();
+      subject.error(
+        new Error(
+          payload.message ??
+            'El administrador rechazó su solicitud de restablecimiento de contraseña.',
+        ),
+      );
+    };
+
     const onConnectError = () => {
       cleanup();
       subject.error(new Error('No se pudo conectar al servidor en tiempo real'));
@@ -49,10 +62,12 @@ export class PasswordResetWsService implements OnDestroy {
 
     const cleanup = () => {
       this.socket?.off('passwordResetCompleted', onCompleted);
+      this.socket?.off('passwordResetRejected', onRejected);
       this.socket?.off('connect_error', onConnectError);
     };
 
     this.socket.on('passwordResetCompleted', onCompleted);
+    this.socket.on('passwordResetRejected', onRejected);
     this.socket.on('connect_error', onConnectError);
 
     return subject.asObservable().pipe(
