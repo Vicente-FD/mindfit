@@ -1,3 +1,48 @@
 :host {
   display: block;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
+
+.login-page {
+  position: relative;
+  min-height: 140vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 20% 20%, rgb(255 102 0 / 0.16), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgb(34 197 94 / 0.14), transparent 42%),
+    #000;
+}
+
+.login-logo-glow {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  padding-top: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  padding-right: 0;
+  padding-bottom: 0;
+}
+
+.login-logo-glow img {
+  width: min(120vw, 82rem);
+  filter: drop-shadow(0 0 2.8rem rgb(255 102 0 / 0.34));
+  transform-origin: center;
+  transform: translate(28vw, 28vh);
+}
+
+.login-card {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  width: min(100% - 2rem, 28rem);
+}
+

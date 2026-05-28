@@ -9,6 +9,13 @@ import { mustChangePasswordGuard } from './core/guards/must-change-password.guar
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   {
+    path: '404',
+    loadComponent: () =>
+      import('./pages/errors/not-found/not-found.component').then(
+        (m) => m.NotFoundComponent,
+      ),
+  },
+  {
     path: 'login',
     canActivate: [guestGuard],
     loadComponent: () =>
@@ -213,7 +220,8 @@ export const routes: Routes = [
             (m) => m.SucursalDashboardComponent,
           ),
       },
+      { path: '**', redirectTo: '/404' },
     ],
   },
-  { path: '**', redirectTo: 'login' },
+  { path: '**', redirectTo: '404' },
 ];
